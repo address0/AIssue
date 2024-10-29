@@ -100,7 +100,6 @@ public class JiraApiUtil {
             JsonNode rootNode = objectMapper.readTree(responseBody);
             log.info("[JiraApiUtil] extractProjectKeysFromBody >>>> rootNode: {}", rootNode);
             JsonNode valuesNode = rootNode.get("values");
-//  todo 내일 와서하자 valuesNode가 비어있네
             log.info("[JiraApiUtil] extractProjectKeysFromBody >>>> valuesNode: {}", valuesNode);
             if (valuesNode.isArray()) {
                 for (JsonNode project : valuesNode) {
