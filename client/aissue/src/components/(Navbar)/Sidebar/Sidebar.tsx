@@ -1,5 +1,6 @@
 // src/components/Sidebar.tsx
 import Image from 'next/image';
+import Link from 'next/link';
 
 export default function Sidebar() {
   return (
@@ -14,7 +15,14 @@ export default function Sidebar() {
       <nav className="flex flex-1 flex-col items-center space-y-4 justify-evenly">
         <button className="w-full text-center text-black hover:bg-[#9EBDFF66] py-2">AI 스프린트 생성</button>
         <button className="w-full text-center text-black hover:bg-[#9EBDFF66] py-2">전체 업무 로그</button>
-        <button className="w-full text-center text-black hover:bg-[#9EBDFF66] py-2">프로젝트 일정</button>
+        
+        {/* Link to Month Page */}
+        <Link href="/month" className="w-full">
+          <button className="w-full text-center text-black hover:bg-[#9EBDFF66] py-2">
+            프로젝트 일정
+          </button>
+        </Link>
+
         <button className="w-full text-center text-black hover:bg-[#9EBDFF66] py-2">외부 API 연동</button>
         <button className="w-full text-center text-black hover:bg-[#9EBDFF66] py-2">프로젝트 정보</button>
       </nav>
