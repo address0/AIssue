@@ -11,8 +11,9 @@ export default function LoginPage() {
 
 
   const handleSignup = () => {
-    // Handle signup logic
+    // 회원가입 페이지로 이동
     console.log('Signup clicked');
+    router.push('/signup'); // /signup 페이지로 이동
   };
 
   const handleLogin = () => {
