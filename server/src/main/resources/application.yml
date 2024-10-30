@@ -20,5 +20,32 @@ spring:
       enabled: true
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: create-drop
     show-sql: true
+
+# swagger 설정
+springdoc:
+  default-consumes-media-type: application/json;charset=UTF-8
+  api-docs:
+    enabled: true
+    path: '/docs'
+  swagger-ui:
+    enabled: true
+    path: '/swagger'
+    try-it-out-enabled: true
+    operations-sorter: alpha
+  
+cloud:
+  aws:
+    s3:
+      bucket: ${S3_BUCKET}
+    region:
+      static-region: ${S3_REGION}
+    credentials:
+      accessKey: ${S3_ACCESS_KEY}
+      secretKey: ${S3_SECRET_KEY}
+
+jwt:
+  secret-key: ${SECRET_KEY}
+  access-token-exp: ${ACCESS_TOKEN_EXP}
+  refresh-token-exp: ${REFRESH_TOKEN_EXP}
