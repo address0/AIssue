@@ -1,0 +1,31 @@
+{
+  "field": "Web",
+  "title": "AIssue: 주니어 개발자를 위한 JIRA 개선안",
+  "detail": "암거나 어쩌구저쩌구",
+  "startDate": "2024-10-14",
+  "endDate": "2024-11-19",
+  "tech": [
+
+  ],
+  "members": [
+    { 
+      "id": 1,
+      "username": "최희현",
+      "role": "leader",
+      "manage": "FE",
+      "level": 4
+    },
+    {
+      "id": 1,
+      "username": "장승연",
+      "role": "member",
+      "manage": "AI"
+    },
+    { 
+      "id": 1,
+      "username": "김성현",
+      "role": "member",
+      "manage": "BE"
+    }
+  ]
+}
