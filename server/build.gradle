@@ -53,6 +53,9 @@ dependencies {
     implementation 'software.amazon.awssdk:s3:2.20.0'
 
     implementation 'org.jetbrains:annotations:24.0.1'
+
+    // 채팅을 위한 의존성 추가 STOMP
+    implementation 'org.springframework.boot:spring-boot-starter-websocket'
 }
 
 tasks.named('test') {

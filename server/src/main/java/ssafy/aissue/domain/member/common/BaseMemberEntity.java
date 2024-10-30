@@ -35,6 +35,10 @@ public abstract class BaseMemberEntity {
         this.isDeleted = true;
     }
 
+    public void restore(){
+        this.isDeleted = false;
+    }
+
 
     @PrePersist
     public abstract void prePersist();

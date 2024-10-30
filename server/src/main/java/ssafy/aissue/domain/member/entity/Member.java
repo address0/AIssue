@@ -6,6 +6,10 @@ import ssafy.aissue.common.constant.global.S3_IMAGE;
 import ssafy.aissue.domain.member.common.BaseMemberEntity;
 import ssafy.aissue.domain.member.command.MemberSignupCommand;
 import ssafy.aissue.domain.member.common.MemberRole;
+import ssafy.aissue.domain.project.entity.ProjectMember;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
 @Entity
@@ -32,8 +36,11 @@ public class Member extends BaseMemberEntity {
 
     private String jiraId;
 
-
+    @Column(nullable = false)
     private String name;
+
+    @OneToMany(mappedBy = "member")
+    private List<ProjectMember> projects;
 
 
     @Builder
@@ -45,12 +52,14 @@ public class Member extends BaseMemberEntity {
         this.name = name;
         this.role = MemberRole.MEMBER;
         this.isDeleted = false;
+        this.projects = new ArrayList<>();
     }
 
     // 명시적인 생성자 추가 ( null 값 허용)
     public Member(MemberRole role) {
         this.isDeleted = false;
         this.role = role;
+        this.projects = new ArrayList<>();
     }
 
 

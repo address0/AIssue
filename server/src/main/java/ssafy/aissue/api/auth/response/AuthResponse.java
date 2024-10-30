@@ -11,20 +11,23 @@ public record AuthResponse(
         @JsonInclude(JsonInclude.Include.NON_NULL)
         String refreshToken,
 
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        Long memberId,
+
         Boolean isRegistered,
 
         @JsonInclude(JsonInclude.Include.NON_NULL)
         String email
 ) {
-    public static AuthResponse of(String accessToken, String refreshToken) {
+    public static AuthResponse of(String accessToken, String refreshToken, Long memberId) {
         if (accessToken == null || refreshToken == null) {
             throw new AbnormalLoginProgressException();
         }
-        return new AuthResponse(accessToken, refreshToken,true, null);
+        return new AuthResponse(accessToken, refreshToken,memberId, true, null);
     }
 
     public static AuthResponse notRegistered(UserInfo userinfo) {
-        return new AuthResponse(null, null, false, userinfo.email());
+        return new AuthResponse(null, null, null,false, userinfo.email());
     }
 
 }

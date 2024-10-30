@@ -6,8 +6,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.http.*;
+import ssafy.aissue.domain.member.entity.Member;
 
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
 
 @Component
 @Slf4j
@@ -64,4 +67,97 @@ public class JiraApiUtil {
         }
         throw new RuntimeException("No accountId found in response");
     }
+
+    // 사용자에게 속한 프로젝트 목록 가져오기
+    public List<String> fetchUserProjects(String email, String jiraKey) {
+        log.info("[JiraApiUtil] fetchUserProjects >>>> email: {}, jiraKey: {}", email, jiraKey);
+        String jiraApiUrl = "https://ssafy.atlassian.net/rest/api/3/project/search";
+        String auth = email + ":" + jiraKey;
+        String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes());
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "Basic " + encodedAuth);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+        ResponseEntity<String> response = restTemplate.exchange(jiraApiUrl, HttpMethod.GET, entity, String.class);
+        log.info("[JiraApiUtil] 유저의 프로젝트 목록 조회 >>>> response: {}", response);
+
+        if (response.getStatusCode() == HttpStatus.OK) {
+            log.info("[JiraApiUtil] 유저의 프로젝트 목록 조회 성공: {}", response.getBody());
+            return extractProjectKeysFromBody(response.getBody());
+        } else {
+            log.error("[JiraApiUtil] 유저의 프로젝트 목록 조회 실패. 상태 코드: {}, 응답 본문: {}", response.getStatusCode(), response.getBody());
+            throw new RuntimeException("Failed to fetch user projects from Jira. Response: " + response.getBody());
+        }
+    }
+
+    // JSON 응답에서 프로젝트 ID 목록 추출
+    private List<String> extractProjectKeysFromBody(String responseBody) {
+        List<String> projectKeys = new ArrayList<>();
+        try {
+            log.info("[JiraApiUtil] extractProjectKeysFromBody >>>> responseBody: {}", responseBody);
+            JsonNode rootNode = objectMapper.readTree(responseBody);
+            log.info("[JiraApiUtil] extractProjectKeysFromBody >>>> rootNode: {}", rootNode);
+            JsonNode valuesNode = rootNode.get("values");
+            log.info("[JiraApiUtil] extractProjectKeysFromBody >>>> valuesNode: {}", valuesNode);
+            if (valuesNode.isArray()) {
+                for (JsonNode project : valuesNode) {
+                    String projectKey = project.get("key").asText();
+                    projectKeys.add(projectKey);
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to parse project keys from response", e);
+        }
+        return projectKeys;
+    }
+
+    // 특정 프로젝트의 멤버 목록 가져오기
+    public List<Member> fetchProjectMembers(String jiraProjectKey, String email, String jiraKey) {
+        String jiraApiUrl = "https://ssafy.atlassian.net/rest/api/3/user/assignable/search?project=" + jiraProjectKey;
+        String auth = email + ":" + jiraKey;
+        String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes());
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "Basic " + encodedAuth);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+
+        ResponseEntity<String> response = restTemplate.exchange(jiraApiUrl, HttpMethod.GET, entity, String.class);
+        log.info("[JiraApiUtil] fetchProjectMembers >>>> response: {}", response);
+
+        if (response.getStatusCode() == HttpStatus.OK) {
+            return extractMembersFromBody(response.getBody());
+        }
+
+        throw new RuntimeException("Failed to fetch project members from Jira");
+    }
+
+    // JSON 응답에서 팀원 정보 추출
+    private List<Member> extractMembersFromBody(String responseBody) {
+        List<Member> members = new ArrayList<>();
+        try {
+            JsonNode rootNode = objectMapper.readTree(responseBody);
+            if (rootNode.isArray()) {
+                for (JsonNode actor : rootNode) {
+                    String email = actor.has("emailAddress") ? actor.get("emailAddress").asText() : "";
+                    String displayName = actor.get("displayName").asText();
+                    String jiraId = actor.get("accountId").asText();
+
+                    Member member = Member.builder()
+                            .email(email)
+                            .name(displayName)
+                            .jiraId(jiraId)
+                            .build();
+                    members.add(member);
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to parse members from response", e);
+        }
+        return members;
+    }
+
 }

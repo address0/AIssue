@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import ssafy.aissue.api.CommonResponse;
 import ssafy.aissue.common.exception.member.AbnormalLoginProgressException;
+import ssafy.aissue.common.exception.member.AlreadyExistingMemberException;
 import ssafy.aissue.common.exception.security.FilterException;
 import ssafy.aissue.common.exception.security.IssuerTokenIncorrectException;
 import ssafy.aissue.common.exception.security.NotAuthenticatedException;
@@ -58,6 +59,13 @@ public class AuthExceptionHandler {
     public CommonResponse handleNotAuthenticatedException(NotAuthenticatedException e) {
         log.error("NotAuthenticatedException", e);
         return CommonResponse.unauthorized(e.getErrorCode());
+    }
+
+    @ExceptionHandler(AlreadyExistingMemberException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public CommonResponse handleAlreadyExistingMemberException(AlreadyExistingMemberException e) {
+        log.error("AlreadyExistingMemberException", e);
+        return CommonResponse.badRequest(e.getErrorCode());
     }
 
 }
