@@ -2,19 +2,23 @@
 
 import Image from 'next/image';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const router = useRouter();
 
-  const handleLogin = () => {
-    // Handle login logic
-    console.log('Login:', { email, password });
-  };
 
   const handleSignup = () => {
     // Handle signup logic
     console.log('Signup clicked');
+  };
+
+  const handleLogin = () => {
+    // 로그인 로직 처리 후 페이지 이동
+    console.log('Login:', { email, password });
+    router.push('/sprint'); // /sprint 페이지로 이동
   };
 
   return (
