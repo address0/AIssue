@@ -1,8 +1,15 @@
 // src/components/Sidebar.tsx
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function Sidebar() {
+  const router = useRouter();
+
+  const handleExitProject = () => {
+    router.push('/login'); // /login 페이지로 이동
+  };
+
   return (
     <div className="w-64 bg-white p-4 flex flex-col justify-between min-h-screen">
       {/* Project Icon and Name */}
@@ -41,6 +48,7 @@ export default function Sidebar() {
 
       {/* Exit Project Button */}
       <button 
+        onClick={handleExitProject}
         className="w-full mt-4 text-center text-black bg-[#EEEEEE] hover:bg-[#9EBDFF66] py-2 rounded-[20px]"
         style={{ borderRadius: '10px' }}
       >
