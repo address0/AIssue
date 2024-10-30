@@ -17,7 +17,13 @@ pipeline {
                 }
             }
         }
-
+        
+        stage('Test') {
+            steps {
+                echo '파이프라인이 정상적으로 작동합니다.'
+            }
+        }
+    
         stage('Frontend Build') {
             steps {
                 dir('client/aissue') {
