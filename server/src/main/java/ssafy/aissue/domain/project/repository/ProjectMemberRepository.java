@@ -13,4 +13,5 @@ public interface ProjectMemberRepository extends JpaRepository<ProjectMember, Lo
     List<ProjectMember> findAllByMember(Member member);
     Optional<ProjectMember> findByProjectAndMember(Project project, Member member);
     boolean existsByProjectAndMember(Project project, Member member);
+
 }

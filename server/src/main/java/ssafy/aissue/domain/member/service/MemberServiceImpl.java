@@ -23,6 +23,7 @@ import ssafy.aissue.domain.project.entity.Project;
 import ssafy.aissue.domain.project.entity.ProjectMember;
 import ssafy.aissue.domain.project.repository.ProjectMemberRepository;
 import ssafy.aissue.domain.project.repository.ProjectRepository;
+import ssafy.aissue.domain.project.service.ProjectService;
 
 import java.util.List;
 import java.util.Optional;
@@ -40,11 +41,11 @@ public class MemberServiceImpl implements MemberService {
     private final JiraApiUtil jiraApiUtil;
     private final ProjectRepository projectRepository;
     private final ProjectMemberRepository projectMemberRepository;
+    private final ProjectService projectService;
 
     @Override
     @Transactional
     public MemberSignupResponse signupMember(MemberSignupCommand signupCommand) {
-        log.info("[MemberService] 회원가입 시작: {}", signupCommand.email());
         Member existingMember = memberRepository.findByEmail(signupCommand.email()).orElse(null);
 
         if (existingMember != null) {
@@ -85,6 +86,7 @@ public class MemberServiceImpl implements MemberService {
                 .password(passwordEncoder.encode(command.password()))
                 .jiraKey(command.jiraKey())
                 .jiraId(jiraAccountId)
+                .name(command.name())
                 .build();
     }
 
@@ -93,12 +95,9 @@ public class MemberServiceImpl implements MemberService {
         List<String> projectKeys = jiraApiUtil.fetchUserProjects(signupCommand.email(), signupCommand.jiraKey());
 
         for (String projectKey : projectKeys) {
-            // Project 엔티티를 먼저 영속화
+            // Project 엔티티를 생성할 때 ProjectService의 createProject 메서드를 사용
             Project project = projectRepository.findByJiraProjectKey(projectKey)
-                    .orElseGet(() -> {
-                        Project newProject = new Project(projectKey);
-                        return projectRepository.save(newProject);  // Project를 먼저 DB에 저장
-                    });
+                    .orElseGet(() -> projectService.createProject(new Project(projectKey))); // createProject 호출
 
             // 이미 프로젝트와 멤버가 연결되어 있는지 확인
             if (!projectMemberRepository.existsByProjectAndMember(project, member)) {
@@ -133,7 +132,7 @@ public class MemberServiceImpl implements MemberService {
             String accessToken = jwtProcessor.generateAccessToken(member);
             String refreshToken = jwtProcessor.generateRefreshToken(member);
             jwtProcessor.saveRefreshToken(accessToken, refreshToken);
-            return MemberSignupResponse.of(accessToken, refreshToken);
+            return MemberSignupResponse.of(accessToken, refreshToken, member.getId());
         } catch (Exception e) {
             log.error("[MemberService] 토큰 생성/저장 실패: memberId={}, error={}", member.getId(), e.getMessage(), e);
             throw new TokenSaveFailedException();

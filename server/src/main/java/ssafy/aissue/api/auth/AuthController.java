@@ -37,7 +37,7 @@ public class AuthController {
         return CommonResponse.noContent();
     }
 
-    @Operation(summary = "ping", description = "인증 서버가 정상적으로 동작하는지 확인합니다.")
+    @Operation(summary = "서버상태확인하기", description = "인증 서버가 정상적으로 동작하는지 확인합니다.")
     @GetMapping("/ping")
     public CommonResponse<?> ping() {
         log.info("[AuthController] 인증 확인 >>>> 로그인 멤버 ID : {}", SecurityUtil.getLoginMemberId());

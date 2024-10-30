@@ -36,7 +36,7 @@ public class Member extends BaseMemberEntity {
 
     private String jiraId;
 
-
+    @Column(nullable = false)
     private String name;
 
     @OneToMany(mappedBy = "member")
