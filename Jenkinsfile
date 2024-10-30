@@ -4,7 +4,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 // GitLab에서 소스 코드 체크아웃
-                git branch: 'release', url: 'https://gitlab.com/your-repo.git'
+                git branch: 'release', url: 'https://lab.ssafy.com/s11-final/S11P31A403.git'
             }
         }
         
