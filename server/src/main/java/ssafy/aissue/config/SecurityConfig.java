@@ -48,7 +48,7 @@ public class SecurityConfig {
         log.debug(">>> [SecurityConfig::configurationSource] CORS 설정이 filterchain에 등록");
 
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("*"));  // 모든 출처 허용
+        configuration.setAllowedOrigins(List.of("http://localhost:3000"));  // 모든 출처 허용
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));  // 허용된 HTTP 메서드
         configuration.setAllowedHeaders(List.of("*"));  // 모든 헤더 허용
         configuration.setAllowCredentials(true);  // 자격증명 허용
