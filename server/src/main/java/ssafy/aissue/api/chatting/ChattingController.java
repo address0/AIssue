@@ -54,7 +54,6 @@ public class ChattingController {
     }
 
     // 메시지 송신 및 수신
-    @PreAuthorize("hasRole('ROLE_MEMBER')")
     @MessageMapping("/message")
     public ResponseEntity<Void> receiveMessage(@RequestBody ChatMessageRequest chatMessageRequest) {
         Long memberId = chatMessageRequest.memberId();
