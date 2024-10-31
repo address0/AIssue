@@ -1,16 +1,25 @@
-# Frontend Dockerfile (client/Dockerfile)
+# Node.js 20.15.1 이미지 사용
+FROM node:20.15.1
 
-# 1. 빌드 스테이지
-FROM node:18 AS build
+# 작업 디렉토리 설정
 WORKDIR /app
-COPY aissue/package.json aissue/package-lock.json ./
+
+# 패키지 설치
+COPY package*.json ./
 RUN npm install
-COPY aissue ./
+
+# 소스 코드 복사
+COPY . .
+
+# 환경 변수 설정
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+
+# 빌드
 RUN npm run build
 
-# 2. 실행 스테이지 (Nginx)
-FROM nginx:alpine
-COPY --from=build /app/.next /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/nginx.conf
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+# 포트 노출
+EXPOSE 3000
+
+# 애플리케이션 시작
+CMD ["npm", "start"]
