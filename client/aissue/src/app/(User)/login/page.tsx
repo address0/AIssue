@@ -1,5 +1,6 @@
 'use client'
 
+import axios from 'axios'
 import Image from 'next/image'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -8,6 +9,7 @@ import { login } from '@/api/user/index'
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [passswordError, setPasswordError] = useState<string>('')
   const router = useRouter()
 
   const handleSignup = () => {
@@ -29,7 +31,13 @@ export default function LoginPage() {
       sessionStorage.setItem('memberId', res.memberId)
       router.push('/sprint') // /sprint 페이지로 이동
     } catch (error) {
-      console.error('로그인 실패', error)
+      if (axios.isAxiosError(error)) {
+        console.log(error.response?.data.message)
+        if (error.response?.data.message === '비밀번호가 일치하지 않습니다.') {
+          setPasswordError(error.response?.data.message)
+        }
+        console.error('로그인 실패', error)
+      }
     }
   }
 
@@ -57,6 +65,9 @@ export default function LoginPage() {
         <div className="border-b border-gray-300 mb-6 w-full"></div>
 
         <div className="mb-4">
+          {passswordError && (
+            <p className="text-red-500 text-sm mb-2">{passswordError}</p>
+          )}
           <input
             type="email"
             placeholder="Jira e-mail"
