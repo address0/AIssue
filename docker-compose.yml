@@ -49,7 +49,7 @@ services:
 
   frontend:
     build:
-      context: ./client/aissue/src
+      context: ./client/aissue
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
