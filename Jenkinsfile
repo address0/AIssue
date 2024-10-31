@@ -24,8 +24,8 @@ pipeline {
         stage('Build Frontend') {
             steps {
                 dir('client/aissue') {
-                    sh 'npm install'
-                    sh 'npm run build'
+                    sh 'sudo npm install'
+                    sh 'sudo npm run build'
                 }
             }
         }
