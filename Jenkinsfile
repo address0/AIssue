@@ -24,8 +24,12 @@ pipeline {
         stage('Build Frontend') {
             steps {
                 dir('client/aissue') {
-                    sh 'npm install'
-                    sh 'npm run build'
+                    sh '''
+                    docker run --rm -v $(pwd):/app -w /app node:20.15.1 bash -c "
+                    npm install &&
+                    npm run build
+                    "
+                    '''
                 }
             }
         }
