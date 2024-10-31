@@ -35,7 +35,7 @@ public class MemberController {
 
     @Operation(summary = "회원가입", description = "회원가입 정보입니다.")
     @PostMapping(value="/signup")
-    public CommonResponse<MemberSignupResponse> signup(@ModelAttribute @Validated MemberSignupRequest request){
+    public CommonResponse<MemberSignupResponse> signup(@RequestBody MemberSignupRequest request){
         log.info("[PlayerController] 회원가입 >>>> request: {}", request);
         MemberSignupResponse response = memberService.signupMember(request.toCommand());
         return CommonResponse.ok(response);
