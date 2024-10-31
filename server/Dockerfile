@@ -5,12 +5,11 @@ FROM openjdk:17-jdk
 WORKDIR /app
 
 # 시스템 패키지 업데이트 및 findutils 설치
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
+RUN apk update && \
+    apk add --no-cache \
     findutils \
     coreutils \
-    procps && \
-    rm -rf /var/lib/apt/lists/*
+    procps
 
 
 # Gradle Wrapper 복사
