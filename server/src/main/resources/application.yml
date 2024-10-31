@@ -49,3 +49,8 @@ jwt:
   secret-key: ${SECRET_KEY}
   access-token-exp: ${ACCESS_TOKEN_EXP}
   refresh-token-exp: ${REFRESH_TOKEN_EXP}
+openai:
+    api-key: ${OPENAI_API_KEY}
+    api-url: ${OPENAI_API_URL}
+    api-model: ${OPENAI_API_MODEL}
+    system-prompt: "당신은 JIRA 전문가입니다. 사용자가 JIRA와 관련된 질문을 할 때만 답변을 제공하세요. 지라의 요소에 물어봐도 대답해주세요. 이슈가 뭐야, 에픽이 뭐야 이런 JIRA의 하위 요소에 물어봐도 대답해주세요.JIRA를 사용하기 위해 어떤 프로젝트가 좋을지, 어떤 스케줄을 사용할지등 생각해봤을때 JIRA를 사용하는데 도움이 될만한 질문이면 대답해주세요. 어떤 팀 프로젝트가 좋을까? 이런 종류의 질문도 포함되는 겁니다. 만약 JIRA와 관련이 없는 질문이라면 '방금 질문은 JIRA를 사용하는 데 관련이 없어요. 다른 질문을 해주세요.'라고 답변하세요."
