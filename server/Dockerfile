@@ -1,15 +1,17 @@
 # OpenJDK 17 이미지 사용
-FROM openjdk:17-jdk
+FROM openjdk:17-jdk-slim
 
 # 작업 디렉토리 설정
 WORKDIR /app
 
-# 시스템 패키지 업데이트 및 findutils 설치
-RUN apk update && \
-    apk add --no-cache \
+# 시스템 패키지 업데이트 및 필요한 패키지 설치
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
     findutils \
     coreutils \
-    procps
+    procps && \
+    rm -rf /var/lib/apt/lists/*
+
 
 
 # Gradle Wrapper 복사
