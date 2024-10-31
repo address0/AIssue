@@ -37,7 +37,7 @@ pipeline {
             steps {
                 sh 'docker-compose down'
                 sh """
-                docker-compose build --parallel \
+                docker-compose build --no-cache --parallel \
                   --build-arg NEXT_PUBLIC_API_URL=${env.NEXT_PUBLIC_API_URL} \
                   --build-arg SPRING_PROFILES_ACTIVE=${env.SPRING_PROFILES_ACTIVE}
                 """
