@@ -23,7 +23,7 @@ pipeline {
         }
         stage('Build Frontend') {
             steps {
-                dir('client/aissue/src') {
+                dir('client/aissue') {
                     sh 'npm install'
                     sh 'npm run build'
                 }
