@@ -5,6 +5,12 @@ pipeline {
         DOCKER_BUILDKIT = '1'
         NEXT_PUBLIC_API_URL = 'http://k11a403.p.ssafy.io'
         SPRING_PROFILES_ACTIVE = 'prod'
+              
+        S3_BUCKET = credentials('S3_BUCKET')
+        S3_REGION = credentials('S3_REGION')
+        S3_ACCESS_KEY = credentials('S3_ACCESS_KEY_ID')
+        S3_SECRET_KEY = credentials('S3_SECRET_ACCESS_KEY')
+        SECRET_KEY = credentials('JWT_SECRET_KEY')
     }
 
     stages {
