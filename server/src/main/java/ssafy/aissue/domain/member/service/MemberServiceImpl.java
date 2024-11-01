@@ -6,7 +6,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 import ssafy.aissue.api.member.response.MemberJiraIdResponse;
 import ssafy.aissue.api.member.response.MemberSignupResponse;
 import ssafy.aissue.common.exception.member.*;
@@ -92,23 +91,31 @@ public class MemberServiceImpl implements MemberService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void updateMemberProjects(Member member, MemberSignupCommand signupCommand) {
-        List<String> projectKeys = jiraApiUtil.fetchUserProjects(signupCommand.email(), signupCommand.jiraKey());
+        try {
+            List<String> projectKeys = jiraApiUtil.fetchUserProjects(signupCommand.email(), signupCommand.jiraKey());
 
-        for (String projectKey : projectKeys) {
-            // Project 엔티티를 생성할 때 ProjectService의 createProject 메서드를 사용
-            Project project = projectRepository.findByJiraProjectKey(projectKey)
-                    .orElseGet(() -> projectService.createProject(new Project(projectKey))); // createProject 호출
+            for (String projectKey : projectKeys) {
+                // Project 엔티티를 생성할 때 ProjectService의 createProject 메서드를 사용
+                Project project = projectRepository.findByJiraProjectKey(projectKey)
+                        .orElseGet(() -> projectService.createProject(new Project(projectKey))); // createProject 호출
 
-            // 이미 프로젝트와 멤버가 연결되어 있는지 확인
-            if (!projectMemberRepository.existsByProjectAndMember(project, member)) {
-                // Member와 Project가 저장된 상태에서 ProjectMember를 생성
-                ProjectMember projectMember = new ProjectMember(project, member, member.getJiraId());
-                project.getMembers().add(projectMember);  // Project 엔티티에 연결
-                member.getProjects().add(projectMember);  // Member 엔티티에 연결
+                // 이미 프로젝트와 멤버가 연결되어 있는지 확인
+                if (!projectMemberRepository.existsByProjectAndMember(project, member)) {
+                    // Member와 Project가 저장된 상태에서 ProjectMember를 생성
+                    ProjectMember projectMember = new ProjectMember(project, member, member.getJiraId());
+                    project.getMembers().add(projectMember);  // Project 엔티티에 연결
+                    member.getProjects().add(projectMember);  // Member 엔티티에 연결
 
-                // 최종적으로 ProjectMember 저장
-                projectMemberRepository.save(projectMember);
+                    // 최종적으로 ProjectMember 저장
+                    projectMemberRepository.save(projectMember);
+                }
             }
+        } catch (InvalidJiraCredentialsException e) {
+            log.error("[MemberService] Jira 인증 실패: email={}, error={}", signupCommand.email(), e.getMessage());
+            throw e;  // 사용자에게 에러 메시지를 전달
+        } catch (Exception e) {
+            log.error("[MemberService] 회원가입 중 예외 발생: {}", e.getMessage(), e);
+            throw new ProjectUpdateFailedException();
         }
     }
 

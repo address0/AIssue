@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.http.*;
+import ssafy.aissue.common.exception.member.InvalidJiraCredentialsException;
 import ssafy.aissue.domain.member.entity.Member;
 
 import java.util.ArrayList;
@@ -51,7 +52,7 @@ public class JiraApiUtil {
             return extractAccountIdFromBody(body);
         }
 
-        throw new RuntimeException("Failed to fetch Jira account_id");
+        throw new InvalidJiraCredentialsException();
     }
 
     // JSON 파싱 메서드 (Jackson을 사용하여 첫 번째 객체에서 accountId를 추출)
@@ -63,9 +64,9 @@ public class JiraApiUtil {
                 return rootNode.get(0).get("accountId").asText();
             }
         } catch (Exception e) {
-            throw new RuntimeException("Failed to parse accountId from response", e);
+            throw new InvalidJiraCredentialsException();
         }
-        throw new RuntimeException("No accountId found in response");
+        throw new InvalidJiraCredentialsException();
     }
 
     // 사용자에게 속한 프로젝트 목록 가져오기
@@ -130,9 +131,12 @@ public class JiraApiUtil {
 
         if (response.getStatusCode() == HttpStatus.OK) {
             return extractMembersFromBody(response.getBody());
+        } else if (response.getStatusCode() == HttpStatus.UNAUTHORIZED) {
+            log.error("[JiraApiUtil] Jira 인증 실패: email={}, jiraKey={}", email, jiraKey);
+            throw new InvalidJiraCredentialsException();
         }
 
-        throw new RuntimeException("Failed to fetch project members from Jira");
+        throw new InvalidJiraCredentialsException();
     }
 
     // JSON 응답에서 팀원 정보 추출

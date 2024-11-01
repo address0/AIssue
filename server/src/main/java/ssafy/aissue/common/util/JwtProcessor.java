@@ -1,9 +1,5 @@
 package ssafy.aissue.common.util;
 
-
-
-
-
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jws;
