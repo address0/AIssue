@@ -22,7 +22,7 @@ export default function Home() {
           <Lottie loop animationData={lottieJson} play className="w-full h-full" />
         </div>
         <div className="animate-pulse text-left">
-          <h2 className="text-blue-700 text-xl">주니어(아이) 개발자 전용 업무 자동화 서비스</h2>
+          <h2 className="text-blue-700 text-xl">주니어(아이) 개발자 전용 업무 자동화 서비스 zz</h2>
           <h1 className="text-white font-bold text-4xl">AIssue</h1>
         </div>
       </div>
