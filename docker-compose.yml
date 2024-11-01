@@ -6,14 +6,15 @@ services:
     ports:
       - "8081:8080"
     environment:
+      # 필요한 환경 변수들은 .env 파일에서 로드됩니다.
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/mydb
-      SPRING_DATASOURCE_USERNAME: user
-      SPRING_DATASOURCE_PASSWORD: user
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
       SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
 
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
-      SPRING_DATA_REDIS_PASSWORD: admin
+      SPRING_DATA_REDIS_PASSWORD: ${SPRING_DATA_REDIS_PASSWORD}
       SPRING_DATA_REDIS_TIMEOUT: 6000
       SPRING_DATA_REDIS_LETTUCE_POOL_MAX_ACTIVE: 10
       SPRING_DATA_REDIS_LETTUCE_POOL_MAX_IDLE: 5
@@ -31,14 +32,14 @@ services:
       SPRINGDOC_SWAGGER_UI_TRY_IT_OUT_ENABLED: "true"
       SPRINGDOC_SWAGGER_UI_OPERATIONS_SORTER: alpha
 
-      CLOUD_AWS_S3_BUCKET: "${S3_BUCKET}"
-      CLOUD_AWS_REGION_STATIC_REGION: "${S3_REGION}"
-      CLOUD_AWS_CREDENTIALS_ACCESSKEY: "${S3_ACCESS_KEY}"
-      CLOUD_AWS_CREDENTIALS_SECRETKEY: "${S3_SECRET_KEY}"
+      CLOUD_AWS_S3_BUCKET: ${CLOUD_AWS_S3_BUCKET}
+      CLOUD_AWS_REGION_STATIC_REGION: ${CLOUD_AWS_REGION_STATIC_REGION}
+      CLOUD_AWS_CREDENTIALS_ACCESSKEY: ${CLOUD_AWS_CREDENTIALS_ACCESSKEY}
+      CLOUD_AWS_CREDENTIALS_SECRETKEY: ${CLOUD_AWS_CREDENTIALS_SECRETKEY}
 
-      JWT_SECRET_KEY: "${SECRET_KEY}"
-      JWT_ACCESS_TOKEN_EXP: "${ACCESS_TOKEN_EXP}"
-      JWT_REFRESH_TOKEN_EXP: "${REFRESH_TOKEN_EXP}"
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      JWT_ACCESS_TOKEN_EXP: ${JWT_ACCESS_TOKEN_EXP}
+      JWT_REFRESH_TOKEN_EXP: ${JWT_REFRESH_TOKEN_EXP}
     depends_on:
       - mysql
       - redis
@@ -58,40 +59,128 @@ services:
     depends_on:
       - backend
 
-
-  # nginx:
-  #   image: nginx:latest
-  #   ports:
-  #     - "80:80"
-  #   volumes:
-  #     - ./nginx/conf.d:/etc/nginx/conf.d
-  #   depends_on:
-  #     - frontend
-  #     - backend
-
   redis:
     image: redis
-    command: redis-server --requirepass admin
+    command: redis-server --requirepass ${SPRING_DATA_REDIS_PASSWORD}
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
-    restart: unless-stopped  # 항상 실행 상태 유지
+    restart: unless-stopped
 
   mysql:
     image: mysql:latest
     environment:
-      MYSQL_ROOT_PASSWORD: yourpassword
-      MYSQL_DATABASE: mydb
-      MYSQL_USER: user
-      MYSQL_PASSWORD: user
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     ports:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-    restart: unless-stopped  # 항상 실행 상태 유지
+    restart: unless-stopped
 
 volumes:
   backend_logs:
   redis_data:
   mysql_data:
+
+
+# services:
+#   backend:
+#     build:
+#       context: ./server
+#       dockerfile: Dockerfile
+#     ports:
+#       - "8081:8080"
+#     environment:
+#       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/mydb
+#       SPRING_DATASOURCE_USERNAME: user
+#       SPRING_DATASOURCE_PASSWORD: user
+#       SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
+
+#       SPRING_DATA_REDIS_HOST: redis
+#       SPRING_DATA_REDIS_PORT: 6379
+#       SPRING_DATA_REDIS_PASSWORD: admin
+#       SPRING_DATA_REDIS_TIMEOUT: 6000
+#       SPRING_DATA_REDIS_LETTUCE_POOL_MAX_ACTIVE: 10
+#       SPRING_DATA_REDIS_LETTUCE_POOL_MAX_IDLE: 5
+#       SPRING_DATA_REDIS_LETTUCE_POOL_MIN_IDLE: 1
+
+#       SPRING_H2_CONSOLE_ENABLED: "true"
+#       SPRING_JPA_HIBERNATE_DDL_AUTO: create-drop
+#       SPRING_JPA_SHOW_SQL: "true"
+
+#       SPRINGDOC_DEFAULT_CONSUMES_MEDIA_TYPE: application/json;charset=UTF-8
+#       SPRINGDOC_API_DOCS_ENABLED: "true"
+#       SPRINGDOC_API_DOCS_PATH: /docs
+#       SPRINGDOC_SWAGGER_UI_ENABLED: "true"
+#       SPRINGDOC_SWAGGER_UI_PATH: /swagger
+#       SPRINGDOC_SWAGGER_UI_TRY_IT_OUT_ENABLED: "true"
+#       SPRINGDOC_SWAGGER_UI_OPERATIONS_SORTER: alpha
+
+#       CLOUD_AWS_S3_BUCKET: "${S3_BUCKET}"
+#       CLOUD_AWS_REGION_STATIC_REGION: "${S3_REGION}"
+#       CLOUD_AWS_CREDENTIALS_ACCESSKEY: "${S3_ACCESS_KEY}"
+#       CLOUD_AWS_CREDENTIALS_SECRETKEY: "${S3_SECRET_KEY}"
+
+#       JWT_SECRET_KEY: "${SECRET_KEY}"
+#       JWT_ACCESS_TOKEN_EXP: "${ACCESS_TOKEN_EXP}"
+#       JWT_REFRESH_TOKEN_EXP: "${REFRESH_TOKEN_EXP}"
+#     depends_on:
+#       - mysql
+#       - redis
+#     volumes:
+#       - backend_logs:/app/logs
+
+#   frontend:
+#     build:
+#       context: ./client/aissue
+#       dockerfile: Dockerfile
+#       args:
+#         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+#     environment:
+#       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+#     ports:
+#       - "3000:3000"
+#     depends_on:
+#       - backend
+
+
+#   # nginx:
+#   #   image: nginx:latest
+#   #   ports:
+#   #     - "80:80"
+#   #   volumes:
+#   #     - ./nginx/conf.d:/etc/nginx/conf.d
+#   #   depends_on:
+#   #     - frontend
+#   #     - backend
+
+#   redis:
+#     image: redis
+#     command: redis-server --requirepass admin
+#     ports:
+#       - "6379:6379"
+#     volumes:
+#       - redis_data:/data
+#     restart: unless-stopped  # 항상 실행 상태 유지
+
+#   mysql:
+#     image: mysql:latest
+#     environment:
+#       MYSQL_ROOT_PASSWORD: yourpassword
+#       MYSQL_DATABASE: mydb
+#       MYSQL_USER: user
+#       MYSQL_PASSWORD: user
+#     ports:
+#       - "3306:3306"
+#     volumes:
+#       - mysql_data:/var/lib/mysql
+#     restart: unless-stopped  # 항상 실행 상태 유지
+
+# volumes:
+#   backend_logs:
+#   redis_data:
+#   mysql_data:
