@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         DOCKER_BUILDKIT = '1'
-        NEXT_PUBLIC_API_URL = 'http://k11a403.p.ssafy.io'
+        NEXT_PUBLIC_API_URL = 'http://k11a403.p.ssafy.io/api'
         SPRING_PROFILES_ACTIVE = 'prod'
     }
 
@@ -40,6 +40,7 @@ pipeline {
             }
         }
         
+
         stage('Deploy with Docker Compose') {
             steps {
                 withCredentials([file(credentialsId: 'dev-be-env-file', variable: 'ENV_FILE')]) {
@@ -54,6 +55,25 @@ pipeline {
             }
         }
     }
+
+        // stage('Deploy with Docker Compose') {
+        //     steps {
+        //         withCredentials([file(credentialsId: 'dev-be-env-file', variable: 'ENV_FILE')]) {
+        //             // .env 파일 내용 출력 (디버그용)
+        //             sh 'cat $ENV_FILE'
+
+        //             sh 'docker-compose down'
+        //             sh """
+        //             docker-compose --env-file $ENV_FILE build --no-cache --parallel \
+        //             --build-arg NEXT_PUBLIC_API_URL=${env.NEXT_PUBLIC_API_URL} \
+        //             --build-arg SPRING_PROFILES_ACTIVE=${env.SPRING_PROFILES_ACTIVE}
+        //             """
+        //             sh 'docker-compose --env-file $ENV_FILE up -d frontend backend'
+        //         }
+        //     }
+        // }
+
+
 
     post {
         always {
