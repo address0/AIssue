@@ -41,7 +41,7 @@ public class SwaggerConfig {
     }
     private License license() {
         return new License()
-                .url("https://lab.ssafy.com/s11-bigdata-recom-sub1/S11P21A509/")
+                .url("https://lab.ssafy.com/s11-final/S11P31A403")
                 .name("A403");
     }
 

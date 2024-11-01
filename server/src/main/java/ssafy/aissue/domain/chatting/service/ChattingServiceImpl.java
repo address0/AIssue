@@ -46,8 +46,21 @@ public class ChattingServiceImpl implements ChattingService {
         if (!projectMemberRepository.existsByProjectAndMember(project, member)) {
             throw new ProjectAccessDeniedException("Access denied to project: " + projectId);
         }
+
         // 프로젝트 ID에 해당하는 채팅 메시지 목록을 반환
         return chattingRepository.findByProjectIdOrderByCreatedAtAsc(projectId);
+    }
+    // 프로젝트 키로 채팅 메시지 목록 가져오기
+    @Override
+    @Transactional(readOnly = true)
+    public List<ChatMessage> getChatMessagesByProjectKey(String jiraProjectKey) {
+        Project project = projectRepository.findByJiraProjectKey(jiraProjectKey)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid project key"));
+
+        Chatting chatting = chattingRepository.findByProject(project)
+                .orElseThrow(() -> new IllegalArgumentException("Chat instance not found"));
+
+        return chatting.getMessages();
     }
 
     /**
