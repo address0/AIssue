@@ -44,13 +44,15 @@ pipeline {
         stage('Deploy with Docker Compose') {
             steps {
                 withCredentials([file(credentialsId: 'dev-be-env-file', variable: 'ENV_FILE')]) {
+                    sh 'cat $ENV_FILE'
+                    
                     sh 'docker-compose down'
                     sh """
                     docker-compose --env-file $ENV_FILE build --no-cache --parallel \
                       --build-arg NEXT_PUBLIC_API_URL=${env.NEXT_PUBLIC_API_URL} \
                       --build-arg SPRING_PROFILES_ACTIVE=${env.SPRING_PROFILES_ACTIVE}
                     """
-                    sh 'docker-compose --env-file $ENV_FILE up -d frontend backend'
+                    sh 'docker-compose --env-file $ENV_FILE up -d'
                 }
             }
         }
