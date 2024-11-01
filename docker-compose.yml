@@ -76,6 +76,7 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
+    restart: unless-stopped  # 항상 실행 상태 유지
 
   mysql:
     image: mysql:latest
@@ -88,6 +89,7 @@ services:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
+     restart: unless-stopped  # 항상 실행 상태 유지
 
 volumes:
   backend_logs:
