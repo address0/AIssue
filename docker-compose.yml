@@ -89,7 +89,7 @@ services:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-     restart: unless-stopped  # 항상 실행 상태 유지
+    restart: unless-stopped  # 항상 실행 상태 유지
 
 volumes:
   backend_logs:
