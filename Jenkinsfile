@@ -3,7 +3,6 @@ pipeline {
 
     environment {
         DOCKER_BUILDKIT = '1'
-        NEXT_PUBLIC_API_URL = 'http://k11a403.p.ssafy.io/api'
         SPRING_PROFILES_ACTIVE = 'prod'
     }
 
@@ -45,7 +44,7 @@ pipeline {
             steps {
                 withCredentials([file(credentialsId: 'dev-be-env-file', variable: 'ENV_FILE')]) {
                     sh 'cat $ENV_FILE'
-                    
+
                     sh 'docker-compose down'
                     sh """
                     docker-compose --env-file $ENV_FILE build --no-cache --parallel \
