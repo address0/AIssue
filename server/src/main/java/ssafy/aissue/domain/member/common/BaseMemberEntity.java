@@ -27,7 +27,6 @@ public abstract class BaseMemberEntity {
     @Column(nullable = false)
     protected Boolean isDeleted = false;
 
-
     @LastModifiedDate
     protected LocalDateTime updatedAt;
 
