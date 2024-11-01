@@ -1,14 +1,14 @@
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/mydb  # MySQL 서버 URL 및 데이터베이스
-    username: user                         # MySQL 사용자
-    password: user                # MySQL 비밀번호
+    url: ${SQL_DATA_URL} #jdbc:mysql://localhost:3306/mydb   # MySQL 서버 URL 및 데이터베이스
+    username: ${SQL_USER_NAME}                        # MySQL 사용자
+    password: ${SQL_USER_PASSWORD}                # MySQL 비밀번호
     driver-class-name: com.mysql.cj.jdbc.Driver
   data:
     redis:
-      host: localhost
-      port: 6379
-      password: admin  # Redis 비밀번호 설정
+      host: ${REDIS_HOST}  # Redis 호스트
+      port: ${REDIS_PORT}  # Redis 포트
+      password: ${REDIS_PASSWORD}  # Redis 비밀번호 설정
       timeout: 6000    # 연결 타임아웃 (밀리초)
       lettuce:
         pool:
@@ -20,8 +20,12 @@ spring:
       enabled: true
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update
+      # create: 애플리케이션 시작 시 테이블 생성
+      # create-drop: 애플리케이션 종료 시 테이블 삭제
+      # update: 애플리케이션 시작 시 테이블이 없으면 생성, 있으면 유지
     show-sql: true
+    open-in-view: false
 
 # swagger 설정
 springdoc:
@@ -49,3 +53,8 @@ jwt:
   secret-key: ${SECRET_KEY}
   access-token-exp: ${ACCESS_TOKEN_EXP}
   refresh-token-exp: ${REFRESH_TOKEN_EXP}
+openai:
+    api-key: ${OPENAI_API_KEY}
+    api-url: ${OPENAI_API_URL}
+    api-model: ${OPENAI_API_MODEL}
+    system-prompt: "당신은 JIRA 전문가입니다. 사용자가 JIRA와 관련된 질문을 할 때만 답변을 제공하세요. 지라의 요소에 물어봐도 대답해주세요. 이슈가 뭐야, 에픽이 뭐야 이런 JIRA의 하위 요소에 물어봐도 대답해주세요.JIRA를 사용하기 위해 어떤 프로젝트가 좋을지, 어떤 스케줄을 사용할지등 생각해봤을때 JIRA를 사용하는데 도움이 될만한 질문이면 대답해주세요. 어떤 팀 프로젝트가 좋을까? 이런 종류의 질문도 포함되는 겁니다. 만약 JIRA와 관련이 없는 질문이라면 '방금 질문은 JIRA를 사용하는 데 관련이 없어요. 다른 질문을 해주세요.'라고 답변하세요."

@@ -25,8 +25,6 @@ public class Member extends BaseMemberEntity {
     @Column(name = "member_id")
     private Long id;
 
-
-
     @Column(unique = true)
     private String email;
 
@@ -41,7 +39,6 @@ public class Member extends BaseMemberEntity {
 
     @OneToMany(mappedBy = "member")
     private List<ProjectMember> projects;
-
 
     @Builder
     public Member(String email, String password,  String jiraKey, String jiraId, String name ) {
@@ -62,7 +59,6 @@ public class Member extends BaseMemberEntity {
         this.projects = new ArrayList<>();
     }
 
-
     public static Member createTempMember() {
         return new Member(MemberRole.TEMP);
     }
@@ -75,7 +71,6 @@ public class Member extends BaseMemberEntity {
         this.role = MemberRole.MEMBER;
         this.isDeleted = false;
     }
-
 
     @Override
     public void prePersist() {

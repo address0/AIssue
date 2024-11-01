@@ -76,4 +76,10 @@ public class MemberExceptionHandler {
         return CommonResponse.conflict(e.getErrorCode());
     }
 
+    @ExceptionHandler(InvalidJiraCredentialsException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public CommonResponse handleInvalidJiraCredentialsException(InvalidJiraCredentialsException e) {
+        log.error("InvalidJiraCredentialsException Error", e);
+        return CommonResponse.unauthorized(e.getErrorCode());
+    }
 }
