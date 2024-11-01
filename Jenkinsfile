@@ -66,58 +66,32 @@ pipeline {
         }
         stage('Deploy with Docker Compose') {
             steps {
-                withCredentials([file(credentialsId: 'MY_ENV_FILE', variable: 'ENV_FILE')]) {
-                    script {
-                        def services = []
-                        if (env.FRONTEND_CHANGED == 'true') {
-                            services << "frontend"
-                        }
-                        if (env.BACKEND_CHANGED == 'true') {
-                            services << "backend"
-                        }
-                        
-                        if (services) {
-                            sh 'docker-compose down'
-                            sh """
-                            docker-compose --env-file $ENV_FILE build --no-cache --parallel ${services.join(" ")}
-                            """
-                            sh "docker-compose --env-file $ENV_FILE up -d --no-deps ${services.join(" ")}"
-                        } else {
-                            echo "No changes detected in frontend or backend. Skipping deployment."
-                        }
+                script {
+                    // 변경된 서비스만 docker-compose로 빌드 및 실행
+                    def services = []
+                    if (env.FRONTEND_CHANGED == 'true') {
+                        services << "frontend"
+                    }
+                    if (env.BACKEND_CHANGED == 'true') {
+                        services << "backend"
+                    }
+                    
+                    if (services) {
+                        sh 'docker-compose down'
+                        sh """
+                        docker-compose build --no-cache --parallel \
+                          --build-arg NEXT_PUBLIC_API_URL=${env.NEXT_PUBLIC_API_URL} \
+                          --build-arg SPRING_PROFILES_ACTIVE=${env.SPRING_PROFILES_ACTIVE} \
+                          ${services.join(" ")}
+                        """
+                        sh "docker-compose up -d --no-deps ${services.join(" ")}"
+                    } else {
+                        echo "No changes detected in frontend or backend. Skipping deployment."
                     }
                 }
             }
         }
     }
-    //     stage('Deploy with Docker Compose') {
-    //         steps {
-    //             script {
-    //                 // 변경된 서비스만 docker-compose로 빌드 및 실행
-    //                 def services = []
-    //                 if (env.FRONTEND_CHANGED == 'true') {
-    //                     services << "frontend"
-    //                 }
-    //                 if (env.BACKEND_CHANGED == 'true') {
-    //                     services << "backend"
-    //                 }
-                    
-    //                 if (services) {
-    //                     sh 'docker-compose down'
-    //                     sh """
-    //                     docker-compose build --no-cache --parallel \
-    //                       --build-arg NEXT_PUBLIC_API_URL=${env.NEXT_PUBLIC_API_URL} \
-    //                       --build-arg SPRING_PROFILES_ACTIVE=${env.SPRING_PROFILES_ACTIVE} \
-    //                       ${services.join(" ")}
-    //                     """
-    //                     sh "docker-compose up -d --no-deps ${services.join(" ")}"
-    //                 } else {
-    //                     echo "No changes detected in frontend or backend. Skipping deployment."
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }
 
     post {
         always {
