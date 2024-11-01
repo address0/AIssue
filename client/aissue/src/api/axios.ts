@@ -4,6 +4,8 @@ import axios from 'axios'
 
 const SERVER_URL = process.env.NEXT_PUBLIC_SERVER_URL
 
+console.log(SERVER_URL)
+
 // 로그인하지 않는 사용자용
 export const publicAPI = axios.create({
   baseURL: SERVER_URL,
