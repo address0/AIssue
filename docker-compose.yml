@@ -54,6 +54,17 @@ services:
     depends_on:
       - backend
 
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+    depends_on:
+      - frontend
+      - backend
+
   redis:
     image: redis
     command: redis-server --requirepass admin
