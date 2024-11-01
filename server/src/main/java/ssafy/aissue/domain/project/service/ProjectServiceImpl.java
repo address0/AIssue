@@ -1,9 +1,9 @@
 package ssafy.aissue.domain.project.service;
 
 import lombok.RequiredArgsConstructor;
-import org.joda.time.DateTime;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ssafy.aissue.common.exception.chatting.ProjectNotFoundException;
 import ssafy.aissue.domain.chatting.entity.Chatting;
 import ssafy.aissue.domain.chatting.repository.ChattingRepository;
 import ssafy.aissue.domain.project.entity.Project;
@@ -18,8 +18,7 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public Project findByJiraProjectKey(String jiraProjectKey) {
-        return projectRepository.findByJiraProjectKey(jiraProjectKey)
-                .orElseThrow(() -> new IllegalArgumentException("프로젝트를 찾을 수 없습니다 살려줘요: " + jiraProjectKey));
+        return projectRepository.findByJiraProjectKey(jiraProjectKey).orElseThrow(ProjectNotFoundException::new);
     }
 
     @Override

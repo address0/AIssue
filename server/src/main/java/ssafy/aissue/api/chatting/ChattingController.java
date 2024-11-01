@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -33,6 +34,7 @@ public class ChattingController {
     private final ChattingService chattingService;
 
     // 채팅 메시지 목록 반환
+    @PreAuthorize("hasRole('ROLE_MEMBER')")
     @Operation(summary = "프로젝트의 채팅 메시지 목록 조회", description = "지정된 프로젝트 키를 사용하여 채팅 메시지 목록을 반환합니다.")
     @GetMapping("/chat/{jiraProjectKey}")
     public ResponseEntity<List<ChatMessageResponse>> getChatMessages(@PathVariable String jiraProjectKey) {

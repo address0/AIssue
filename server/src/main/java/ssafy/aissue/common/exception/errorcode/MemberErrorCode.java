@@ -15,6 +15,7 @@ public enum MemberErrorCode implements BaseErrorCode {
     PASSWORD_NOT_MATCH(NOT_FOUND, "PLAYER_400_5", "비밀번호가 일치하지 않습니다."),
 
     INVALID_LOGIN_INFO(UNAUTHORIZED, "PLAYER_401_1", "로그인 유저가 존재하지 않습니다."),
+    INVALID_JIRA_CREDENTIALS(UNAUTHORIZED, "PLAYER_401_2", "Jira 인증 정보가 잘못되었습니다. email또는 jiraAPIKey를 확인해주세요."),
 
     PLAYER_NOT_FOUND(NOT_FOUND, "PLAYER_404_1", "존재하지 않는 회원입니다."),
     TEMP_PLAYER_NOT_FOUND(NOT_FOUND, "PLAYER_404_2", "로그인 과정에서 생성된 임시 회원 정보가 존재하지 않습니다."),
