@@ -48,7 +48,7 @@ pipeline {
                     sh 'docker-compose down'
                     sh """
                     docker-compose --env-file $ENV_FILE build --no-cache --parallel \
-                      --build-arg NEXT_PUBLIC_API_URL=${env.NEXT_PUBLIC_API_URL} \
+                      --build-arg NEXT_PUBLIC_API_URL=${env.NEXT_PUBLIC_SERVER_URL} \
                       --build-arg SPRING_PROFILES_ACTIVE=${env.SPRING_PROFILES_ACTIVE}
                     """
                     sh 'docker-compose --env-file $ENV_FILE up -d'
