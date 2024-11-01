@@ -2,7 +2,7 @@
 FROM node:20.15.1
 
 # 작업 디렉토리 설정
-WORKDIR /src
+WORKDIR /app
 
 # 패키지 설치
 COPY package*.json ./
