@@ -28,15 +28,6 @@ pipeline {
             }
         }
 
-        stage('Load .env File') {
-            steps {
-                withCredentials([file(credentialsId: 'dev-be-env-file', variable: 'ENV_FILE')]) {
-                    // `.env` 파일을 환경 변수로 로드
-                    sh 'export $(grep -v "^#" $ENV_FILE | xargs)'
-                }
-            }
-        }
-
         stage('Build Backend') {
             when {
                 expression { env.BACKEND_CHANGED == 'true' }
