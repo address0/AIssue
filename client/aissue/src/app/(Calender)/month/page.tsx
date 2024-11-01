@@ -2,19 +2,18 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { usePathname } from 'next/navigation'; // usePathname를 가져옵니다.
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import Sidebar from '@/components/(Navbar)/Sidebar/Sidebar';
 import { renderEvents, renderEpicList } from '@/utils/monthCalender';
 import '@/app/(Calender)/month/month.module.css';
-import Link from 'next/link';
+
 
 export default function MonthPage() {
   const [value, setValue] = useState<Date | [Date, Date] | null>(new Date());
 
   const [isClient, setIsClient] = useState(false);
-  const pathname = usePathname(); // 현재 경로를 가져옵니다.
+ 
 
   useEffect(() => {
     setIsClient(true); // 클라이언트 사이드에서만 렌더링하도록 설정
@@ -23,7 +22,7 @@ export default function MonthPage() {
   const handleDateChange = (date: Date | [Date, Date] | null) => {
     setValue(date);
   };
-  const isMonthPage = pathname === '/month';
+
 
   return (
     <div className="flex min-h-screen bg-gray-100">
