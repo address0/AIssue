@@ -84,7 +84,7 @@ pipeline {
                           --build-arg SPRING_PROFILES_ACTIVE=${env.SPRING_PROFILES_ACTIVE} \
                           ${services.join(" ")}
                         """
-                        sh "docker-compose up -d --no-deps ${services.join(" ")}"
+                        sh "docker-compose up -d ${services.join(" ")}"
                     } else {
                         echo "No changes detected in frontend or backend. Skipping deployment."
                     }
