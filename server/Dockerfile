@@ -32,7 +32,7 @@ ENV SPRING_PROFILES_ACTIVE=$SPRING_PROFILES_ACTIVE
 RUN ./gradlew clean build -x test --no-daemon
 
 # 포트 노출
-EXPOSE 8080
+EXPOSE 8081
 
 # 애플리케이션 시작
 CMD ["java", "-jar", "build/libs/app.jar"]
