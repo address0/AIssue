@@ -1,27 +1,46 @@
+.custom-calendar {
+  font-family: Arial, sans-serif;
+}
 
 .react-calendar {
-    border: 2px solid #4D86FF;
-    border-radius: 8px;
-  }
-  
-  .react-calendar__navigation button {
-    color: #4D86FF;
-    font-weight: bold;
-  }
-  
-  /* Month and Year (Header) */
-  .react-calendar__navigation button:enabled:focus,
-  .react-calendar__navigation button:enabled:hover {
-    background-color: transparent;
-  }
-  
-  .react-calendar__navigation button span {
-    display: none; /* "년" 텍스트 숨기기 */
-  }
-  
-  .react-calendar__navigation button:after {
-    content: "월"; /* "월"만 표시 */
-    color: #4D86FF;
-    font-weight: bold;
-  }
-  
+  border: none;
+}
+
+.react-calendar__month-view__weekdays__weekday {
+  color: gray;
+  font-weight: bold;
+}
+
+.react-calendar__month-view__days__day--weekend {
+  color: #FF5733; /* Red for weekends */
+}
+
+.react-calendar__tile {
+  position: relative;
+  padding: 10px;
+}
+
+.react-calendar__tile--now {
+  background: #4D86FF;
+  color: white;
+  border-radius: 8px;
+}
+
+.react-calendar__tile--now:hover {
+  background: #3b5bbf;
+}
+
+.react-calendar__tile--active {
+  background: #4D86FF;
+  color: white;
+}
+
+.react-calendar__tile--hasActive {
+  background: #4D86FF;
+  color: white;
+}
+
+.custom-epic-bar {
+  height: 8px;
+  border-radius: 4px;
+}
