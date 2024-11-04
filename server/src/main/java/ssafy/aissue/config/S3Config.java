@@ -13,7 +13,6 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import ssafy.aissue.common.properties.S3Properties;
 
-
 @Configuration
 @RequiredArgsConstructor
 public class S3Config {
@@ -44,4 +43,3 @@ public class S3Config {
                 .build();
     }
 }
-
