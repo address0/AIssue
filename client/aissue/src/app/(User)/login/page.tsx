@@ -12,6 +12,8 @@ export default function LoginPage() {
   const [passswordError, setPasswordError] = useState<string>('')
   const router = useRouter()
 
+  console.log(process.env.NEXT_PUBLIC_SERVER_URL)
+  
   const handleSignup = () => {
     // 회원가입 페이지로 이동
     console.log('Signup clicked')
