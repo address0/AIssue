@@ -14,7 +14,7 @@ export default function Sidebar() {
     <div className="w-64 bg-white p-4 flex flex-col justify-between min-h-screen">
       {/* Project Icon and Name */}
       <div className="flex flex-col items-center space-y-2 mb-6">
-        <Image src="/img/teamprofile.png" alt="Team Project Icon" width={40} height={40} />
+        <Image src="/img/chatbot.png" alt="Team Project Icon" width={40} height={40} />
         <span className="text-black font-semibold">Team / Project name</span>
       </div>
       
