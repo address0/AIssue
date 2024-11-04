@@ -1,15 +1,15 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Sidebar from '@/components/(Navbar)/Sidebar/Sidebar'
 import Link from 'next/link'
 import ChatModal from '@/components/(Modal)/ChatModal/page'
 import styles from '@/app/(Calender)/month/month.module.css'
-import Button from '@/components/Button/Button'
+
 
 export default function MonthPage() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date())
-  const [isClient, setIsClient] = useState(false)
+
   const [isMonthView, setIsMonthView] = useState(true)
   const [isChatOpen, setIsChatOpen] = useState(false)
   const [selectedStory, setSelectedStory] = useState<string | null>(null)
@@ -46,9 +46,7 @@ export default function MonthPage() {
     setIsChatOpen(!isChatOpen)
   }
 
-  useEffect(() => {
-    setIsClient(true)
-  }, [])
+
 
   const handleDayClick = (day: number, month: number, year: number) => {
     const clickedDate = new Date(year, month, day, 12, 0, 0)
