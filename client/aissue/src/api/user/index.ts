@@ -12,13 +12,13 @@ const login = async (email: string, password: string) => {
 const signUp = async (
   email: string,
   password: string,
-  jraKey: string,
+  jiraKey: string,
   name: string,
 ) => {
   const res = await publicAPI.post('/member/signup', {
     email,
     password,
-    jraKey,
+    jiraKey,
     name,
   })
   return res.data.result
