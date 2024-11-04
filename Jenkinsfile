@@ -4,6 +4,7 @@ pipeline {
     environment {
         DOCKER_BUILDKIT = '1'
         SPRING_PROFILES_ACTIVE = 'prod'
+        NEXT_PUBLIC_SERVER_URL = 'https://k11a403.p.ssafy.io/api'
     }
 
     stages {
@@ -46,7 +47,7 @@ pipeline {
                     sh 'docker-compose down'
                     sh """
                     docker-compose --env-file $ENV_FILE build --no-cache --parallel \
-                    --build-arg NEXT_PUBLIC_SERVER_URL=${env.NEXT_PUBLIC_SERVER_URL} \
+                    --build-arg NEXT_PUBLIC_SERVER_URL \
                     --build-arg SPRING_PROFILES_ACTIVE=${env.SPRING_PROFILES_ACTIVE}
                     """
                     sh 'docker-compose --env-file $ENV_FILE up -d'
