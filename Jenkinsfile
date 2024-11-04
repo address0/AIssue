@@ -4,7 +4,7 @@ pipeline {
     environment {
         DOCKER_BUILDKIT = '1'
         SPRING_PROFILES_ACTIVE = 'prod'
-        NEXT_PUBLIC_SERVER_URL = 'https://k11a403.p.ssafy.io/api'
+        NEXT_PUBLIC_SERVER_URL = 'http://k11a403.p.ssafy.io/api'
     }
 
     stages {
