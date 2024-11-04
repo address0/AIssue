@@ -31,6 +31,7 @@ export default function SignupPage() {
       sessionStorage.setItem('accessToken', res.accessToken)
       sessionStorage.setItem('refreshToken', res.refreshToken)
       sessionStorage.setItem('memberId', res.memberId)
+      sessionStorage.setItem('memberName', res.memberName)
       router.push('/sprint')
     } catch (error) {
       console.log(error)
@@ -59,7 +60,7 @@ export default function SignupPage() {
       style={{ backgroundColor: '#9EBDFF' }}
       onKeyDown={(e) => {
         if (e.key === 'Enter' && singupStep === 1) {
-          handleSignupStep(2)();
+          handleSignupStep(2)()
         }
       }}
     >
@@ -156,6 +157,5 @@ export default function SignupPage() {
         )}
       </div>
     </div>
-
   )
 }
