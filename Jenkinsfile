@@ -17,7 +17,7 @@ pipeline {
         stage('Load Env File') {
             steps {
                 withCredentials([file(credentialsId: 'dev-be-env-file', variable: 'ENV_FILE')]) {
-                    sh 'cp $ENV_FILE .env' // 프로젝트 루트에 .env 파일 복사
+                    sh 'sudo cp $ENV_FILE .env' // 프로젝트 루트에 .env 파일 복사
                 }
             }
         }
