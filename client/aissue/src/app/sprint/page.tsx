@@ -93,13 +93,19 @@ export default function SprintPage() {
 
       {/* Input Area Fixed to Bottom, Centered, and Adjusted for Sidebar */}
       <div className="fixed bottom-[5%] left-[17rem] w-[70%] bg-white p-4 shadow-md flex items-center border-2 border-[#4D86FF] rounded-[10px]">
-        <input
+      <input
           type="text"
           value={input}
           onChange={handleInputChange}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              handleSubmit();
+            }
+          }}
           placeholder="AI에게 질문 입력하기 ..."
           className="flex-1 border-none focus:outline-none"
         />
+
         <button onClick={handleSubmit} className="ml-4 bg-blue-300 text-white p-3 rounded-full">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
             <path d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-9H9V7h2v2zm0 4H9v-2h2v2z" />
