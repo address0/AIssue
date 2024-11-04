@@ -77,58 +77,71 @@ export default function WeekPage() {
         </div>
 
         <div className="flex">
-          {/* Calendar */}
-          <div className="flex-1 border border-[#54B2A3] rounded-lg p-2 bg-[#FFFFFF] calendar-container">
-            <Calendar
-              localizer={localizer}
-              events={events}
-              defaultView="work_week"
-              views={{ work_week: true }}
-              startAccessor="start"
-              endAccessor="end"
-              style={{ height: 'calc(100vh - 150px)' }}
-              components={{
-                toolbar: CustomToolbar,
-              }}
-              dayPropGetter={(date: Date) => ({
-                style: { color: '#929292' }, // Day header color
-              })}
-              slotPropGetter={(date: Date) => ({
-                style: { color: '#929292' }, // Time slot color
-              })}
-              formats={{
-                dayFormat: (date: Date, culture: string, localizer: any) =>
-                  localizer.format(date, 'ddd', culture), // Shorten days to Mon, Tue, etc.
-                timeGutterFormat: (date: Date, culture: string, localizer: any) =>
-                  localizer.format(date, 'h', culture), // Display time as 9, 10, 11, etc.
-                agendaTimeFormat: 'h', // Ensures agenda view matches the short format
-              }}
-              min={new Date(2024, 10, 1, 9, 0)}
-              max={new Date(2024, 10, 1, 18, 0)}
-              scrollToTime={new Date(2024, 10, 1, 9, 0)} // Start the view at 9 AM
-            />
+  {/* Calendar */}
+  <div className="w-[70%] border border-[#54B2A3] rounded-lg p-2 bg-[#FFFFFF] calendar-container">
+    <Calendar
+      localizer={localizer}
+      events={events}
+      defaultView="work_week"
+      views={{ work_week: true }}
+      startAccessor="start"
+      endAccessor="end"
+      style={{ height: 'calc(100vh - 150px)' }}
+      components={{
+        toolbar: CustomToolbar,
+      }}
+      dayPropGetter={(date: Date) => ({
+        style: { color: '#929292' }, // Day header color
+      })}
+      slotPropGetter={(date: Date) => ({
+        style: { color: '#929292' }, // Time slot color
+      })}
+      formats={{
+        dayFormat: (date: Date, culture: string, localizer: any) =>
+          localizer.format(date, 'ddd', culture), // Shorten days to Mon, Tue, etc.
+        timeGutterFormat: (date: Date, culture: string, localizer: any) =>
+          localizer.format(date, 'h', culture), // Display time as 9, 10, 11, etc.
+        agendaTimeFormat: 'h', // Ensures agenda view matches the short format
+      }}
+      min={new Date(2024, 10, 1, 9, 0)}
+      max={new Date(2024, 10, 1, 18, 0)}
+      scrollToTime={new Date(2024, 10, 1, 9, 0)} // Start the view at 9 AM
+    />
+  </div>
+
+  {/* Story List Sidebar */}
+  <div className="w-[30%] bg-[#F5F5F5] border-l border-gray-300 p-4">
+    <h3 className="text-lg font-semibold text-[#54B2A3] mb-4 bg-[#C2F4EC] p-2 rounded-md text-center">
+      Story List
+    </h3>
+    {stories.map((story) => (
+      <div key={story.id} className="mb-4 p-3 bg-white rounded-lg shadow-sm border border-gray-200">
+        <button
+          className="flex justify-between items-center w-full text-left"
+          onClick={() => setSelectedStory(story.id === selectedStory ? null : story.id)}
+        >
+          <div className="flex items-center space-x-2">
+            {/* Story Icon */}
+            <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+
+            {/* Story Title and Subtext */}
+            <div>
+              <span className="font-semibold text-gray-700">{story.title}</span>
+              <p className="text-sm text-gray-500"># Issue Code / 4 hours</p>
+            </div>
           </div>
-          {/* Story List Sidebar */}
-          <div className="w-1/4 p-4 bg-[#F5F5F5] border-l border-gray-300">
-            <h3 className="text-lg font-semibold text-[#54B2A3] mb-4 bg-[#C2F4EC] p-2 rounded-md text-center">Story List</h3>
-            {stories.map((story) => (
-              <div key={story.id} className="mb-4 p-3 bg-white rounded-lg shadow-sm border border-gray-200">
-                <button
-                  className="flex justify-between items-center w-full text-left"
-                  onClick={() => setSelectedStory(story.id === selectedStory ? null : story.id)}
-                >
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                    <div>
-                      <span className="font-semibold text-gray-700">{story.title}</span>
-                      <p className="text-sm text-gray-500"># Issue Code / 4 hours</p>
-                    </div>
-                  </div>
-                  <span className="text-gray-500">{story.id === selectedStory ? '▲' : '▼'}</span>
-                </button>
-              </div>
-            ))}
-          </div>
+          {/* Toggle Arrow */}
+          <span className="text-gray-500">{story.id === selectedStory ? '▲' : '▼'}</span>
+        </button>
+      </div>
+    ))}
+  </div>
+</div>
+
+
+
+
+       
         </div>
 
         {/* Chat icon button */}
@@ -141,6 +154,6 @@ export default function WeekPage() {
 
         {isChatOpen && <ChatModalGreen onClose={toggleChat} />}
       </div>
-    </div>
+   
   );
 }

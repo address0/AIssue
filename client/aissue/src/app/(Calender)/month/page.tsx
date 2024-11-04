@@ -16,7 +16,16 @@ export default function MonthPage() {
   const [isClient, setIsClient] = useState(false);
   const [isMonthView, setIsMonthView] = useState(true);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [selectedStory, setSelectedStory] = useState<string | null>(null);
 
+  const stories = [
+    { id: 'story1', title: 'Story Title 1', tasks: [{ title: 'Task 1', start: new Date(2024, 10, 1, 10, 0), end: new Date(2024, 10, 1, 11, 0) }] },
+    { id: 'story2', title: 'Story Title 2', tasks: [{ title: 'Task 2', start: new Date(2024, 10, 3, 12, 0), end: new Date(2024, 10, 3, 14, 0) }] },
+  ];
+
+  const events = selectedStory
+    ? stories.find((story) => story.id === selectedStory)?.tasks || []
+    : [];
   const toggleChat = () => {
     setIsChatOpen(!isChatOpen);
   };
@@ -78,12 +87,34 @@ export default function MonthPage() {
             />
           )}
           <div className="flex-grow basis-1/5 bg-gray-50 p-4 rounded-lg shadow-lg">
-            <h3 className="text-blue-500 font-semibold mb-4">Epic List</h3>
+            {/* Story List Sidebar */}
+        
+            <h3 className="text-lg font-semibold text-[#7498E5] mb-4 bg-[#9EBDFF66] p-2 rounded-md text-center">Story List</h3>
+            {stories.map((story) => (
+              <div key={story.id} className="mb-4 p-3 bg-white rounded-lg shadow-sm border border-gray-200">
+                <button
+                  className="flex justify-between items-center w-full text-left"
+                  onClick={() => setSelectedStory(story.id === selectedStory ? null : story.id)}
+                >
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                    <div>
+                      <span className="font-semibold text-gray-700">{story.title}</span>
+                      <p className="text-sm text-gray-500"># Issue Code / 4 hours</p>
+                    </div>
+                  </div>
+                  <span className="text-gray-500">{story.id === selectedStory ? '▲' : '▼'}</span>
+                </button>
+              </div>
+            ))}
+          
+            {/* <h3 className="text-blue-500 font-semibold mb-4">Epic List</h3>
             <ul className="space-y-3">
               {renderEpicList()}
-            </ul>
+            </ul> */}
           </div>
         </div>
+        
 
         {/* Chat icon button */}
         <button
