@@ -17,10 +17,11 @@ pipeline {
         stage('Load Env File') {
             steps {
                 withCredentials([file(credentialsId: 'dev-be-env-file', variable: 'ENV_FILE')]) {
-                    sh 'sudo cp $ENV_FILE .env' // 프로젝트 루트에 .env 파일 복사
+                sh 'cp $ENV_FILE .env' // `sudo` 제거
                 }
             }
         }
+
 
         stage('Build Backend') {
             steps {
