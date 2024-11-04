@@ -139,7 +139,7 @@ public class MemberServiceImpl implements MemberService {
             String accessToken = jwtProcessor.generateAccessToken(member);
             String refreshToken = jwtProcessor.generateRefreshToken(member);
             jwtProcessor.saveRefreshToken(accessToken, refreshToken);
-            return MemberSignupResponse.of(accessToken, refreshToken, member.getId());
+            return MemberSignupResponse.of(accessToken, refreshToken, member.getId(), member.getName());
         } catch (Exception e) {
             log.error("[MemberService] 토큰 생성/저장 실패: memberId={}, error={}", member.getId(), e.getMessage(), e);
             throw new TokenSaveFailedException();

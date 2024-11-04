@@ -8,6 +8,7 @@ import ssafy.aissue.common.properties.*;
 @EnableConfigurationProperties({
         JwtProperties.class,
         S3Properties.class,
+        CorsProperties.class,
 })
 public class PropertiesConfig {
 }
