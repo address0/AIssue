@@ -17,7 +17,7 @@ pipeline {
         stage('Load Env File') {
             steps {
                 withCredentials([file(credentialsId: 'dev-be-env-file', variable: 'ENV_FILE')]) {
-                    sh 'cp $ENV_FILE .env' // 프로젝트 루트에 .env 파일 복사
+                    sh 'cp $ENV_FILE .env' // 루트에 .env 파일 복사
                 }
             }
         }
@@ -25,10 +25,10 @@ pipeline {
         stage('Build Backend') {
             steps {
                 dir('server') {
-                    withCredentials([file(credentialsId: 'dev-be-env-file', variable: 'ENV_FILE')]) {
-                        sh 'export $(grep -v "^#" $ENV_FILE | xargs)'  // 환경 변수 로드
-                    }
                     sh 'chmod +x gradlew'
+                    withCredentials([file(credentialsId: 'dev-be-env-file', variable: 'ENV_FILE')]) {
+                        sh 'export $(grep -v "^#" $ENV_FILE | xargs)' // 환경 변수 로드
+                    }
                     sh './gradlew clean build -x test'
                 }
             }
@@ -39,7 +39,7 @@ pipeline {
                 dir('client/aissue') {
                     sh '''
                     docker run --rm -u $(id -u):$(id -g) \
-                      --env-file ../../.env \
+                      --env-file ../../.env \ 
                       -v "$PWD":/app -w /app node:20.15.1 bash -c "
                     npm install &&
                     npm run build
