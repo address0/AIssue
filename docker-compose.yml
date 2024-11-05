@@ -19,6 +19,9 @@ services:
       JWT_SECRET_KEY: ${SECRET_KEY}
       JWT_ACCESS_TOKEN_EXP: ${ACCESS_TOKEN_EXP}
       JWT_REFRESH_TOKEN_EXP: ${REFRESH_TOKEN_EXP}
+      OPENAI_API_KEY : ${OPENAI_API_KEY}
+      OPENAI_API_URL : ${OPENAI_API_URL}
+      OPENAI_API_MODEL : ${OPENAI_API_MODEL}
     depends_on:
       - mysql
       - redis
