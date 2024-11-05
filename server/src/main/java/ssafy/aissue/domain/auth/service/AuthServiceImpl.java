@@ -44,7 +44,7 @@ public class AuthServiceImpl implements AuthService {
         tokens = generateTokens(member);
         jwtProcessor.saveRefreshToken(tokens);
 
-        return AuthResponse.of(tokens.accessToken(), tokens.refreshToken(), member.getId());
+        return AuthResponse.of(tokens.accessToken(), tokens.refreshToken(), member.getId(), member.getName());
     }
 
     @Override

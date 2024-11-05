@@ -1,14 +1,14 @@
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/mydb  # MySQL 서버 URL 및 데이터베이스
-    username: user                         # MySQL 사용자
-    password: user                # MySQL 비밀번호
+    url: ${SQL_DATA_URL} #jdbc:mysql://localhost:3306/mydb   # MySQL 서버 URL 및 데이터베이스
+    username: ${SQL_USER_NAME}                        # MySQL 사용자
+    password: ${SQL_USER_PASSWORD}                # MySQL 비밀번호
     driver-class-name: com.mysql.cj.jdbc.Driver
   data:
     redis:
-      host: localhost
-      port: 6379
-      password: admin  # Redis 비밀번호 설정
+      host: ${REDIS_HOST}  # Redis 호스트
+      port: ${REDIS_PORT}  # Redis 포트
+      password: ${REDIS_PASSWORD}  # Redis 비밀번호 설정
       timeout: 6000    # 연결 타임아웃 (밀리초)
       lettuce:
         pool:
@@ -20,8 +20,12 @@ spring:
       enabled: true
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update
+      # create: 애플리케이션 시작 시 테이블 생성
+      # create-drop: 애플리케이션 종료 시 테이블 삭제
+      # update: 애플리케이션 시작 시 테이블이 없으면 생성, 있으면 유지
     show-sql: true
+    open-in-view: false
 
 # swagger 설정
 springdoc:
