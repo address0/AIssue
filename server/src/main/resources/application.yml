@@ -32,10 +32,12 @@ springdoc:
   default-consumes-media-type: application/json;charset=UTF-8
   api-docs:
     enabled: true
-    path: '/docs'
+    # path: '/docs'
+    path: /v3/api-docs
   swagger-ui:
     enabled: true
-    path: '/swagger'
+    # path: '/swagger'
+    path: /swagger-ui.html
     try-it-out-enabled: true
     operations-sorter: alpha
   
