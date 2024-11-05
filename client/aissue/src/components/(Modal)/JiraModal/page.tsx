@@ -38,6 +38,8 @@ export default function JiraModal({ onClose }: JiraModalProps) {
         nextSlide(); // 오른쪽 방향키로 다음 슬라이드
       } else if (event.key === 'ArrowLeft') {
         prevSlide(); // 왼쪽 방향키로 이전 슬라이드
+      } else if (event.key === 'Escape') {
+        onClose(); // Esc 키로 모달 닫기
       }
     };
 
