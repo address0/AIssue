@@ -61,15 +61,37 @@
 
 .monthHeader {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: center;
+  gap: 1rem; /* Space between elements */
+  height: 50px; /* Set a consistent height */
+}
+
+.monthTitle {
+  color: #4D86FF;
+  font-weight: 600; /* Equivalent to font-semibold */
+  font-size: 1.25rem; /* Adjust font size as needed */
+  height: 50px; /* Same height as the monthHeader */
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .arrowButton {
-  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px; /* Same width as the height for square buttons */
+  height: 50px; /* Same height as the monthHeader */
+  background: none;
   border: none;
-  font-size: 1.5rem;
+  padding: 0;
   cursor: pointer;
+}
+
+.arrowButton img {
+  width: 50%; /* Ensure the image fills the button */
+  height: 50%;
 }
 
 .weekdaysContainer {
@@ -158,4 +180,27 @@
   cursor: pointer;
   background-color: #f0f0f0;
 }
+
+.epicColor1 {
+  background-color: #FFDDC1; /* 색상 예시 */
+}
+
+.epicColor2 {
+  background-color: #D3E5FF;
+}
+
+.epicColor3 {
+  background-color: #C1FFD6;
+}
+
+.epicColor4 {
+  background-color: #FFD6FF;
+}
+
+.epicBar {
+  height: 5px;
+  border-radius: 2px;
+  margin-top: 2px;
+}
+
 
