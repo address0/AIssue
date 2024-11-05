@@ -24,8 +24,15 @@ public class SwaggerConfig {
     public OpenAPI openAPI(ServletContext servletContext){
         log.debug(">>> [SwaggerConfig::openAPI] OpenAPI 설정");
         String contextPath = servletContext.getContextPath();
-        Server server = new Server().url(contextPath);
-        return new OpenAPI().servers(List.of(server))
+        // 로컬 서버 설정
+        Server localServer = new Server()
+                .url("http://localhost:8080")
+                .description("Local Server");
+        // 배포된 서버 설정
+        Server productionServer = new Server()
+                .url("https://k11a403.p.ssafy.io/api")  // 실제 배포된 서버 URL로 변경
+                .description("Production Server");
+        return new OpenAPI().servers(List.of(localServer, productionServer))
                 .info(info())
                 .addSecurityItem(securityItem())
                 .components(new Components()
