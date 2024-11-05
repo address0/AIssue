@@ -1,4 +1,4 @@
-package ssafy.aissue.domain.issue.entity;
+package ssafy.aissue.domain.issue.common;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @SuperBuilder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
-public abstract class BaseIssue {
+public abstract class BaseIssueEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -5,11 +5,12 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+import ssafy.aissue.domain.issue.common.BaseIssueEntity;
 
 @Entity
 @Getter
 @SuperBuilder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Story extends BaseIssue {
+public class Story extends BaseIssueEntity {
 
 }
