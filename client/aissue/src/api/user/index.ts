@@ -32,7 +32,8 @@ const logOut = async () => {
   })
   sessionStorage.removeItem('accessToken')
   sessionStorage.removeItem('refreshToken')
-  sessionStorage.removeItem('loginType')
+  sessionStorage.removeItem('memberName')
+  sessionStorage.removeItem('memberId')
   return null
 }
 

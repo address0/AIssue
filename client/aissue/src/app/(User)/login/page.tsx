@@ -31,6 +31,7 @@ export default function LoginPage() {
       sessionStorage.setItem('accessToken', res.accessToken)
       sessionStorage.setItem('refreshToken', res.refreshToken)
       sessionStorage.setItem('memberId', res.memberId)
+      sessionStorage.setItem('memberName', res.memberName)
       router.push('/sprint') // /sprint 페이지로 이동
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -44,7 +45,14 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-blue-100">
+    <div
+      className="min-h-screen flex items-center justify-center bg-blue-100"
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') {
+          handleLogin()
+        }
+      }}
+    >
       <div className="w-full max-w-md bg-white p-8 rounded-lg shadow-lg">
         <div className="flex flex-col items-center mb-6">
           <div className="flex items-center space-x-2">
