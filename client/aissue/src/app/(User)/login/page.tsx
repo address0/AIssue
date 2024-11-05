@@ -32,7 +32,7 @@ export default function LoginPage() {
       sessionStorage.setItem('refreshToken', res.refreshToken)
       sessionStorage.setItem('memberId', res.memberId)
       sessionStorage.setItem('memberName', res.memberName)
-      router.push('/sprint') // /sprint 페이지로 이동
+      router.push('/project') // /sprint 페이지로 이동
     } catch (error) {
       if (axios.isAxiosError(error)) {
         console.log(error.response?.data.message)
