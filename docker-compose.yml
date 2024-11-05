@@ -64,14 +64,11 @@ services:
     # Dozzle 추가
   dozzle:
     image: amir20/dozzle:latest
-    ports:
-      - "9999:8080"  # Dozzle UI에 접속할 포트 설정
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock  # Docker 소켓 공유
-    restart: always
-    environment:
-      - DOZZLE_LEVEL=info  # 로그 수준 설정
-      - DOZZLE_TAILSIZE=300  # 각 컨테이너의 최근 로그 라인 수
+    ports:
+      - "9999:8080"  # Dozzle UI에 접속할 포트 설정
+
 
 volumes:
   backend_logs:
