@@ -32,7 +32,7 @@ export default function SignupPage() {
       sessionStorage.setItem('refreshToken', res.refreshToken)
       sessionStorage.setItem('memberId', res.memberId)
       sessionStorage.setItem('memberName', res.memberName)
-      router.push('/sprint')
+      router.push('/project')
     } catch (error) {
       console.log(error)
       if (axios.isAxiosError(error)) {

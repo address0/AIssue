@@ -3,7 +3,6 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
-import Sidebar from '@/components/(Navbar)/Sidebar/Sidebar'
 import Lottie from 'react-lottie-player'
 import lottieJson from '@public/lottie/Animation - 1730424329200.json'
 
@@ -23,10 +22,7 @@ export default function SprintPage() {
   if (!isSprintPage) {
     // Initial UI before switching to SprintPage
     return (
-      <div className="flex overflow-hidden bg-gray-100">
-        {/* Sidebar */}
-        <Sidebar />
-
+      <div className="flex min-h-screen h-screen overflow-hidden bg-gray-100 w-full">
         {/* Initial Content */}
         <div className="flex-1 p-6 flex flex-col items-center justify-center space-y-6 overflow-hidden">
           {/* Lottie Animation */}
@@ -60,7 +56,6 @@ export default function SprintPage() {
   return (
     <div className="flex min-h-screen h-screen overflow-hidden bg-gray-100">
       {/* Sidebar */}
-      <Sidebar />
 
       {/* Main Content */}
       <div className="flex-1 p-6 overflow-hidden">
