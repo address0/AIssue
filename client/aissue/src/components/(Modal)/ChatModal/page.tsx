@@ -1,39 +1,165 @@
-// src/components/ChatModal.tsx
-"use client";
+/* eslint-disable */
+// @ts-nocheck
+'use client'
 
-import React, { useEffect, useState } from "react";
-import ChatMessages from "@/components/ChatMessages";
-
+import React, { useRef, useEffect, useState, ChangeEvent } from 'react'
+import { Stomp } from '@stomp/stompjs'
+import axios from 'axios'
 interface ChatModalProps {
-  onClose: () => void;
+  onClose: () => void
+  memberId: string | null
+  projectId: string | null
+  accessToken: string | null
+  color: string
 }
-
-export default function ChatModal({ onClose }: ChatModalProps) {
-  const [userId, setUserId] = useState<number | null>(null);
+// Message 인터페이스 정의
+interface Message {
+  memberId: string
+  message: string
+  memberName: string
+}
+export default function ChatModal({
+  onClose,
+  memberId,
+  projectId,
+  accessToken,
+  color,
+}: ChatModalProps) {
+  const stompClient = useRef<Stomp.Client | null>(null)
+  const [messages, setMessages] = useState<Message[]>([])
+  const [inputValue, setInputValue] = useState<string>('')
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const userIdString = localStorage.getItem("userId");
-      setUserId(userIdString ? Number(userIdString) : null);
-    }
-  }, []);
+    connect()
+    fetchMessages()
+    return () => disconnect()
+  }, [])
 
+  const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setInputValue(event.target.value)
+  }
+  const connect = () => {
+    const socket = new WebSocket('wss://k11a403.p.ssafy.io/api/ws')
+    stompClient.current = Stomp.over(() => socket)
+
+    stompClient.current.connect(
+      { Authorization: `Bearer ${accessToken}` }, // connectHeaders에 토큰 전달
+      () => {
+        // 성공적으로 연결된 경우
+        stompClient.current?.subscribe(
+          `/sub/chatroom/${projectId}`,
+          (message) => {
+            const newMessage: Message = JSON.parse(message.body)
+            setMessages((prevMessages) => [...prevMessages, newMessage])
+          },
+        )
+      },
+      (error) => {
+        console.error('WebSocket connection error:', error) // 오류 핸들링
+      },
+    )
+  }
+  const disconnect = () => {
+    if (stompClient.current) {
+      stompClient.current.disconnect()
+    }
+  }
+  const fetchMessages = () => {
+    return axios
+      .get<Message[]>(`https://k11a403.p.ssafy.io/api/chat/${projectId}`, {
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8',
+          Authorization: `Bearer ${accessToken}`,
+        },
+      })
+      .then((response) => {
+        setMessages(response.data)
+      })
+  }
+
+  const sendMessage = () => {
+    if (stompClient.current && inputValue) {
+      const body = {
+        jiraProjectKey: projectId, // 프로젝트 ID를 메시지 본문에 포함
+
+        memberId: memberId, // 사용자 ID를 메시지 본문에 포함
+
+        message: inputValue,
+      }
+
+      stompClient.current.send(
+        '/pub/message', // 고정된 메시지 경로로 전송
+        { Authorization: `Bearer ${accessToken}` },
+        JSON.stringify(body),
+      )
+      setInputValue('')
+    }
+  }
   return (
     <div className="fixed inset-0 flex items-center justify-end bg-black bg-opacity-50 z-50">
       <div className="bg-white rounded-lg shadow-lg w-[35vw] h-[60vh] p-4 m-4 flex flex-col">
         {/* Header */}
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-semibold">채팅</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700"
+          >
             ✕
           </button>
         </div>
-
         {/* Chat Messages */}
         <div className="flex-1 overflow-hidden">
-          <ChatMessages chatRoomId={1} userId={userId} /> {/* 예시로 chatRoomId를 1로 설정 */}
+          <div className="flex flex-col h-full bg-white overflow-hidden">
+            {/* 채팅 메시지 목록 */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-2">
+              {messages.map((chat, index) => (
+                <div
+                  key={index}
+                  className={`flex ${
+                    chat.memberId === memberId ? 'justify-end' : 'justify-start'
+                  } mb-2`}
+                >
+                  <div
+                    className={`max-w-xs p-3 rounded-lg ${
+                      chat.memberId === memberId
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-gray-200 text-gray-800'
+                    }`}
+                  >
+                    <p className="text-sm">{chat.message}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* 메시지 입력창 */}
+            <div className="flex items-center border-t p-2">
+              <input
+                type="text"
+                placeholder="팀원들과 채팅하기..."
+                className={`flex-1 px-3 py-2 text-sm border border-[${color}] rounded-lg focus:outline-none`}
+                value={inputValue}
+                onChange={handleInputChange}
+                style={{
+                  borderColor: `${color}`,
+                  borderRadius: '8px',
+                }}
+              />
+              <button
+                onClick={sendMessage}
+                className="ml-2 flex items-center justify-center p-2 h-full"
+              >
+                <img
+                  src="/img/chatsendgreen.png"
+                  alt="Send"
+                  className="w-6 h-6"
+                />
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-  );
+  )
 }
