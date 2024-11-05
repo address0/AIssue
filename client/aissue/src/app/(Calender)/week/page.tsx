@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Sidebar from '@/components/(Navbar)/Sidebar/Sidebar'
 import Link from 'next/link'
 import ChatModalGreen from '@/components/(Modal)/ChatModalGreen/page'
-import styles from '@/app/(Calender)/week/week.module.css'
+
 
 interface Task {
   title: string
