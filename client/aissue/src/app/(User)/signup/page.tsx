@@ -5,26 +5,28 @@ import Image from 'next/image'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { signUp } from '@/api/user/index'
+import JiraModal from '@/components/(Modal)/JiraModal/page' // JiraModal 컴포넌트 추가
 
 export default function SignupPage() {
   const [email, setEmail] = useState<string>('')
   const [apiToken, setApiToken] = useState<string>('')
   const [name, setName] = useState<string>('')
   const [password, setPassword] = useState<string>('')
-  const [singupStep, setSignupStep] = useState<number>(1)
+  const [signupStep, setSignupStep] = useState<number>(1)
   const [jiraError, setJiraError] = useState<string>('')
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false) // 모달 상태 추가
   const router = useRouter()
 
   const handleSignup = () => {
     console.log(email, password, apiToken, name)
-    singupSubmit()
+    signupSubmit()
   }
 
   const handleSignupStep = (step: number) => () => {
     setSignupStep(step)
   }
 
-  const singupSubmit = async () => {
+  const signupSubmit = async () => {
     try {
       console.log(email, password, apiToken, name)
       const res = await signUp(email, password, apiToken, name)
@@ -54,12 +56,20 @@ export default function SignupPage() {
     }
   }
 
+  const openModal = () => {
+    setIsModalOpen(true)
+  }
+
+  const closeModal = () => {
+    setIsModalOpen(false)
+  }
+
   return (
     <div
       className="min-h-screen flex items-center justify-center"
       style={{ backgroundColor: '#9EBDFF' }}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' && singupStep === 1) {
+        if (e.key === 'Enter' && signupStep === 1) {
           handleSignupStep(2)()
         }
       }}
@@ -93,7 +103,7 @@ export default function SignupPage() {
         </div>
 
         <h2 className="text-lg text-teal-600 text-center mb-6">회원가입</h2>
-        {singupStep === 1 && (
+        {signupStep === 1 && (
           <>
             <div className="space-y-4">
               {jiraError && (
@@ -114,7 +124,10 @@ export default function SignupPage() {
                 className="w-full p-3 border border-teal-400 rounded focus:outline-none focus:ring-2 focus:ring-teal-400"
               />
               <p className="text-xs text-gray-500 text-center">
-                <span className="text-blue-500 cursor-pointer">
+                <span
+                  className="text-blue-500 cursor-pointer"
+                  onClick={openModal} // 모달 열기
+                >
                   Jira API Token은 어디서 보나요?
                 </span>
               </p>
@@ -127,11 +140,11 @@ export default function SignupPage() {
             </button>
           </>
         )}
-        {singupStep === 2 && (
+        {signupStep === 2 && (
           <>
             <div className="space-y-4">
               <input
-                type="email"
+                type="text"
                 placeholder="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -154,6 +167,11 @@ export default function SignupPage() {
               회원가입
             </button>
           </>
+        )}
+
+        {/* JiraModal 컴포넌트 */}
+        {isModalOpen && (
+          <JiraModal onClose={closeModal} />
         )}
       </div>
     </div>

@@ -3,6 +3,7 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
+
 import Lottie from 'react-lottie-player'
 import lottieJson from '@public/lottie/Animation - 1730424329200.json'
 
@@ -101,7 +102,7 @@ export default function SprintPage() {
       </div>
 
       {/* Input Area Fixed to Bottom, Centered, and Adjusted for Sidebar */}
-      <div className="fixed bottom-[5%] left-[17rem] w-[70%] bg-white p-4 shadow-md flex items-center border-2 border-[#4D86FF] rounded-[10px]">
+      <div className="fixed bottom-[5%] left-[20rem] w-[70%] bg-white p-4 shadow-md flex items-center border-2 border-[#4D86FF] rounded-[10px]">
         <input
           type="text"
           value={input}
