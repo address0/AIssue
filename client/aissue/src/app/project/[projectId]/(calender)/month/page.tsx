@@ -1,14 +1,15 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import Sidebar from '@/components/(Navbar)/Sidebar/Sidebar'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
-import ChatModalGreen from '@/components/(Modal)/ChatModalGreen/page'
+import ChatModal from '@/components/(Modal)/ChatModal/page'
 import styles from '@/app/(Calender)/month/month.module.css'
 import { useParams } from 'next/navigation'
 import axios from 'axios'
+import { usePathname } from 'next/navigation'
 
 // 에픽 데이터 타입 정의
+
 interface Epic {
   id: string
   title: string
@@ -31,9 +32,13 @@ export default function MonthPage() {
   const [monthOffset, setMonthOffset] = useState(0)
   const [epics, setEpics] = useState<Epic[]>([]) // 에픽 데이터 타입 지정
 
+  const accessToken = sessionStorage.getItem('accessToken') // 세션 스토리지에서 액세스 토큰을 가져옵니다.
+  const memberId = sessionStorage!.getItem('memberId') // 세션 스토리지에서 사용자 ID를 가져옵니다.
+  const pathname = usePathname()
+  const projectId = pathname.split('/')[2]
   const currentDate = new Date()
   const today = new Date()
-  const { projectId, userId } = useParams() // useParams로 projectId와 userId를 가져옵니다.
+  const { userId } = useParams() // useParams로 projectId와 userId를 가져옵니다.
 
   useEffect(() => {
     if (projectId && userId) {
@@ -174,7 +179,6 @@ export default function MonthPage() {
 
   return (
     <div className="flex min-h-screen bg-gray-100">
-      <Sidebar />
       <div className="flex-1 p-6">
         <div className="relative flex justify-between items-center mb-6">
           <h2 className="text-2xl font-semibold text-[#7498E5]">
@@ -182,7 +186,7 @@ export default function MonthPage() {
           </h2>
 
           <div className="absolute left-1/2 transform -translate-x-1/2 flex">
-            <Link href="/month">
+            <Link href={`/project/${projectId}/month`}>
               <button
                 onClick={() => setIsMonthView(true)}
                 className={`px-4 py-2 font-medium text-sm ${
@@ -194,7 +198,7 @@ export default function MonthPage() {
                 Month
               </button>
             </Link>
-            <Link href="/week">
+            <Link href={`/project/${projectId}/week`}>
               <button
                 onClick={() => setIsMonthView(false)}
                 className={`px-4 py-2 font-medium text-sm ${
@@ -273,7 +277,15 @@ export default function MonthPage() {
           <img src="/img/chaticon.png" alt="Chat Icon" className="w-6 h-6" />
         </button>
 
-        {isChatOpen && <ChatModalGreen onClose={toggleChat} />}
+        {isChatOpen && (
+          <ChatModal
+            onClose={toggleChat}
+            memberId={memberId}
+            projectId={projectId}
+            accessToken={accessToken}
+            color={'#7498E5'}
+          />
+        )}
       </div>
     </div>
   )
