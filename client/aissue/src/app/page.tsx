@@ -30,7 +30,7 @@ export default function Home() {
           <h2 className="text-blue-700 text-xl">
             주니어(아이) 개발자 전용 업무 자동화 서비스
           </h2>
-          <img src="/img/aiissue.png" alt="AIssue" className="w-20 h-20" />
+    
           <h1 className="text-white font-bold text-4xl">AIssue</h1>
         </div>
       </div>

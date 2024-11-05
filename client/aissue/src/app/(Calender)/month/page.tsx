@@ -1,53 +1,59 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Sidebar from '@/components/(Navbar)/Sidebar/Sidebar'
 import Link from 'next/link'
 import ChatModal from '@/components/(Modal)/ChatModal/page'
 import styles from '@/app/(Calender)/month/month.module.css'
+import { useParams } from 'next/navigation'
+import axios from 'axios'
 
+// 에픽 데이터 타입 정의
+interface Epic {
+  id: string
+  title: string
+  start: string
+  end: string
+}
+
+const epicColors = ['bg-[#FFDDC1]', 'bg-[#D3E5FF]', 'bg-[#C1FFD6]', 'bg-[#FFD6FF]']; // 에픽 색상 배열 정의
 
 export default function MonthPage() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date())
-
   const [isMonthView, setIsMonthView] = useState(true)
   const [isChatOpen, setIsChatOpen] = useState(false)
   const [selectedStory, setSelectedStory] = useState<string | null>(null)
-  const [monthOffset, setMonthOffset] = useState(0) // New state for month offset
+  const [monthOffset, setMonthOffset] = useState(0)
+  const [epics, setEpics] = useState<Epic[]>([]) // 에픽 데이터 타입 지정
+
   const currentDate = new Date()
   const today = new Date()
+  const { projectId, userId } = useParams() // useParams로 projectId와 userId를 가져옵니다.
 
-  const stories = [
-    {
-      id: 'story1',
-      title: 'Story Title 1',
-      tasks: [
-        {
-          title: 'Task 1',
-          start: new Date(2024, 10, 1, 10, 0),
-          end: new Date(2024, 10, 1, 11, 0),
-        },
-      ],
-    },
-    {
-      id: 'story2',
-      title: 'Story Title 2',
-      tasks: [
-        {
-          title: 'Task 2',
-          start: new Date(2024, 10, 3, 12, 0),
-          end: new Date(2024, 10, 3, 14, 0),
-        },
-      ],
-    },
-  ]
+  useEffect(() => {
+    if (projectId && userId) {
+      fetchEpics();
+    }
+  }, [monthOffset, projectId, userId])
 
+  // 서버에서 에픽 데이터를 가져오는 함수
+  const fetchEpics = async () => {
+    try {
+      const response = await axios.get(`/projects/${projectId}/${userId}/month`, {
+        params: { monthOffset }
+      })
+      setEpics(response.data) // 서버 응답 데이터를 에픽 상태로 설정
+    } catch (error) {
+      console.error('Error fetching epics:', error)
+    }
+  }
+
+  // 채팅 모달 열기/닫기 토글 함수
   const toggleChat = () => {
     setIsChatOpen(!isChatOpen)
   }
 
-
-
+  // 특정 날짜 클릭 시 처리 함수
   const handleDayClick = (day: number, month: number, year: number) => {
     const clickedDate = new Date(year, month, day, 12, 0, 0)
     if (clickedDate >= today) {
@@ -55,12 +61,14 @@ export default function MonthPage() {
     }
   }
 
+  // 월별 날짜 정보 (월의 총 일수와 첫 번째 요일)를 가져오는 함수
   const getMonthData = (year: number, month: number) => {
     const daysInMonth = new Date(year, month + 1, 0).getDate()
     const firstDayOfMonth = new Date(year, month, 1).getDay()
     return { daysInMonth, firstDayOfMonth }
   }
 
+  // 캘린더 월별 렌더링 함수
   const renderMonth = (monthOffset: number) => {
     const baseDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + monthOffset, 1)
     const year = baseDate.getFullYear()
@@ -73,15 +81,11 @@ export default function MonthPage() {
           <button className={styles.arrowButton} onClick={() => setMonthOffset(monthOffset - 1)}>
             <img src="/img/leftarrow.png" alt="Previous Month" />
           </button>
-          <h3 style={{ color: '#4D86FF' }} className="font-semibold">
-            {`${month + 1}월`}
-          </h3>
-
+          <h3 className={`${styles.monthTitle} font-semibold`}>{`${year}년 ${month + 1}월`}</h3>
           <button className={styles.arrowButton} onClick={() => setMonthOffset(monthOffset + 1)}>
             <img src="/img/rightarrow.png" alt="Next Month" />
           </button>
         </div>
-
         <div className={styles.weekdaysContainer}>
           {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day, index) => (
             <div key={index} className={`${styles.weekday} ${index === 0 ? styles.sunday : ""} ${index === 6 ? styles.saturday : ""}`}>
@@ -101,6 +105,10 @@ export default function MonthPage() {
             const isSelected = selectedDate?.getDate() === day && selectedDate?.getMonth() === month && selectedDate?.getFullYear() === year
             const isPastDate = date < today && !isToday
 
+            const dayEpics = epics.filter(epic => 
+              date >= new Date(epic.start) && date <= new Date(epic.end)
+            )
+
             return (
               <div
                 key={`day-${year}-${month}-${day}`}
@@ -108,7 +116,14 @@ export default function MonthPage() {
                 onClick={() => !isPastDate && handleDayClick(day, month, year)}
               >
                 {isToday ? "오늘" : day}
-                <div className={`${styles.epicBar} ${styles[`epicColor${day % 4 + 1}`]}`} />
+                {dayEpics.map((epic, idx) => (
+                  <div
+                    key={epic.id}
+                    className={`${styles.epicBar} ${epicColors[idx % epicColors.length]}`} // 동일한 색상을 적용
+                    title={epic.title}
+                    style={{ marginTop: '2px' }} // 각 마일스톤 바가 겹치지 않도록 간격 추가
+                  />
+                ))}
               </div>
             )
           })}
@@ -154,30 +169,35 @@ export default function MonthPage() {
         </div>
 
         <div className="flex space-x-4">
-          <div style={{ width: '70%', minWidth: '700px' }}> {/* Calendar section with fixed width */}
-            {renderMonth(monthOffset)} {/* Pass the monthOffset to render the correct month */}
+          <div style={{ width: '70%', minWidth: '700px' }}>
+            {renderMonth(monthOffset)}
           </div>
-          <div style={{ width: '30%', minWidth: '300px' }} className="bg-gray-50 p-4 rounded-lg shadow-lg"> {/* Story list section with fixed width */}
+          <div style={{ width: '30%', minWidth: '300px' }} className="bg-gray-50 p-4 rounded-lg shadow-lg">
             <h3 className="text-lg font-semibold text-[#7498E5] mb-4 bg-[#9EBDFF66] p-2 rounded-md text-center">
-              Story List
+              Epic List
             </h3>
-            {stories.map((story) => (
-              <div key={story.id} className="mb-4 p-3 bg-white rounded-lg shadow-sm border border-gray-200">
-                <button
+            {epics.map((epic, idx) => (
+              <div
+                key={epic.id}
+                className={`mb-4 p-3 rounded-lg shadow-sm border border-gray-200 ${epicColors[idx % epicColors.length]}`} // 에픽 인덱스에 따른 배경색 설정
+              >
+                <div
                   className="flex justify-between items-center w-full text-left"
-                  onClick={() => setSelectedStory(story.id === selectedStory ? null : story.id)}
+                  onClick={() => setSelectedStory(epic.id === selectedStory ? null : epic.id)}
                 >
                   <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                    <div className={`w-3 h-3 rounded-full ${epicColors[idx % epicColors.length]}`}></div> {/* 동적 색상 적용 */}
                     <div>
-                      <span className="font-semibold text-gray-700">{story.title}</span>
-                      <p className="text-sm text-gray-500"># Issue Code / 4 hours</p>
+                      <span className="font-semibold text-gray-700">{epic.title}</span>
+                      <p className="text-sm text-gray-500">
+                        {`${new Date(epic.start).toLocaleDateString()} - ${new Date(epic.end).toLocaleDateString()}`}
+                      </p>
                     </div>
                   </div>
-                  <span className="text-gray-500">{story.id === selectedStory ? '▲' : '▼'}</span>
-                </button>
+                </div>
               </div>
             ))}
+
           </div>
         </div>
 
