@@ -96,10 +96,10 @@ export default function ProjectLayout({
             </button>
             <button
               type="button"
-              onClick={() => router.push(`/project/${projectId}/calender`)}
+              onClick={() => router.push(`/project/${projectId}/month`)}
               className={`p-6 rounded-xl text-left
               ${
-                currentPath === 'calender'
+                currentPath === 'month' || currentPath === 'week'
                   ? 'bg-[#7498e5] text-white'
                   : 'hover:bg-base-50'
               }`}
