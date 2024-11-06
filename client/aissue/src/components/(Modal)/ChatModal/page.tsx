@@ -103,10 +103,21 @@ export default function ChatModal({
       setInputValue('')
     }
   }
+  const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) {
+      onClose()
+    }
+  }
 
   return (
-    <div className="fixed inset-0 flex items-center justify-end bg-black bg-opacity-50 z-50">
-      <div className="bg-white rounded-lg shadow-lg w-[35vw] h-[60vh] p-4 m-4 flex flex-col">
+    <div
+      className="fixed inset-0 flex items-center justify-end z-50"
+      onClick={handleOverlayClick}
+    >
+      <div
+        className="bg-white rounded-lg shadow-lg w-[35vw] h-[60vh] p-4 m-4 flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-semibold">채팅</h2>
           <button
