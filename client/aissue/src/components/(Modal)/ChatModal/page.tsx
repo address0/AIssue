@@ -12,7 +12,7 @@ interface ChatModalProps {
   accessToken: string | null
   color: string
 }
-// Message 인터페이스 정의
+
 interface Message {
   memberId: string
   message: string
@@ -117,16 +117,21 @@ export default function ChatModal({
                 <div
                   key={index}
                   className={`flex ${
-                    chat.memberId === memberId ? 'justify-end' : 'justify-start'
+                    memberId && String(chat.memberId) === String(memberId)
+                      ? 'justify-end'
+                      : 'justify-start'
                   } mb-2`}
                 >
                   <div
                     className={`max-w-xs p-3 rounded-lg ${
-                      chat.memberId === memberId
-                        ? 'bg-blue-500 text-white'
+                      memberId && String(chat.memberId) === String(memberId)
+                        ? `bg-[${color}] text-white`
                         : 'bg-gray-200 text-gray-800'
                     }`}
                   >
+                    {String(chat.memberId) === String(memberId) ? null : (
+                      <p className="text-xs font-bold">{chat.memberName}</p>
+                    )}
                     <p className="text-sm">{chat.message}</p>
                   </div>
                 </div>
@@ -135,22 +140,22 @@ export default function ChatModal({
 
             {/* 메시지 입력창 */}
             <div className="flex items-center border-t p-2">
-            <input
-              type="text"
-              placeholder="팀원들과 채팅하기..."
-              className={`flex-1 px-3 py-2 text-sm border border-[${color}] rounded-lg focus:outline-none`}
-              value={inputValue}
-              onChange={handleInputChange}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  sendMessage();
-                }
-              }}
-              style={{
-                borderColor: `${color}`,
-                borderRadius: '8px',
-              }}
-            />
+              <input
+                type="text"
+                placeholder="팀원들과 채팅하기..."
+                className={`flex-1 px-3 py-2 text-sm border border-[${color}] rounded-lg focus:outline-none`}
+                value={inputValue}
+                onChange={handleInputChange}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    sendMessage()
+                  }
+                }}
+                style={{
+                  borderColor: `${color}`,
+                  borderRadius: '8px',
+                }}
+              />
 
               <button
                 onClick={sendMessage}
