@@ -1,10 +1,10 @@
 /* eslint-disable */
 // @ts-nocheck
-'use client'
 
 import React, { useRef, useEffect, useState, ChangeEvent } from 'react'
 import { Stomp } from '@stomp/stompjs'
 import axios from 'axios'
+
 interface ChatModalProps {
   onClose: () => void
   memberId: string | null
@@ -18,6 +18,7 @@ interface Message {
   message: string
   memberName: string
 }
+
 export default function ChatModal({
   onClose,
   memberId,
@@ -29,23 +30,30 @@ export default function ChatModal({
   const [messages, setMessages] = useState<Message[]>([])
   const [inputValue, setInputValue] = useState<string>('')
 
+  const messagesEndRef = useRef<HTMLDivElement | null>(null)
+
   useEffect(() => {
     connect()
     fetchMessages()
     return () => disconnect()
   }, [])
 
+  // messages가 업데이트될 때마다 스크롤을 맨 아래로 이동
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
+
   const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
     setInputValue(event.target.value)
   }
+
   const connect = () => {
     const socket = new WebSocket('wss://k11a403.p.ssafy.io/api/ws')
     stompClient.current = Stomp.over(() => socket)
 
     stompClient.current.connect(
-      { Authorization: `Bearer ${accessToken}` }, // connectHeaders에 토큰 전달
+      { Authorization: `Bearer ${accessToken}` },
       () => {
-        // 성공적으로 연결된 경우
         stompClient.current?.subscribe(
           `/sub/chatroom/${projectId}`,
           (message) => {
@@ -55,15 +63,17 @@ export default function ChatModal({
         )
       },
       (error) => {
-        console.error('WebSocket connection error:', error) // 오류 핸들링
+        console.error('WebSocket connection error:', error)
       },
     )
   }
+
   const disconnect = () => {
     if (stompClient.current) {
       stompClient.current.disconnect()
     }
   }
+
   const fetchMessages = () => {
     return axios
       .get<Message[]>(`https://k11a403.p.ssafy.io/api/chat/${projectId}`, {
@@ -80,25 +90,23 @@ export default function ChatModal({
   const sendMessage = () => {
     if (stompClient.current && inputValue) {
       const body = {
-        jiraProjectKey: projectId, // 프로젝트 ID를 메시지 본문에 포함
-
-        memberId: memberId, // 사용자 ID를 메시지 본문에 포함
-
+        jiraProjectKey: projectId,
+        memberId: memberId,
         message: inputValue,
       }
 
       stompClient.current.send(
-        '/pub/message', // 고정된 메시지 경로로 전송
+        '/pub/message',
         { Authorization: `Bearer ${accessToken}` },
         JSON.stringify(body),
       )
       setInputValue('')
     }
   }
+
   return (
     <div className="fixed inset-0 flex items-center justify-end bg-black bg-opacity-50 z-50">
       <div className="bg-white rounded-lg shadow-lg w-[35vw] h-[60vh] p-4 m-4 flex flex-col">
-        {/* Header */}
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-semibold">채팅</h2>
           <button
@@ -108,10 +116,8 @@ export default function ChatModal({
             ✕
           </button>
         </div>
-        {/* Chat Messages */}
         <div className="flex-1 overflow-hidden">
           <div className="flex flex-col h-full bg-white overflow-hidden">
-            {/* 채팅 메시지 목록 */}
             <div className="flex-1 overflow-y-auto p-4 space-y-2">
               {messages.map((chat, index) => (
                 <div
@@ -136,9 +142,8 @@ export default function ChatModal({
                   </div>
                 </div>
               ))}
+              <div ref={messagesEndRef} />
             </div>
-
-            {/* 메시지 입력창 */}
             <div className="flex items-center border-t p-2">
               <input
                 type="text"
@@ -156,7 +161,6 @@ export default function ChatModal({
                   borderRadius: '8px',
                 }}
               />
-
               <button
                 onClick={sendMessage}
                 className="ml-2 flex items-center justify-center p-2 h-full"
