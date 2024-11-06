@@ -52,6 +52,21 @@ export default function MonthPage() {
     }
   }, [monthOffset, projectId, userId])
 
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'ArrowRight') {
+        setMonthOffset((prev) => prev + 1)
+      } else if (event.key === 'ArrowLeft') {
+        setMonthOffset((prev) => prev - 1)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [])
+
   const fetchEpics = async () => {
     try {
       const response = await axios.get(
