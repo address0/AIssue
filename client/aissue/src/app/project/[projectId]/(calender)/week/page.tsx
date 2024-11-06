@@ -31,6 +31,22 @@ export default function WeekPage() {
     }
   }, [])
 
+  // 방향키 이벤트 추가
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'ArrowRight') {
+        setWeekOffset((prev) => prev + 1)
+      } else if (event.key === 'ArrowLeft') {
+        setWeekOffset((prev) => prev - 1)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [])
+
   const today = new Date()
   const currentWeekDate = new Date(
     today.getFullYear(),
@@ -134,7 +150,6 @@ export default function WeekPage() {
 
           <div className="flex items-center space-x-2">
             <span className="text-gray-700">{userName}님</span> {/* 사용자 이름 적용 */}
-            
           </div>
         </div>
 
