@@ -3,6 +3,8 @@ package ssafy.aissue.domain.issue.common;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import ssafy.aissue.api.issue.request.IssueUpdateRequest;
+
 import java.time.LocalDateTime;
 
 @Getter
@@ -37,5 +39,11 @@ public abstract class BaseIssueEntity {
             throw new IllegalArgumentException("종료 일자가 시작 일자 이전에 올 수 없습니다.");
         }
         this.endAt = newEndAt;
+    }
+
+    public void updateFromDto(IssueUpdateRequest.Issue issue) {
+    }
+
+    public static Object toDto(Object o) {
     }
 }
