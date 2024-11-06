@@ -135,17 +135,23 @@ export default function ChatModal({
 
             {/* 메시지 입력창 */}
             <div className="flex items-center border-t p-2">
-              <input
-                type="text"
-                placeholder="팀원들과 채팅하기..."
-                className={`flex-1 px-3 py-2 text-sm border border-[${color}] rounded-lg focus:outline-none`}
-                value={inputValue}
-                onChange={handleInputChange}
-                style={{
-                  borderColor: `${color}`,
-                  borderRadius: '8px',
-                }}
-              />
+            <input
+              type="text"
+              placeholder="팀원들과 채팅하기..."
+              className={`flex-1 px-3 py-2 text-sm border border-[${color}] rounded-lg focus:outline-none`}
+              value={inputValue}
+              onChange={handleInputChange}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  sendMessage();
+                }
+              }}
+              style={{
+                borderColor: `${color}`,
+                borderRadius: '8px',
+              }}
+            />
+
               <button
                 onClick={sendMessage}
                 className="ml-2 flex items-center justify-center p-2 h-full"
