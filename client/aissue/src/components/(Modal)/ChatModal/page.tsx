@@ -12,7 +12,7 @@ interface ChatModalProps {
   accessToken: string | null
   color: string
 }
-// Message 인터페이스 정의
+
 interface Message {
   memberId: string
   message: string
@@ -117,16 +117,21 @@ export default function ChatModal({
                 <div
                   key={index}
                   className={`flex ${
-                    chat.memberId === memberId ? 'justify-end' : 'justify-start'
+                    memberId && String(chat.memberId) === String(memberId)
+                      ? 'justify-end'
+                      : 'justify-start'
                   } mb-2`}
                 >
                   <div
                     className={`max-w-xs p-3 rounded-lg ${
-                      chat.memberId === memberId
-                        ? 'bg-blue-500 text-white'
+                      memberId && String(chat.memberId) === String(memberId)
+                        ? `bg-[${color}] text-white`
                         : 'bg-gray-200 text-gray-800'
                     }`}
                   >
+                    {String(chat.memberId) === String(memberId) ? null : (
+                      <p>{chat.memberName}</p>
+                    )}
                     <p className="text-sm">{chat.message}</p>
                   </div>
                 </div>
