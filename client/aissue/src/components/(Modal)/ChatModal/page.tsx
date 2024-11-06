@@ -35,10 +35,10 @@ export default function ChatModal({
   useEffect(() => {
     connect()
     fetchMessages()
-    requestNotificationPermission() // 알림 권한 요청
     return () => disconnect()
   }, [])
 
+  // messages가 업데이트될 때마다 스크롤을 맨 아래로 이동
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
@@ -59,12 +59,6 @@ export default function ChatModal({
           (message) => {
             const newMessage: Message = JSON.parse(message.body)
             setMessages((prevMessages) => [...prevMessages, newMessage])
-
-            // 본인이 아닌 다른 사람이 보낸 메시지일 경우 알림 표시
-            if (newMessage.memberId !== memberId) {
-              console.log('Triggering notification for new message') // 디버그 로그
-              showNotification(newMessage.memberName, newMessage.message)
-            }
           },
         )
       },
@@ -109,30 +103,6 @@ export default function ChatModal({
       setInputValue('')
     }
   }
-
-  const requestNotificationPermission = () => {
-    if (Notification.permission !== 'granted') {
-      Notification.requestPermission().then((permission) => {
-        if (permission !== 'granted') {
-          console.log('Notification permission not granted.')
-        } else {
-          console.log('Notification permission granted.')
-        }
-      })
-    }
-  }
-
-  const showNotification = (title: string, message: string) => {
-    if (Notification.permission === 'granted') {
-      new Notification(title, {
-        body: message,
-        icon: '/img/notification-icon.gif' // 변환된 GIF 파일 경로
-      })
-    } else {
-      console.log('Notification permission not granted, cannot show notification.')
-    }
-  }
-
   const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) {
       onClose()
