@@ -5,6 +5,13 @@ import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { getProjectList } from '@/api/project'
 import { useState } from 'react'
+import ChatBotModal from '@/components/(Modal)/ChatBotModal/page'
+
+interface Message {
+  text: string
+  isUser: boolean
+}
+
 export default function ProjectLayout({
   children,
 }: Readonly<{
@@ -21,7 +28,17 @@ export default function ProjectLayout({
   const currentPath = pathname.split('/')[3]
   const userName = sessionStorage.getItem('memberName')
   const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [isChatOpen, setIsChatOpen] = useState(false)
   const toggleDropdown = () => setDropdownOpen(!dropdownOpen)
+  const [chatBotMessages, setChatBotMessages] = useState<Message[]>([
+    {
+      text: '안녕하세요. JIRA에 관해 궁금한 게 있으면 뭐든지 물어보세요.',
+      isUser: false,
+    },
+  ])
+  const toggleChat = () => {
+    setIsChatOpen(!isChatOpen)
+  }
 
   const handleProjectSelect = (selectedProjectId: string) => {
     setDropdownOpen(false)
@@ -140,6 +157,24 @@ export default function ProjectLayout({
           </button>
         </div>
         <div className="w-full">{children}</div>
+        <button
+          onClick={toggleChat}
+          className="fixed bottom-8 right-24 rounded-full object-fill flex items-center justify-center shadow-lg"
+        >
+          <Image
+            src="/img/chatbot.png"
+            alt="Team Project Icon"
+            width={50}
+            height={50}
+          />
+        </button>
+        {isChatOpen && (
+          <ChatBotModal
+            onClose={toggleChat}
+            chatBotMessages={chatBotMessages}
+            setChatBotMessages={setChatBotMessages}
+          />
+        )}
       </div>
     </>
   )
