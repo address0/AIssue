@@ -11,7 +11,7 @@ export default function Sidebar() {
   };
 
   return (
-    <div className="w-64 bg-white p-4 flex flex-col justify-between min-h-screen">
+    <div className="w-64 bg-white p-4 flex flex-col justify-between h-screen">
       {/* Project Icon and Name */}
       <div className="flex flex-col items-center space-y-2 mb-6">
         <Image src="/img/chatbot.png" alt="Team Project Icon" width={40} height={40} />
