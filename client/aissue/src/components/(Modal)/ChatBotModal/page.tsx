@@ -1,6 +1,7 @@
 import React, { useRef, useState, ChangeEvent, useEffect } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { postChatBot } from '@/api/gptChatBot'
+
 interface Message {
   text: string
   isUser: boolean
@@ -56,15 +57,31 @@ export default function ChatBotModal({
   const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
     setInputValue(event.target.value)
   }
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [chatBotMessages])
+
+  // ESC 키가 눌렸을 때 모달을 닫는 함수
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [onClose])
 
   const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) {
       onClose()
     }
   }
+
   return (
     <div
       className="fixed inset-0 flex items-center justify-end z-50"
