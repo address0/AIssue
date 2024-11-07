@@ -8,8 +8,6 @@ import { useParams } from 'next/navigation'
 import axios from 'axios'
 import { usePathname } from 'next/navigation'
 
-// 에픽 데이터 타입 정의
-
 interface Epic {
   id: string
   title: string
@@ -22,7 +20,7 @@ const epicColors = [
   'bg-[#D3E5FF]',
   'bg-[#C1FFD6]',
   'bg-[#FFD6FF]',
-] // 에픽 색상 배열 정의
+]
 
 export default function MonthPage() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date())
@@ -30,15 +28,23 @@ export default function MonthPage() {
   const [isChatOpen, setIsChatOpen] = useState(false)
   const [selectedStory, setSelectedStory] = useState<string | null>(null)
   const [monthOffset, setMonthOffset] = useState(0)
-  const [epics, setEpics] = useState<Epic[]>([]) // 에픽 데이터 타입 지정
+  const [epics, setEpics] = useState<Epic[]>([])
+  const [userName, setUserName] = useState<string | null>(null) // 사용자 이름 상태 추가
 
-  const accessToken = sessionStorage.getItem('accessToken') // 세션 스토리지에서 액세스 토큰을 가져옵니다.
-  const memberId = sessionStorage!.getItem('memberId') // 세션 스토리지에서 사용자 ID를 가져옵니다.
+  useEffect(() => {
+    // 클라이언트 측에서만 sessionStorage 접근
+    if (typeof window !== 'undefined') {
+      setUserName(sessionStorage.getItem('memberName'))
+    }
+  }, [])
+
+  const accessToken = sessionStorage.getItem('accessToken')
+  const memberId = sessionStorage!.getItem('memberId')
   const pathname = usePathname()
   const projectId = pathname.split('/')[2]
   const currentDate = new Date()
   const today = new Date()
-  const { userId } = useParams() // useParams로 projectId와 userId를 가져옵니다.
+  const { userId } = useParams()
 
   useEffect(() => {
     if (projectId && userId) {
@@ -46,7 +52,21 @@ export default function MonthPage() {
     }
   }, [monthOffset, projectId, userId])
 
-  // 서버에서 에픽 데이터를 가져오는 함수
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'ArrowRight') {
+        setMonthOffset((prev) => prev + 1)
+      } else if (event.key === 'ArrowLeft') {
+        setMonthOffset((prev) => prev - 1)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [])
+
   const fetchEpics = async () => {
     try {
       const response = await axios.get(
@@ -55,18 +75,16 @@ export default function MonthPage() {
           params: { monthOffset },
         },
       )
-      setEpics(response.data) // 서버 응답 데이터를 에픽 상태로 설정
+      setEpics(response.data)
     } catch (error) {
       console.error('Error fetching epics:', error)
     }
   }
 
-  // 채팅 모달 열기/닫기 토글 함수
   const toggleChat = () => {
     setIsChatOpen(!isChatOpen)
   }
 
-  // 특정 날짜 클릭 시 처리 함수
   const handleDayClick = (day: number, month: number, year: number) => {
     const clickedDate = new Date(year, month, day, 12, 0, 0)
     if (clickedDate >= today) {
@@ -74,14 +92,12 @@ export default function MonthPage() {
     }
   }
 
-  // 월별 날짜 정보 (월의 총 일수와 첫 번째 요일)를 가져오는 함수
   const getMonthData = (year: number, month: number) => {
     const daysInMonth = new Date(year, month + 1, 0).getDate()
     const firstDayOfMonth = new Date(year, month, 1).getDay()
     return { daysInMonth, firstDayOfMonth }
   }
 
-  // 캘린더 월별 렌더링 함수
   const renderMonth = (monthOffset: number) => {
     const baseDate = new Date(
       currentDate.getFullYear(),
@@ -164,9 +180,9 @@ export default function MonthPage() {
                     key={epic.id}
                     className={`${styles.epicBar} ${
                       epicColors[idx % epicColors.length]
-                    }`} // 동일한 색상을 적용
+                    }`}
                     title={epic.title}
-                    style={{ marginTop: '2px' }} // 각 마일스톤 바가 겹치지 않도록 간격 추가
+                    style={{ marginTop: '2px' }}
                   />
                 ))}
               </div>
@@ -213,10 +229,8 @@ export default function MonthPage() {
           </div>
 
           <div className="flex items-center space-x-2">
-            <span className="text-gray-700">User1님</span>
-            <div className="bg-gray-300 w-10 h-5 rounded-full flex items-center">
-              <div className="bg-white w-4 h-4 rounded-full ml-1 transition-transform"></div>
-            </div>
+            <span className="text-gray-700">{userName}님</span>
+          
           </div>
         </div>
 
@@ -236,7 +250,7 @@ export default function MonthPage() {
                 key={epic.id}
                 className={`mb-4 p-3 rounded-lg shadow-sm border border-gray-200 ${
                   epicColors[idx % epicColors.length]
-                }`} // 에픽 인덱스에 따른 배경색 설정
+                }`}
               >
                 <div
                   className="flex justify-between items-center w-full text-left"
@@ -249,8 +263,7 @@ export default function MonthPage() {
                       className={`w-3 h-3 rounded-full ${
                         epicColors[idx % epicColors.length]
                       }`}
-                    ></div>{' '}
-                    {/* 동적 색상 적용 */}
+                    ></div>
                     <div>
                       <span className="font-semibold text-gray-700">
                         {epic.title}
