@@ -1,4 +1,3 @@
-// src/app/sprint/page.tsx
 'use client'
 
 import { useState } from 'react'
@@ -7,16 +6,55 @@ import Sidebar from '@/components/(Navbar)/Sidebar/Sidebar'
 import Lottie from 'react-lottie-player'
 import lottieJson from '@public/lottie/Animation - 1730424329200.json'
 
-export default function SprintPage() {
-  const [isSprintPage, setIsSprintPage] = useState(false)
-  const [input, setInput] = useState('')
+// interface SprintResponses {
+//   epics: string;
+//   tasks: string;
+//   bugs: string;
+//   members: string;
+//   date: string;
+// }
 
+export default function SprintPage() {
+  const [isSprintPage, setIsSprintPage] = useState<boolean>(false)
+  const [input, setInput] = useState<string>('')
+  const [messages, setMessages] = useState<{ user: string; bot: string }[]>([]);
+  console.log(messages)
+
+  
+  
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInput(e.target.value)
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    if (!input) {
+      window.alert('정확한 값을 입력해 주세요!')
+      return
+    };
+
     console.log('Question submitted:', input)
+    const userMessage = input;
+    setMessages((prev) => [...prev, { user: userMessage, bot: '' }]);
+    setInput('');
+
+    const response = await fetch('/sprint/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: userMessage }),
+    });
+
+    const data = await response.json();
+    if (response.ok) {
+      console.log(data.response)
+      setMessages((prev) => {
+        const newMessages = [...prev];
+        newMessages[newMessages.length - 1].bot = data.response;
+        return newMessages;
+      });
+    } else {
+      console.error(data.error);
+    }
+
     setInput('')
   }
 
@@ -28,7 +66,7 @@ export default function SprintPage() {
         <Sidebar />
 
         {/* Initial Content */}
-        <div className="flex-1 p-6 flex flex-col items-center justify-center space-y-6 overflow-hidden">
+        <div className="flex-1 h-screen p-6 flex flex-col items-center justify-center space-y-6 overflow-hidden">
           {/* Lottie Animation */}
           <div className="w-[60%] h-[50%] flex justify-center items-center">
             <Lottie
@@ -40,16 +78,16 @@ export default function SprintPage() {
           </div>
 
           {/* Text */}
-          <div className="text-center text-gray-500 space-y-2">
-            <p>아직 생성된 에픽이 없어요.</p>
-            <p>AI 컨설턴트와 함께 전체 에픽 목록을 생성해 볼까요?</p>
+          <div className="text-center text-lg text-gray-500 space-y-2">
+            <p>아직 생성된 스프린트가 없어요.</p>
+            <p>AI 컨설턴트와 함께 이번 주 일정을 생성해 볼까요?</p>
           </div>
           {/* Button */}
           <button
             onClick={() => setIsSprintPage(true)}
-            className="bg-purple-500 text-white px-6 py-3 rounded-lg"
+            className="bg-purple-500 text-white px-8 py-3 text-lg rounded-lg hover:bg-purple-600"
           >
-            에픽 생성하기
+            스프린트 생성하기
           </button>
         </div>
       </div>
@@ -63,11 +101,11 @@ export default function SprintPage() {
       <Sidebar />
 
       {/* Main Content */}
-      <div className="flex-1 p-6 overflow-hidden">
+      <div className="flex-1 relative p-6 overflow-hidden">
         {/* Centered Header */}
         <div className="flex justify-center mb-8">
           <h2 className="text-2xl text-gray-500 font-light text-center">
-            AI와의 채팅을 통해 금주의 스프린트를 제작해 보세요{' '}
+            AI 스프린트 제작하기{' '}
             <span role="img" aria-label="search">
               🔍
             </span>
@@ -77,8 +115,14 @@ export default function SprintPage() {
         {/* Chat Area */}
         <div className="flex items-start space-x-4 mb-6">
           <Image src="/img/chatbot.png" alt="Chatbot" width={50} height={50} />
-          <div className="bg-[#B2E0D9] text-gray-700 p-3 rounded-[20px]">
-            안녕하세요! 어떤 스프린트를 만들까요?
+          <div className='flex flex-col space-y-4'>
+            <div className="bg-[#B2E0D9] text-gray-700 p-4 rounded-[0px_20px_20px_20px] animation-fade-in-up">
+              <p>안녕하세요! 저는 에픽/이슈 생성을 도와주는 AI컨설턴트, AIssue입니다.</p>
+              <p>스프린트 생성에 앞서, 전체 일정(에픽 목록) 생성을 도와 드리겠습니다.</p>
+            </div>
+            <div className="bg-[#B2E0D9] text-gray-700 p-4 rounded-[0px_20px_20px_20px]">
+              <p>먼저, 프로젝트의 이름(title)을 알려 주세요!</p>
+            </div>
           </div>
         </div>
 
@@ -106,7 +150,7 @@ export default function SprintPage() {
       </div>
 
       {/* Input Area Fixed to Bottom, Centered, and Adjusted for Sidebar */}
-      <div className="fixed bottom-[5%] left-[17rem] w-[70%] bg-white p-4 shadow-md flex items-center border-2 border-[#4D86FF] rounded-[10px]">
+      <div className="absolute bottom-[3rem] left-[17rem] w-[70%] bg-white py-3 px-6 shadow-md flex items-center border-2 border-[#4D86FF] rounded-[10px] text-lg">
         <input
           type="text"
           value={input}

@@ -159,7 +159,7 @@ export default function WeekPage() {
 
         <div className="flex space-x-4">
           {/* Task Calendar Section */}
-          <div style={{ width: '70%', minWidth: '700px' }} className="bg-white p-4 rounded-lg shadow-md">
+          <div style={{ width: '70%', minWidth: '700px', border: '2px solid #54B2A3' }} className="bg-white p-4 rounded-lg shadow-md">
             <div className="flex justify-center items-center space-x-2">
               <button
                 onClick={() => setWeekOffset(weekOffset - 1)}

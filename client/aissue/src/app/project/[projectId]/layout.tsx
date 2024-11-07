@@ -49,7 +49,7 @@ export default function ProjectLayout({
   }
   return (
     <>
-      <div className="flex">
+      <div className="flex h-screen overflow-hidden">
         <div className="flex flex-col p-6 gap-4 text-disabled-dark font-bold w-[20.625rem]">
           <div className="flex flex-col py-6 gap-y-2 justify-center items-center">
             <div className="flex flex-col items-center space-y-4 mb-6">
@@ -90,7 +90,7 @@ export default function ProjectLayout({
             <button
               type="button"
               onClick={() => router.push(`/project/${projectId}/sprint`)}
-              className={`p-6 rounded-xl text-left
+              className={`p-6 rounded-xl text-center
               ${
                 currentPath === 'sprint'
                   ? 'bg-[#7498e5] text-white'
@@ -102,7 +102,7 @@ export default function ProjectLayout({
             <button
               type="button"
               onClick={() => router.push(`/project/${projectId}/worklog`)}
-              className={`p-6 rounded-xl text-left
+              className={`p-6 rounded-xl text-center
               ${
                 currentPath === 'worklog'
                   ? 'bg-[#7498e5] text-white'
@@ -114,7 +114,7 @@ export default function ProjectLayout({
             <button
               type="button"
               onClick={() => router.push(`/project/${projectId}/month`)}
-              className={`p-6 rounded-xl text-left
+              className={`p-6 rounded-xl text-center
               ${
                 currentPath === 'month' || currentPath === 'week'
                   ? 'bg-[#7498e5] text-white'
@@ -126,7 +126,7 @@ export default function ProjectLayout({
             <button
               type="button"
               onClick={() => router.push(`/project/${projectId}/otherapi`)}
-              className={`p-6 rounded-xl text-left
+              className={`p-6 rounded-xl text-center
               ${
                 currentPath === 'otherapi'
                   ? 'bg-[#7498e5] text-white'
@@ -138,7 +138,7 @@ export default function ProjectLayout({
             <button
               type="button"
               onClick={() => router.push(`/project/${projectId}/info`)}
-              className={`p-6 rounded-xl text-left
+              className={`p-6 rounded-xl text-center
                 ${
                   currentPath === 'info'
                     ? 'bg-[#7498e5] text-white'
