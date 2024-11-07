@@ -41,7 +41,7 @@ const WorkLogPage = () => {
     <div className="flex min-h-screen bg-gray-100">
       <div className="w-4/5 p-8">
         <div className="flex justify-between items-center mb-4">
-          <h1 className="text-2xl font-bold">팀 프로젝트 스프린트 일정</h1>
+          <h1 className="text-2xl font-bold">{projectId} 프로젝트 스프린트 일정</h1>
           <div className="flex items-center space-x-2">
             <span className="text-gray-700">{userName}님</span>
           </div>
