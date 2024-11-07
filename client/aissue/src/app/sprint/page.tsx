@@ -1,23 +1,24 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Image from 'next/image'
 import Sidebar from '@/components/(Navbar)/Sidebar/Sidebar'
 import Lottie from 'react-lottie-player'
 import lottieJson from '@public/lottie/Animation - 1730424329200.json'
 
-interface SprintResponses {
-  epics: string;
-  tasks: string;
-  bugs: string;
-  members: string;
-  date: string;
-}
+// interface SprintResponses {
+//   epics: string;
+//   tasks: string;
+//   bugs: string;
+//   members: string;
+//   date: string;
+// }
 
 export default function SprintPage() {
   const [isSprintPage, setIsSprintPage] = useState<boolean>(false)
   const [input, setInput] = useState<string>('')
   const [messages, setMessages] = useState<{ user: string; bot: string }[]>([]);
+  console.log(messages)
 
   
   
