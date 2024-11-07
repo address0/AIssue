@@ -1,16 +1,25 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Sidebar from '@/components/(Navbar)/Sidebar/Sidebar'
 import Lottie from 'react-lottie-player'
 import lottieJson from '@public/lottie/Animation - 1730424329200.json'
 
+interface SprintResponses {
+  epics: string;
+  tasks: string;
+  bugs: string;
+  members: string;
+  date: string;
+}
 
 export default function SprintPage() {
   const [isSprintPage, setIsSprintPage] = useState<boolean>(false)
   const [input, setInput] = useState<string>('')
   const [messages, setMessages] = useState<{ user: string; bot: string }[]>([]);
+
+  
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInput(e.target.value)
@@ -35,7 +44,7 @@ export default function SprintPage() {
 
     const data = await response.json();
     if (response.ok) {
-      console.log(data)
+      console.log(data.response)
       setMessages((prev) => {
         const newMessages = [...prev];
         newMessages[newMessages.length - 1].bot = data.response;
@@ -105,8 +114,14 @@ export default function SprintPage() {
         {/* Chat Area */}
         <div className="flex items-start space-x-4 mb-6">
           <Image src="/img/chatbot.png" alt="Chatbot" width={50} height={50} />
-          <div className="bg-[#B2E0D9] text-gray-700 p-3 rounded-[20px]">
-            안녕하세요! 어떤 스프린트를 만들까요?
+          <div className='flex flex-col space-y-4'>
+            <div className="bg-[#B2E0D9] text-gray-700 p-4 rounded-[0px_20px_20px_20px] animation-fade-in-up">
+              <p>안녕하세요! 저는 에픽/이슈 생성을 도와주는 AI컨설턴트, AIssue입니다.</p>
+              <p>스프린트 생성에 앞서, 전체 일정(에픽 목록) 생성을 도와 드리겠습니다.</p>
+            </div>
+            <div className="bg-[#B2E0D9] text-gray-700 p-4 rounded-[0px_20px_20px_20px]">
+              <p>먼저, 프로젝트의 이름(title)을 알려 주세요!</p>
+            </div>
           </div>
         </div>
 
