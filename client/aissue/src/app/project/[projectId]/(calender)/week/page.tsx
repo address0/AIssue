@@ -1,11 +1,9 @@
-// src/app/project/[projectId]/team/page.tsx
 'use client';
 
 import React, { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import Link from 'next/link'
-import ChatModal from '@/components/(Modal)/ChatModal/page'
-
+import Link from 'next/link';
+import ChatModal from '@/components/(Modal)/ChatModal/page';
 
 interface Task {
   title: string;
@@ -32,22 +30,20 @@ export default function WeekPage() {
     }
   }, []);
 
-  // 방향키 이벤트 추가
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'ArrowRight') {
-        setWeekOffset((prev) => prev + 1)
+        setWeekOffset((prev) => prev + 1);
       } else if (event.key === 'ArrowLeft') {
-        setWeekOffset((prev) => prev - 1)
+        setWeekOffset((prev) => prev - 1);
       }
-    }
-    window.addEventListener('keydown', handleKeyDown)
+    };
+    window.addEventListener('keydown', handleKeyDown);
 
     return () => {
-      window.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [])
-
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
 
   const today = new Date();
   const currentWeekDate = new Date(
@@ -58,14 +54,13 @@ export default function WeekPage() {
   const currentMonth = currentWeekDate.toLocaleString('default', { month: 'long' });
   const currentWeek = Math.ceil(
     (currentWeekDate.getDate() +
-      new Date(currentWeekDate.getFullYear(), currentWeekDate.getMonth(), 1).getDay()) / 7,
+      new Date(currentWeekDate.getFullYear(), currentWeekDate.getMonth(), 1).getDay()) / 7
   );
 
-  const accessToken = typeof window !== 'undefined' ? sessionStorage.getItem('accessToken') : null
-  const memberId = typeof window !== 'undefined' ? sessionStorage.getItem('memberId') : null
-  const pathname = usePathname()
-  const projectId = pathname.split('/')[2]
-
+  const accessToken = typeof window !== 'undefined' ? sessionStorage.getItem('accessToken') : null;
+  const memberId = typeof window !== 'undefined' ? sessionStorage.getItem('memberId') : null;
+  const pathname = usePathname();
+  const projectId = pathname.split('/')[2];
 
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const currentDay = dayNames[today.getDay()];
@@ -74,9 +69,8 @@ export default function WeekPage() {
   const hours = Array.from({ length: 10 }, (_, i) => i + 9);
 
   const toggleChat = () => {
-    setIsChatOpen(!isChatOpen)
-  }
-
+    setIsChatOpen(!isChatOpen);
+  };
 
   const stories: Story[] = [
     {
@@ -102,8 +96,8 @@ export default function WeekPage() {
       story.tasks.filter(
         (task) =>
           task.start.getDay() - 1 === dayIndex &&
-          task.start.getDate() === task.end.getDate(),
-      ),
+          task.start.getDate() === task.end.getDate()
+      )
     );
   };
 
@@ -151,14 +145,12 @@ export default function WeekPage() {
             </Link>
           </div>
 
-
           <div className="flex items-center space-x-2">
             <span className="text-gray-700">{userName}님</span>
           </div>
         </div>
 
         <div className="flex space-x-4">
-          {/* Task Calendar Section */}
           <div style={{ width: '70%', minWidth: '700px', border: '2px solid #54B2A3' }} className="bg-white p-4 rounded-lg shadow-md">
             <div className="flex justify-center items-center space-x-2">
               <button
@@ -180,7 +172,6 @@ export default function WeekPage() {
               </button>
             </div>
 
-            {/* Calendar Days */}
             <div className="grid grid-cols-6 gap-0 relative">
               <div className="flex flex-col pt-2">
                 {hours.map((hour) => (
@@ -196,20 +187,20 @@ export default function WeekPage() {
               {daysOfWeek.map((day) => (
                 <div key={day} className="flex flex-col relative">
                   <div
-                    className={`text-center font-semibold text-gray-500 mb-1 ${
-                      isTodayInCurrentWeek() && day === currentDay ? 'bg-red-400 bg-opacity-80' : ''
+                    className={`text-center font-semibold mb-1 ${
+                      isTodayInCurrentWeek() && day === currentDay ? 'bg-red-400 text-white' : 'text-gray-500'
                     }`}
                   >
                     {day}
                     {isTodayInCurrentWeek() && day === currentDay && (
-                      <span className="text-sm text-gray-600 ml-1">
+                      <span className="text-sm text-gray-100 ml-1">
                         {`${today.getMonth() + 1}/${today.getDate()}`}
                       </span>
                     )}
                   </div>
                   <div
                     className={`border-l border-r border-b h-full ${
-                      isTodayInCurrentWeek() && day === currentDay ? 'bg-red-400 bg-opacity-20' : ''
+                      isTodayInCurrentWeek() && day === currentDay ? 'bg-red-100' : ''
                     }`}
                   >
                     {hours.map((hour) => (
@@ -226,10 +217,7 @@ export default function WeekPage() {
                               style={{
                                 top: (task.start.getMinutes() / 60) * 100 + '%',
                                 height:
-                                  ((task.end.getTime() - task.start.getTime()) /
-                                    1000 / 60 / 60) *
-                                    100 +
-                                  '%',
+                                  ((task.end.getTime() - task.start.getTime()) / 1000 / 60 / 60) * 100 + '%',
                               }}
                             >
                               {task.title}
