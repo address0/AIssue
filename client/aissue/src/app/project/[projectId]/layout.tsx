@@ -46,16 +46,19 @@ export default function ProjectLayout({
     setDropdownOpen(false)
     router.push(`/project/${selectedProjectId}/sprint`)
   }
-  
+
   if (isLoading) {
     return <div>프로젝트 목록을 불러오는 중입니다.</div>
   }
-  
+
   return (
     <>
       {/* currentPath가 'info'일 때는 overflow-hidden을 제거 */}
-      <div className={`flex h-screen ${currentPath !== 'info' ? 'overflow-hidden' : ''}`}>
-        
+      <div
+        className={`flex h-screen ${
+          currentPath !== 'info' ? 'overflow-hidden' : ''
+        }`}
+      >
         {/* Sidebar */}
         <div className="flex flex-col p-6 gap-4 text-disabled-dark font-bold w-[20.625rem] bg-white shadow-lg">
           <div className="flex flex-col py-6 gap-y-2 justify-center items-center">
@@ -77,7 +80,7 @@ export default function ProjectLayout({
                   <span className="font-normal">현재 프로젝트 : </span>
                   {projectId ? `#${projectId}` : 'Project 선택'}
                 </p>
-                
+
                 {/* Dropdown for Project Selection */}
                 {dropdownOpen && (
                   <div className="absolute z-10 mt-2 w-48 bg-white rounded-md shadow-lg">
@@ -133,14 +136,15 @@ export default function ProjectLayout({
             </button>
             <button
               type="button"
-              onClick={() => router.push(`/project/${projectId}/otherapi`)}
-              className={`p-6 rounded-xl text-center ${
-                currentPath === 'otherapi'
+              onClick={() => router.push(`/project/${projectId}/summary`)}
+              className={`p-6 rounded-xl text-center
+              ${
+                currentPath === 'summary'
                   ? 'bg-[#7498e5] text-white'
                   : 'hover:bg-base-50'
               }`}
             >
-              외부 API 연동
+              채팅 회고록
             </button>
             <button
               type="button"
@@ -164,7 +168,7 @@ export default function ProjectLayout({
             프로젝트 나가기
           </button>
         </div>
-        
+
         {/* Main Content */}
         <div className="w-full overflow-y-auto">{children}</div>
 
@@ -180,7 +184,7 @@ export default function ProjectLayout({
             height={50}
           />
         </button>
-        
+
         {/* ChatBot Modal */}
         {isChatOpen && (
           <ChatBotModal
