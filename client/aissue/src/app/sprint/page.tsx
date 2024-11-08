@@ -17,11 +17,9 @@ import lottieJson from '@public/lottie/Animation - 1730424329200.json'
 export default function SprintPage() {
   const [isSprintPage, setIsSprintPage] = useState<boolean>(false)
   const [input, setInput] = useState<string>('')
-  const [messages, setMessages] = useState<{ user: string; bot: string }[]>([]);
+  const [messages, setMessages] = useState<{ user: string; bot: string }[]>([])
   console.log(messages)
 
-  
-  
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInput(e.target.value)
   }
@@ -30,29 +28,29 @@ export default function SprintPage() {
     if (!input) {
       window.alert('정확한 값을 입력해 주세요!')
       return
-    };
+    }
 
     console.log('Question submitted:', input)
-    const userMessage = input;
-    setMessages((prev) => [...prev, { user: userMessage, bot: '' }]);
-    setInput('');
+    const userMessage = input
+    setMessages((prev) => [...prev, { user: userMessage, bot: '' }])
+    setInput('')
 
     const response = await fetch('/sprint/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ message: userMessage }),
-    });
+    })
 
-    const data = await response.json();
+    const data = await response.json()
     if (response.ok) {
       console.log(data.response)
       setMessages((prev) => {
-        const newMessages = [...prev];
-        newMessages[newMessages.length - 1].bot = data.response;
-        return newMessages;
-      });
+        const newMessages = [...prev]
+        newMessages[newMessages.length - 1].bot = data.response
+        return newMessages
+      })
     } else {
-      console.error(data.error);
+      console.error(data.error)
     }
 
     setInput('')
@@ -115,10 +113,16 @@ export default function SprintPage() {
         {/* Chat Area */}
         <div className="flex items-start space-x-4 mb-6">
           <Image src="/img/chatbot.png" alt="Chatbot" width={50} height={50} />
-          <div className='flex flex-col space-y-4'>
+          <div className="flex flex-col space-y-4">
             <div className="bg-[#B2E0D9] text-gray-700 p-4 rounded-[0px_20px_20px_20px] animation-fade-in-up">
-              <p>안녕하세요! 저는 에픽/이슈 생성을 도와주는 AI컨설턴트, AIssue입니다.</p>
-              <p>스프린트 생성에 앞서, 전체 일정(에픽 목록) 생성을 도와 드리겠습니다.</p>
+              <p>
+                안녕하세요! 저는 에픽/이슈 생성을 도와주는 AI컨설턴트,
+                AIssue입니다.
+              </p>
+              <p>
+                스프린트 생성에 앞서, 전체 일정(에픽 목록) 생성을 도와
+                드리겠습니다.
+              </p>
             </div>
             <div className="bg-[#B2E0D9] text-gray-700 p-4 rounded-[0px_20px_20px_20px]">
               <p>먼저, 프로젝트의 이름(title)을 알려 주세요!</p>

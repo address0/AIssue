@@ -125,15 +125,15 @@ export default function ProjectLayout({
             </button>
             <button
               type="button"
-              onClick={() => router.push(`/project/${projectId}/otherapi`)}
+              onClick={() => router.push(`/project/${projectId}/summary`)}
               className={`p-6 rounded-xl text-center
               ${
-                currentPath === 'otherapi'
+                currentPath === 'summary'
                   ? 'bg-[#7498e5] text-white'
                   : 'hover:bg-base-50'
               }`}
             >
-              외부 API 연동
+              채팅 회고록
             </button>
             <button
               type="button"
