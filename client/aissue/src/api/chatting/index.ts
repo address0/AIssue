@@ -5,4 +5,9 @@ const getChattingList = async (jiraProjectKey: string) => {
   return res.data
 }
 
-export { getChattingList }
+const getSummariesChattingList = async (jiraProjectKey: string) => {
+  const res = await privateAPI.get(`/chat/${jiraProjectKey}/summaries`)
+  return res.data
+}
+
+export { getChattingList, getSummariesChattingList }
