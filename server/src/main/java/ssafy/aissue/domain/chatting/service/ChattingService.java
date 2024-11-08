@@ -1,5 +1,6 @@
 package ssafy.aissue.domain.chatting.service;
 
+import ssafy.aissue.api.chatting.response.ChatSummaryResponse;
 import ssafy.aissue.domain.chatting.entity.ChatMessage;
 import ssafy.aissue.domain.chatting.entity.Chatting;
 
@@ -14,5 +15,8 @@ public interface ChattingService {
 
     // 채팅 메시지를 데이터베이스에 저장하기
     ChatMessage handleChatMessage(Long memberId, String jiraProjectKey, String messageContent);
+
+    // 특정 프로젝트의 채팅 요약복 가져오기
+    List<ChatSummaryResponse> getAllSummariesForProject(String jiraProjectKey);
 
 }
