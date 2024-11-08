@@ -41,9 +41,9 @@ public abstract class BaseIssueEntity {
         this.endAt = newEndAt;
     }
 
-    public void updateFromDto(IssueUpdateRequest.Issue issue) {
-    }
-
-    public static Object toDto(Object o) {
-    }
+//    public void updateFromDto(IssueUpdateRequest.Issue issue) {
+//    }
+//
+//    public static Object toDto(Object o) {
+//    }
 }

@@ -20,18 +20,16 @@ public class IssueUpdateRequest {
     public static class Issue {
 
         @NotNull
+        @NotBlank
         @JsonProperty("issue_id")
         private final Long issueId;
 
-        @NotBlank
         private final String summary;
 
         private final String description;
 
-        @NotBlank
         private final String status;
 
-        @NotBlank
         private final String priority;
 
         @JsonProperty("story_points")
