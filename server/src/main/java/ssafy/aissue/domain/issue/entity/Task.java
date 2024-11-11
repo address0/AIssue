@@ -12,5 +12,4 @@ import ssafy.aissue.domain.issue.common.BaseIssueEntity;
 @SuperBuilder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Task extends BaseIssueEntity {
-
 }

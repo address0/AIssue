@@ -19,7 +19,7 @@ public abstract class BaseIssueEntity {
     private Long id;
 
     @Column(nullable = false)
-    private String jiraId;
+    private Long jiraId;
 
     @Column(nullable = false)
     private String jiraKey;
@@ -41,9 +41,5 @@ public abstract class BaseIssueEntity {
         this.endAt = newEndAt;
     }
 
-//    public void updateFromDto(IssueUpdateRequest.Issue issue) {
-//    }
-//
-//    public static Object toDto(Object o) {
-//    }
+
 }

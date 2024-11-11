@@ -16,8 +16,8 @@ public interface IssueService {
 
     void linkIssues(IssueLinkRequest issueLinkRequest);     // Issue 종속성 등록
 
-    List<IssueResponse> getMonthIssues();  // 이슈 목록
+    List<WeeklyIssueResponse> getMonthIssues();  // 이슈 목록
 
-    List<IssueResponse> getWeekIssues();
+    List<WeeklyIssueResponse> getWeeklyIssues(String email, String jiraKey);
 
 }

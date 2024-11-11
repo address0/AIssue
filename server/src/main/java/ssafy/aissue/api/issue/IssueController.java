@@ -4,10 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import ssafy.aissue.api.CommonResponse;
 import ssafy.aissue.api.issue.request.IssueBatchRequest;
 import ssafy.aissue.domain.issue.service.IssueService;
@@ -26,6 +23,12 @@ public class IssueController {
     public CommonResponse<?> createBatchIssue(@RequestParam(name="issue")IssueBatchRequest issueBatchRequest) {
         log.info("[IssueController] createBatchIssue");
         return CommonResponse.ok();
+    }
+
+    @Operation(summary = "월간 일정 조회", description = "에픽 일정을 제공합니다.")
+    @GetMapping
+    public CommonResponse<?> getMonthlyIssues() {
+
     }
 
 }
