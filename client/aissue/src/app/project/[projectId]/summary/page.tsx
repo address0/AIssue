@@ -2,6 +2,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { getSummariesChattingList } from '@/api/chatting'
 import { usePathname } from 'next/navigation'
+import { useState } from 'react'
+import Image from 'next/image'
 
 // 데이터 타입 정의
 type ChatSummary = {
@@ -20,6 +22,7 @@ type ParsedSummary = {
 export default function SummaryPage() {
   const pathname = usePathname()
   const projectId = pathname.split('/')[2]
+  const [expandedItems, setExpandedItems] = useState<{ [key: string]: boolean }>({})
 
   const { data, isLoading, isError, error } = useQuery<ChatSummary[]>({
     queryKey: ['chattingSummaryList', projectId],
@@ -57,6 +60,13 @@ export default function SummaryPage() {
     }
   }
 
+  const toggleExpand = (key: string) => {
+    setExpandedItems((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }))
+  }
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8 text-lg font-semibold text-[#7498e5]">
@@ -74,71 +84,100 @@ export default function SummaryPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6 p-6 bg-[#f8faff] rounded-lg">
-      {data && data.length > 0 ? (
-        data.map((chatting) => {
-          const parsedSummary = parseSummary(chatting.summary)
-
-          return (
-            <div
-              key={chatting.projectKey}
-              className="p-4 border border-[#d0e1ff] rounded-lg bg-white shadow-sm"
-            >
-              {/* 날짜 */}
-              <p className="text-[#7498e5] font-bold mb-4">{chatting.date}</p>
-
-              {/* 전체 내용 요약 */}
-              <div className="mb-4">
-                <p className="font-semibold text-gray-800">전체 내용 요약:</p>
-                <p className="text-gray-700 text-sm leading-relaxed mt-1">
-                  {parsedSummary.overallSummary}
-                </p>
-              </div>
-
-              {/* 핵심 내용 요약 */}
-              <div className="mb-4">
-                <p className="font-semibold text-gray-800">핵심 내용 요약:</p>
-                <p className="text-gray-700 text-sm leading-relaxed mt-1">
-                  {parsedSummary.coreSummary}
-                </p>
-              </div>
-
-              {/* 사용자별 내용 요약 */}
-              <div>
-                <p className="font-semibold text-gray-800">
-                  사용자별 내용 요약:
-                </p>
-
-                {parsedSummary.userSummaries ? (
-                  <div className="pl-4 space-y-2 mt-2">
-                    {Object.entries(parsedSummary.userSummaries).map(
-                      ([user, summary]) => (
-                        <div key={user}>
-                          <p className="font-semibold text-gray-800">
-                            {user}의 요약:
-                          </p>
-                          <p className="text-gray-700 text-sm leading-relaxed">
-                            {summary}
-                          </p>
-                        </div>
-                      ),
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-gray-700 text-sm leading-relaxed mt-1">
-                    사용자별 요약은 제공된 정보가 없기 때문에 진행할 수
-                    없습니다.
-                  </p>
-                )}
-              </div>
-            </div>
-          )
-        })
-      ) : (
-        <div className="text-center text-gray-700">
-          채팅을 친 기록이 없습니다. 채팅을 시작해볼까요?
+    <div className="flex min-h-screen bg-gray-100">
+      <div className="flex-1 p-6 overflow-hidden">
+        <div className="flex flex-col gap-4 mb-6">
+          <h2 className="text-2xl font-semibold text-[#5B586E]">
+            팀원 채팅 기반 회고록
+          </h2>
         </div>
-      )}
+
+        <div className="space-y-4">
+          {data && data.length > 0 ? (
+            data.map((chatting) => {
+              const parsedSummary = parseSummary(chatting.summary)
+              const isExpanded = expandedItems[chatting.projectKey]
+
+              return (
+                <div
+                  key={chatting.projectKey}
+                  className="p-4 border border-[#d0e1ff] rounded-lg bg-white shadow-sm"
+                >
+                  {/* 날짜 및 요약 미리보기 */}
+                  <div className="flex justify-between items-center">
+                    <p className="text-[#7498e5] font-bold">{chatting.date}</p>
+                    <button
+                      onClick={() => toggleExpand(chatting.projectKey)}
+                      className="text-[#7498e5] text-xl font-bold"
+                    >
+                      <Image
+                        src={isExpanded ? '/img/closebtn.png' : '/img/plusbtn.png'}
+                        alt={isExpanded ? 'Close' : 'Expand'}
+                        width={24}
+                        height={24}
+                      />
+                    </button>
+                  </div>
+
+                  {/* 핵심 내용 요약 (미리보기) */}
+                  <div className="mt-2">
+                    <p className="font-semibold text-gray-800">핵심 내용 요약:</p>
+                    <p className="text-gray-700 text-sm leading-relaxed mt-1">
+                      {parsedSummary.coreSummary}
+                    </p>
+                  </div>
+
+                  {/* 전체 내용 및 사용자별 내용 요약 (토글로 확장) */}
+                  {isExpanded && (
+                    <div className="mt-4">
+                      {/* 전체 내용 요약 */}
+                      <div className="mb-4">
+                        <p className="font-semibold text-gray-800">전체 내용 요약:</p>
+                        <p className="text-gray-700 text-sm leading-relaxed mt-1">
+                          {parsedSummary.overallSummary}
+                        </p>
+                      </div>
+
+                      {/* 사용자별 내용 요약 */}
+                      <div>
+                        <p className="font-semibold text-gray-800">
+                          사용자별 내용 요약:
+                        </p>
+
+                        {parsedSummary.userSummaries ? (
+                          <div className="pl-4 space-y-2 mt-2">
+                            {Object.entries(parsedSummary.userSummaries).map(
+                              ([user, summary]) => (
+                                <div key={user}>
+                                  <p className="font-semibold text-gray-800">
+                                    {user}의 요약:
+                                  </p>
+                                  <p className="text-gray-700 text-sm leading-relaxed">
+                                    {summary}
+                                  </p>
+                                </div>
+                              ),
+                            )}
+                          </div>
+                        ) : (
+                          <p className="text-gray-700 text-sm leading-relaxed mt-1">
+                            사용자별 요약은 제공된 정보가 없기 때문에 진행할 수
+                            없습니다.
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )
+            })
+          ) : (
+            <div className="text-center text-gray-700">
+              채팅을 친 기록이 없습니다. 채팅을 시작해볼까요?
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   )
 }
