@@ -3,7 +3,6 @@ import { useQuery } from '@tanstack/react-query'
 import { getSummariesChattingList } from '@/api/chatting'
 import { usePathname } from 'next/navigation'
 import SummaryDetails from '@/components/SummaryDetails'
-
 // 데이터 타입 정의
 type ChatSummary = {
   projectKey: string
