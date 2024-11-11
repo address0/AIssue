@@ -1,0 +1,206 @@
+.custom-calendar {
+  font-family: Arial, sans-serif;
+}
+
+.react-calendar {
+  border: none;
+}
+
+.react-calendar__month-view__weekdays__weekday {
+  color: gray;
+  font-weight: bold;
+}
+
+.react-calendar__month-view__days__day--weekend {
+  color: #FF5733; 
+}
+
+.react-calendar__tile {
+  position: relative;
+  padding: 10px;
+}
+
+.react-calendar__tile--now {
+  background: #4D86FF;
+  color: white;
+  border-radius: 8px;
+}
+
+.react-calendar__tile--now:hover {
+  background: #3b5bbf;
+}
+
+.react-calendar__tile--active {
+  background: #4D86FF;
+  color: white;
+}
+
+.react-calendar__tile--hasActive {
+  background: #4D86FF;
+  color: white;
+}
+
+.custom-epic-bar {
+  height: 8px;
+  border-radius: 4px;
+}
+
+
+
+.modalContainer {
+  max-width: 800px;
+  padding: 20px;
+}
+
+.monthContainer {
+  padding: 10px;
+  background-color: #FFFFFF; /* Calendar background color */
+  border: 2px solid #4D86FF; /* Calendar border color */
+  border-radius: 8px;
+}
+
+.monthHeader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem; /* Space between elements */
+  height: 50px; /* Set a consistent height */
+}
+
+.monthTitle {
+  color: #4D86FF;
+  font-weight: 600; /* Equivalent to font-semibold */
+  font-size: 1.25rem; /* Adjust font size as needed */
+  height: 50px; /* Same height as the monthHeader */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.arrowButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px; /* Same width as the height for square buttons */
+  height: 50px; /* Same height as the monthHeader */
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.arrowButton img {
+  width: 50%; /* Ensure the image fills the button */
+  height: 50%;
+}
+
+.weekdaysContainer {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+
+.weekday {
+  flex: 1;
+  text-align: center;
+  font-weight: bold;
+}
+
+.sunday {
+  color: red;
+}
+
+.saturday {
+  color: blue;
+}
+
+.calendarContainer {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+  background-color: #FFFFFF;
+}
+
+.calendarDay {
+  position: relative;
+  padding: 10px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.today {
+  border: 2px solid #4D86FF;
+}
+
+.selected {
+  background-color: #B2E0D9;
+}
+
+.disabled {
+  color: #ccc;
+  pointer-events: none;
+}
+
+.epicBar {
+  position: absolute;
+  bottom: 2px;
+  left: 5%;
+  width: 90%;
+  height: 5px;
+  border-radius: 3px;
+}
+
+.epicColor1 {
+  background-color: #ff6b6b;
+}
+
+.epicColor2 {
+  background-color: #1dd1a1;
+}
+
+.epicColor3 {
+  background-color: #54a0ff;
+}
+
+.epicColor4 {
+  background-color: #feca57;
+}
+
+.toggleButtons {
+  display: flex;
+  justify-content: center;
+  margin: 10px 0;
+}
+
+.toggleButton {
+  padding: 8px 16px;
+  margin: 0 5px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  background-color: #f0f0f0;
+}
+
+.epicColor1 {
+  background-color: #FFDDC1; /* 색상 예시 */
+}
+
+.epicColor2 {
+  background-color: #D3E5FF;
+}
+
+.epicColor3 {
+  background-color: #C1FFD6;
+}
+
+.epicColor4 {
+  background-color: #FFD6FF;
+}
+
+.epicBar {
+  height: 5px;
+  border-radius: 2px;
+  margin-top: 2px;
+}
+
+
