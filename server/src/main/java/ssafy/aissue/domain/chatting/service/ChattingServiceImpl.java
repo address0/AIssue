@@ -4,10 +4,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ssafy.aissue.api.chatting.response.ChatSummaryResponse;
 import ssafy.aissue.common.exception.chatting.ProjectAccessDeniedException;
 import ssafy.aissue.domain.chatting.entity.ChatMessage;
+import ssafy.aissue.domain.chatting.entity.ChatSummary;
 import ssafy.aissue.domain.chatting.entity.Chatting;
 import ssafy.aissue.domain.chatting.repository.ChatMessageRepository;
+import ssafy.aissue.domain.chatting.repository.ChatSummaryRepository;
 import ssafy.aissue.domain.chatting.repository.ChattingRepository;
 import ssafy.aissue.domain.member.entity.Member;
 import ssafy.aissue.domain.member.repository.MemberRepository;
@@ -16,6 +19,7 @@ import ssafy.aissue.domain.project.repository.ProjectMemberRepository;
 import ssafy.aissue.domain.project.repository.ProjectRepository;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +32,7 @@ public class ChattingServiceImpl implements ChattingService {
     private final MemberRepository memberRepository;
     private final ProjectMemberRepository projectMemberRepository;
     private final ChatMessageRepository chatMessageRepository;
+    private final ChatSummaryRepository chatSummaryRepository;
     /**
      * 특정 프로젝트의 채팅 메시지 목록을 가져오는 메서드
      * 프로젝트 접근 권한 확인 후 메시지 반환
@@ -84,5 +89,17 @@ public class ChattingServiceImpl implements ChattingService {
         newMessage.setMemberName(member.getName());
         newMessage.setMessage(messageContent);
         return chatMessageRepository.save(newMessage);
+    }
+
+    /**
+     * 특정 프로젝트의 모든 채팅 요약본 가져오기
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<ChatSummaryResponse> getAllSummariesForProject(String jiraProjectKey) {
+        List<ChatSummary> summaries = chatSummaryRepository.findAllByProjectKeyOrderByDateAsc(jiraProjectKey);
+        return summaries.stream()
+                .map(ChatSummaryResponse::of)
+                .collect(Collectors.toList());
     }
 }
