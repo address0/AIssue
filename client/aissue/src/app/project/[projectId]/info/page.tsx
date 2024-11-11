@@ -2,11 +2,128 @@
 
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 
 export default function InfoPage() {
-  // Assuming we have a variable `projectImage` which contains the URL of the project image
   const projectImage = null; // Replace `null` with the actual project image URL if available
+
+  // Carousel content for "프로젝트 상세" section
+  const carouselContent = [
+    (
+      <table className="min-w-full border border-gray-200 rounded-lg overflow-hidden" key="carousel-content-table">
+        <thead>
+          <tr>
+            <th className="border-b border-gray-200 px-4 py-2 text-left text-gray-600">기능명</th>
+            <th className="border-b border-gray-200 px-4 py-2 text-left text-gray-600">내용</th>
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from({ length: 8 }).map((_, i) => (
+            <tr key={i}>
+              <td className="border-b border-gray-200 px-4 py-2">기능{i + 1}</td>
+              <td className="border-b border-gray-200 px-4 py-2">기능 설명 여기에 추가작업합니다</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    ),
+    (
+      <div className="flex flex-col items-center" key="carousel-content-sprint-schedule">
+        <h3 className="text-lg font-semibold mb-4">Sprint Schedule</h3>
+        <div className="flex space-x-4">
+          <div className="w-1/3 bg-[#B2E0D9] p-4 rounded-lg">
+            <h4 className="text-center font-semibold">Todo</h4>
+            <table className="min-w-full border border-gray-200 rounded-lg overflow-hidden">
+              <thead>
+                <tr>
+                  <th className="border-b border-gray-200 px-4 py-2 text-left text-gray-600">issue title</th>
+                  <th className="border-b border-gray-200 px-4 py-2 text-left text-gray-600">내용</th>
+                </tr>
+              </thead>
+              <tbody>
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <tr key={i}>
+                    <td className="border-b border-gray-200 px-4 py-2">이슈{i + 1}</td>
+                    <td className="border-b border-gray-200 px-4 py-2">이슈 설명</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="w-1/3 bg-[#FACACA] p-4 rounded-lg">
+            <h4 className="text-center font-semibold">In Progress</h4>
+            <table className="min-w-full border border-gray-200 rounded-lg overflow-hidden">
+              <thead>
+                <tr>
+                  <th className="border-b border-gray-200 px-4 py-2 text-left text-gray-600">issue title</th>
+                  <th className="border-b border-gray-200 px-4 py-2 text-left text-gray-600">내용</th>
+                </tr>
+              </thead>
+              <tbody>
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <tr key={i}>
+                    <td className="border-b border-gray-200 px-4 py-2">이슈{i + 1}</td>
+                    <td className="border-b border-gray-200 px-4 py-2">이슈 설명</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="w-1/3 bg-[#C0C0C0] p-4 rounded-lg">
+            <h4 className="text-center font-semibold">Done</h4>
+            <table className="min-w-full border border-gray-200 rounded-lg overflow-hidden">
+              <thead>
+                <tr>
+                  <th className="border-b border-gray-200 px-4 py-2 text-left text-gray-600">issue title</th>
+                  <th className="border-b border-gray-200 px-4 py-2 text-left text-gray-600">내용</th>
+                </tr>
+              </thead>
+              <tbody>
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <tr key={i}>
+                    <td className="border-b border-gray-200 px-4 py-2">이슈{i + 1}</td>
+                    <td className="border-b border-gray-200 px-4 py-2">이슈 설명</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    ),
+    (
+      <div className="flex justify-center items-center h-full" key="carousel-content-overview">
+        <Image src="/img/project_overview.png" alt="Project Overview" width={600} height={400} />
+      </div>
+    ),
+  ];
+
+  const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+
+  const handlePrevSlide = () => {
+    setCurrentSlideIndex((prevIndex) => (prevIndex === 0 ? carouselContent.length - 1 : prevIndex - 1));
+  };
+
+  const handleNextSlide = () => {
+    setCurrentSlideIndex((prevIndex) => (prevIndex === carouselContent.length - 1 ? 0 : prevIndex + 1));
+  };
+
+  // Add keyboard event listeners for arrow keys
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'ArrowLeft') {
+        handlePrevSlide();
+      } else if (event.key === 'ArrowRight') {
+        handleNextSlide();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
@@ -21,7 +138,7 @@ export default function InfoPage() {
               <h2 className="text-lg font-semibold text-[#7498E5]">프로젝트 개요</h2>
               <button className="text-white bg-[#7498E5] px-4 py-2 rounded-lg">수정</button>
             </div>
-            
+
             {/* Project Logo and Details */}
             <div className="flex items-center mb-4 space-x-8">
               <img
@@ -30,24 +147,20 @@ export default function InfoPage() {
                 className="w-16 h-16"
               />
               
-              {/* Project Details in Vertical Layout with Consistent Divider Position */}
               <div className="grid grid-cols-[auto_auto_1fr] gap-x-4 gap-y-4">
-                {/* 프로젝트명 */}
+                {/* Project Details */}
                 <label className="text-gray-600 text-center font-semibold">프로젝트명</label>
                 <div className="h-full border-l border-[#D9D9D9]"></div>
                 <p className="text-gray-800">Alsue</p>
 
-                {/* 주제 */}
                 <label className="text-gray-600 text-center font-semibold">주제</label>
                 <div className="h-full border-l border-[#D9D9D9]"></div>
                 <p className="text-gray-800">AI를 사용한 JIRA 관리 자동화 프로젝트</p>
 
-                {/* 개발 기간 */}
                 <label className="text-gray-600 text-center font-semibold">개발 기간</label>
                 <div className="h-full border-l border-[#D9D9D9]"></div>
                 <p className="text-gray-800">2024-10-14 ~ 2024-11-19</p>
 
-                {/* Tech Stack */}
                 <label className="text-gray-600 text-center font-semibold">Tech</label>
                 <div className="h-full border-l border-[#D9D9D9]"></div>
                 <div className="flex space-x-4">
@@ -68,30 +181,26 @@ export default function InfoPage() {
                     <p className="text-gray-800">Docker, AWS</p>
                   </div>
                 </div>
-
               </div>
             </div>
           </div>
 
-          {/* Project Details Table */}
-          <div className="bg-white p-6 rounded-lg shadow-md">
+          {/* Project Details Carousel */}
+          <div className="bg-white p-6 rounded-lg shadow-md relative">
             <h2 className="text-lg font-semibold mb-4 text-[#54B2A3]">프로젝트 상세</h2>
-            <table className="min-w-full border border-gray-200 rounded-lg overflow-hidden">
-              <thead>
-                <tr>
-                  <th className="border-b border-gray-200 px-4 py-2 text-left text-gray-600">기능명</th>
-                  <th className="border-b border-gray-200 px-4 py-2 text-left text-gray-600">내용</th>
-                </tr>
-              </thead>
-              <tbody>
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <tr key={i}>
-                    <td className="border-b border-gray-200 px-4 py-2">기능{i + 1}</td>
-                    <td className="border-b border-gray-200 px-4 py-2">기능 설명 여기에 추가작업합니다</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            
+            {/* Carousel Navigation */}
+            <button onClick={handlePrevSlide} className="absolute left-0 top-1/2 transform -translate-y-1/2">
+              <Image src="/img/signleftarrow.png" alt="Previous" width={24} height={24} />
+            </button>
+            <button onClick={handleNextSlide} className="absolute right-0 top-1/2 transform -translate-y-1/2">
+              <Image src="/img/signrightarrow.png" alt="Next" width={24} height={24} />
+            </button>
+
+            {/* Display Carousel Content */}
+            <div className="flex justify-center items-center">
+              {carouselContent[currentSlideIndex]}
+            </div>
           </div>
         </div>
 
