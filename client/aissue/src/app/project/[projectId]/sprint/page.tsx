@@ -4,13 +4,28 @@
 import { useState, useRef, useEffect } from 'react'
 import Image from 'next/image'
 import Lottie from 'react-lottie-player'
-import lottieJson from '@public/lottie/Animation - 1730424329200.json'
+import NoEpic from '@public/lottie/Animation - 1730424329200.json'
+import LoadingImg from '@public/lottie/Animation - 1731310411267.json'
+
+interface IssueData {
+  pk: string,
+  summary: string,
+  description: string,
+  issuetype: string,
+  priority: null | string,
+  parent: string,
+  issuelink: null | string,
+  storyPoint: null | string,
+  manager: null | string
+}
 
 export default function SprintPage() {
   const [isSprintPage, setIsSprintPage] = useState(false)
   const [messages, setMessages] = useState<{ user: string; bot: string }[]>([])
   const [input, setInput] = useState('')
+  const [loading, setLoading] = useState(false)
   const chatEndRef = useRef<HTMLDivElement | null>(null)
+  const [parsedData, setParsedData] = useState<IssueData[]>([])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInput(e.target.value)
@@ -25,6 +40,7 @@ export default function SprintPage() {
     const userMessage = input
     setMessages((prev) => [...prev, { user: userMessage, bot: '' }])
     setInput('')
+    setLoading(true)
 
     const response = await fetch('/project/[projectId]/sprint/chat', {
       method: 'POST',
@@ -34,31 +50,55 @@ export default function SprintPage() {
 
     const data = await response.json()
     if (response.ok) {
+      const resultMatch = data?.response?.match(/result:\s*(\[[\s\S]*?\])\s*}/);
+
+      if (resultMatch) {
+        console.log("response: TEXT")
+        let jsonString = resultMatch[1];
+        jsonString = jsonString.replace(/(\w+):/g, '"$1":')
+        try {
+          setParsedData(JSON.parse(jsonString))
+        } catch (error) {
+          console.error("JSON parsing failed:", error);
+        }
+      } else {
+        try {
+          console.log("response: JSON")
+          const jsonData = JSON.parse(data?.response)
+          setParsedData(jsonData?.result);
+        } catch (error) {
+          console.log("JSON 부분을 찾을 수 없습니다.");
+        }
+      }
       setMessages((prev) => {
         const newMessages = [...prev]
-        newMessages[newMessages.length - 1].bot = data.response
+        newMessages[newMessages.length - 1].bot = data?.response
         return newMessages
       })
     } else {
       console.error(data.error)
     }
+    setLoading(false)
   }
 
   useEffect(() => {
     if (chatEndRef.current) {
-      chatEndRef.current.scrollIntoView({ behavior: 'smooth' })
+      chatEndRef?.current?.scrollIntoView({ behavior: 'smooth' })
     }
   }, [messages])
 
+  useEffect(() => {
+    console.log(parsedData)
+  },[parsedData])
+
   if (!isSprintPage) {
-    // Initial UI before switching to SprintPage
     return (
       <div className="flex min-h-screen h-screen overflow-hidden bg-gray-100 w-full">
         <div className="flex-1 p-6 flex flex-col items-center justify-center space-y-6 overflow-hidden">
           <div className="w-[60%] h-[50%] flex justify-center items-center">
             <Lottie
               loop
-              animationData={lottieJson}
+              animationData={NoEpic}
               play
               className="w-full h-full"
             />
@@ -78,7 +118,6 @@ export default function SprintPage() {
     )
   }
 
-  // SprintPage UI after clicking "에픽 생성하기"
   return (
     <div className="flex h-screen overflow-hidden bg-gray-100">
       <div className="flex-1 p-6 overflow-hidden">
@@ -106,21 +145,38 @@ export default function SprintPage() {
           </div>
 
           {/* User Messages and Bot Responses */}
-          {messages.map((msg, index) => (
+          {messages?.map((msg, index) => (
             <div key={index} className="flex flex-col space-y-2">
               <div className="self-end max-w-xs p-3 bg-blue-300 text-gray-700 rounded-[20px_0px_20px_20px]">
-                {msg.user}
+                {msg?.user}
               </div>
-              {msg.bot && (
+              {msg?.bot && (
                 <div className='flex items-start space-x-4'>
                   <Image src="/img/chatbot.png" alt="Chatbot" width={50} height={50} />
-                  <div className="self-start max-w-xs p-3 bg-[#B2E0D9] text-gray-700 rounded-[0px_20px_20px_20px]">
-                    {msg.bot}
+                  <div className='flex flex-col'>
+                    <div className="self-start max-w-xs p-3 bg-[#B2E0D9] text-gray-700 rounded-[0px_20px_20px_20px]">
+                      {parsedData?.length > 0 ? '생성된 이슈는 다음과 같습니다.' : msg?.bot}
+                    </div>
+                    {parsedData?.length > 0 && parsedData?.map((item, index) => (
+                      <li className='text-lg text-gray-700 list-none' key={index}>{item?.summary}</li>
+                    ))}
                   </div>
                 </div>
               )}
             </div>
           ))}
+          {loading && (
+            <div className="flex items-start space-x-4">
+              <Image src="/img/chatbot.png" alt="Chatbot" width={50} height={50} />
+              <Lottie
+                loop
+                animationData={LoadingImg}
+                play
+                className="w-32"
+              />
+              <p className='text-gray-700'>Loading ...</p>
+            </div>
+          )}
           <div ref={chatEndRef} />
         </div>
 
