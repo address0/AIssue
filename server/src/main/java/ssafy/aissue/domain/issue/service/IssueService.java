@@ -1,10 +1,15 @@
 package ssafy.aissue.domain.issue.service;
+import jakarta.transaction.Transactional;
 import ssafy.aissue.api.issue.request.*;
 import ssafy.aissue.api.issue.response.*;
+import ssafy.aissue.api.member.response.MemberJiraIdResponse;
 
 import java.util.List;
 
 public interface IssueService {
+
+    @Transactional
+    MemberJiraIdResponse getJiraEmail();
 
     void createIssue(IssueRequest issueRequest);    // Issue 생성
 
@@ -16,8 +21,8 @@ public interface IssueService {
 
     void linkIssues(IssueLinkRequest issueLinkRequest);     // Issue 종속성 등록
 
-    List<WeeklyIssueResponse> getMonthIssues();  // 이슈 목록
+    List<WeeklyIssueResponse> getMonthlyIssues();
 
-    List<WeeklyIssueResponse> getWeeklyIssues(String email, String jiraKey);
+    List<WeeklyIssueResponse> getWeeklyIssues(String projectKey);
 
 }

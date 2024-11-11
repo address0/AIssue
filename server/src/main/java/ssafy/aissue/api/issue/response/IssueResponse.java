@@ -14,6 +14,7 @@ public class IssueResponse {
     private String status;
     private String priority;
     private String issuetype;
+    private String assignee;
 
     private ParentIssue parent;
     private List<Subtask> subtasks;

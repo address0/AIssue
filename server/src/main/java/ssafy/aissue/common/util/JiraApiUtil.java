@@ -6,11 +6,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.http.*;
+import org.springframework.web.util.UriComponentsBuilder;
 import ssafy.aissue.api.issue.response.IssueResponse;
 import ssafy.aissue.api.issue.response.WeeklyIssueResponse;
 import ssafy.aissue.common.exception.member.InvalidJiraCredentialsException;
 import ssafy.aissue.domain.member.entity.Member;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -62,7 +64,7 @@ public class JiraApiUtil {
         try {
             // JSON 배열의 첫 번째 객체에서 "accountId" 추출
             JsonNode rootNode = objectMapper.readTree(responseBody);
-            if (rootNode.isArray() && rootNode.size() > 0) {
+            if (rootNode.isArray() && !rootNode.isEmpty()) {
                 return rootNode.get(0).get("accountId").asText();
             }
         } catch (Exception e) {
@@ -166,14 +168,23 @@ public class JiraApiUtil {
         return members;
     }
 
-    public List<IssueResponse> fetchWeeklyUserIssues(String email, String jiraKey) {
+    public List<IssueResponse> fetchWeeklyUserIssues(String email, String jiraKey, String projectKey) {
         log.info("[JiraApiUtil] fetchUserIssues >>>> email: {}, jiraKey: {}", email, jiraKey);
-        String jqlQuery = "sprint in openSprints() AND assignee = \"" + email + "\" AND issuetype = \"{Story}\"";
-        String jiraStoryPointField = "customfield_10031";
-        // String jiraSprintField = "customfield_10020";
-        String jiraFields = "id,key,summary,priority,parent,"+jiraStoryPointField;
 
-        String jiraApiUrl = "https://ssafy.atlassian.net/rest/api/2/search?jql="+ jqlQuery +"&fields="+jiraFields;
+        String jqlQuery = "project = \"" + projectKey + "\" AND sprint in openSprints() AND assignee = \"" + email + "\" AND issuetype = \"Story\"";
+        String jiraStoryPointField = "customfield_10031";
+        String jiraFields = "id,key,summary,priority,subtasks,parent,status,issuetype,assignee," + jiraStoryPointField;
+
+        // UriComponentsBuilder를 사용하여 URL을 생성하고 인코딩
+        URI jiraApiUri = UriComponentsBuilder.fromHttpUrl("https://ssafy.atlassian.net/rest/api/2/search")
+                .queryParam("jql", jqlQuery)
+                .queryParam("fields", jiraFields)
+                .build()
+                .encode()  // URI 인코딩 적용
+                .toUri();  // 완전한 URI 객체로 변환
+
+        log.info("jira 요청 주소: {}", jiraApiUri);
+
         String auth = email + ":" + jiraKey;
         String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes());
 
@@ -182,7 +193,7 @@ public class JiraApiUtil {
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         HttpEntity<String> entity = new HttpEntity<>(headers);
-        ResponseEntity<String> response = restTemplate.exchange(jiraApiUrl, HttpMethod.GET, entity, String.class);
+        ResponseEntity<String> response = restTemplate.exchange(jiraApiUri, HttpMethod.GET, entity, String.class);
         log.info("[JiraApiUtil] 유저의 이슈 목록 조회 >>>> response: {}", response);
 
         if (response.getStatusCode() == HttpStatus.OK) {
@@ -193,6 +204,7 @@ public class JiraApiUtil {
             throw new RuntimeException("Failed to fetch user projects from Jira. Response: " + response.getBody());
         }
     }
+
 
     private List<IssueResponse> parseIssuesFromResponse(String responseBody) {
         List<IssueResponse> issues = new ArrayList<>();
@@ -208,7 +220,8 @@ public class JiraApiUtil {
                 String status = issueNode.path("fields").path("status").path("name").asText();
                 String priority = issueNode.path("fields").path("priority").path("name").asText();
                 String issuetype = issueNode.path("fields").path("issuetype").path("name").asText();
-
+                String assignee = issueNode.path("fields").path("assignee").path("displayName").asText();
+//                log.info("이슈 담당자 : " + assignee);
                 IssueResponse.ParentIssue parent = null;
                 if (issueNode.path("fields").has("parent")) {
                     JsonNode parentNode = issueNode.path("fields").path("parent");
@@ -245,12 +258,17 @@ public class JiraApiUtil {
                         .issuetype(issuetype)
                         .parent(parent)
                         .subtasks(subtasks)
+                        .assignee(assignee)
                         .build());
             }
         } catch (Exception e) {
             throw new RuntimeException("Failed to parse issues from response", e);
         }
         return issues;
+    }
+
+    public List<IssueResponse> fetchMonthlyUserIssues(String email, String jiraKey) {
+        return List.of();
     }
 }
 

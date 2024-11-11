@@ -7,7 +7,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import ssafy.aissue.api.CommonResponse;
 import ssafy.aissue.api.issue.request.IssueBatchRequest;
+import ssafy.aissue.api.issue.response.WeeklyIssueResponse;
 import ssafy.aissue.domain.issue.service.IssueService;
+
+import java.util.List;
 
 @Slf4j
 @RestController
@@ -25,10 +28,11 @@ public class IssueController {
         return CommonResponse.ok();
     }
 
-    @Operation(summary = "월간 일정 조회", description = "에픽 일정을 제공합니다.")
-    @GetMapping
-    public CommonResponse<?> getMonthlyIssues() {
-
+    @Operation(summary = "주간 일정 조회", description = "에픽 일정을 제공합니다.")
+    @GetMapping("/weekly")
+    public CommonResponse<List<WeeklyIssueResponse>> getWeeklyIssues(
+            @RequestParam(name = "projectKey") String projectKey) {
+        return CommonResponse.ok(issueService.getWeeklyIssues(projectKey));
     }
 
 }
