@@ -2,7 +2,7 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 
 export default function InfoPage() {
@@ -11,7 +11,7 @@ export default function InfoPage() {
   // Carousel content for "프로젝트 상세" section
   const carouselContent = [
     (
-      <table className="min-w-full border border-gray-200 rounded-lg overflow-hidden">
+      <table className="min-w-full border border-gray-200 rounded-lg overflow-hidden" key="carousel-content-table">
         <thead>
           <tr>
             <th className="border-b border-gray-200 px-4 py-2 text-left text-gray-600">기능명</th>
@@ -29,79 +29,76 @@ export default function InfoPage() {
       </table>
     ),
     (
-      <div className="flex flex-col items-center">
-        <h3 className="text-lg font-semibold mb-4">Sprint 1</h3>
+      <div className="flex flex-col items-center" key="carousel-content-sprint-schedule">
+        <h3 className="text-lg font-semibold mb-4">Sprint Schedule</h3>
         <div className="flex space-x-4">
           <div className="w-1/3 bg-[#B2E0D9] p-4 rounded-lg">
             <h4 className="text-center font-semibold">Todo</h4>
             <table className="min-w-full border border-gray-200 rounded-lg overflow-hidden">
-        <thead>
-          <tr>
-            <th className="border-b border-gray-200 px-4 py-2 text-left text-gray-600">기능명</th>
-            <th className="border-b border-gray-200 px-4 py-2 text-left text-gray-600">내용</th>
-          </tr>
-        </thead>
-        <tbody>
-          {Array.from({ length: 8 }).map((_, i) => (
-            <tr key={i}>
-              <td className="border-b border-gray-200 px-4 py-2">기능{i + 1}</td>
-              <td className="border-b border-gray-200 px-4 py-2">기능 설명 여기에 추가작업합니다</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-            {/* Todo issues go here */}
+              <thead>
+                <tr>
+                  <th className="border-b border-gray-200 px-4 py-2 text-left text-gray-600">issue title</th>
+                  <th className="border-b border-gray-200 px-4 py-2 text-left text-gray-600">내용</th>
+                </tr>
+              </thead>
+              <tbody>
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <tr key={i}>
+                    <td className="border-b border-gray-200 px-4 py-2">이슈{i + 1}</td>
+                    <td className="border-b border-gray-200 px-4 py-2">이슈 설명</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
           <div className="w-1/3 bg-[#FACACA] p-4 rounded-lg">
             <h4 className="text-center font-semibold">In Progress</h4>
             <table className="min-w-full border border-gray-200 rounded-lg overflow-hidden">
-        <thead>
-          <tr>
-            <th className="border-b border-gray-200 px-4 py-2 text-left text-gray-600">기능명</th>
-            <th className="border-b border-gray-200 px-4 py-2 text-left text-gray-600">내용</th>
-          </tr>
-        </thead>
-        <tbody>
-          {Array.from({ length: 8 }).map((_, i) => (
-            <tr key={i}>
-              <td className="border-b border-gray-200 px-4 py-2">기능{i + 1}</td>
-              <td className="border-b border-gray-200 px-4 py-2">기능 설명 여기에 추가작업합니다</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-            {/* In Progress issues go here */}
+              <thead>
+                <tr>
+                  <th className="border-b border-gray-200 px-4 py-2 text-left text-gray-600">issue title</th>
+                  <th className="border-b border-gray-200 px-4 py-2 text-left text-gray-600">내용</th>
+                </tr>
+              </thead>
+              <tbody>
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <tr key={i}>
+                    <td className="border-b border-gray-200 px-4 py-2">이슈{i + 1}</td>
+                    <td className="border-b border-gray-200 px-4 py-2">이슈 설명</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
           <div className="w-1/3 bg-[#C0C0C0] p-4 rounded-lg">
             <h4 className="text-center font-semibold">Done</h4>
             <table className="min-w-full border border-gray-200 rounded-lg overflow-hidden">
-        <thead>
-          <tr>
-            <th className="border-b border-gray-200 px-4 py-2 text-left text-gray-600">기능명</th>
-            <th className="border-b border-gray-200 px-4 py-2 text-left text-gray-600">내용</th>
-          </tr>
-        </thead>
-        <tbody>
-          {Array.from({ length: 8 }).map((_, i) => (
-            <tr key={i}>
-              <td className="border-b border-gray-200 px-4 py-2">기능{i + 1}</td>
-              <td className="border-b border-gray-200 px-4 py-2">기능 설명 여기에 추가작업합니다</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-            {/* Done issues go here */}
+              <thead>
+                <tr>
+                  <th className="border-b border-gray-200 px-4 py-2 text-left text-gray-600">issue title</th>
+                  <th className="border-b border-gray-200 px-4 py-2 text-left text-gray-600">내용</th>
+                </tr>
+              </thead>
+              <tbody>
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <tr key={i}>
+                    <td className="border-b border-gray-200 px-4 py-2">이슈{i + 1}</td>
+                    <td className="border-b border-gray-200 px-4 py-2">이슈 설명</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
     ),
     (
-      <div className="flex justify-center items-center h-full">
+      <div className="flex justify-center items-center h-full" key="carousel-content-overview">
         <Image src="/img/project_overview.png" alt="Project Overview" width={600} height={400} />
       </div>
     ),
   ];
-  
+
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
 
   const handlePrevSlide = () => {
@@ -111,6 +108,22 @@ export default function InfoPage() {
   const handleNextSlide = () => {
     setCurrentSlideIndex((prevIndex) => (prevIndex === carouselContent.length - 1 ? 0 : prevIndex + 1));
   };
+
+  // Add keyboard event listeners for arrow keys
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'ArrowLeft') {
+        handlePrevSlide();
+      } else if (event.key === 'ArrowRight') {
+        handleNextSlide();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
