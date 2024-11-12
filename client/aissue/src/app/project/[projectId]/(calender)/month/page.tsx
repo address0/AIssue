@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -159,10 +162,11 @@ const CalendarComponent = () => {
   useEffect(() => {
     const toolbarChunks = document.querySelectorAll('.fc-toolbar-chunk');
     if (toolbarChunks[1]) {  // 두 번째 요소가 있는지 확인
-      toolbarChunks[1].style.display = 'flex';
-      toolbarChunks[1].style.alignItems = 'center';
-      toolbarChunks[1].style.gap = '10px';
-      toolbarChunks[1].style.justifyContent = 'center'; // 가운데 정렬
+      const toolbarElement = toolbarChunks[1] as HTMLElement; // Cast to HTMLElement
+      toolbarElement.style.display = 'flex';
+      toolbarElement.style.alignItems = 'center';
+      toolbarElement.style.gap = '10px';
+      toolbarElement.style.justifyContent = 'center'; // 가운데 정렬
     }
   }, [events]); // `events`가 업데이트될 때마다 실행
   
