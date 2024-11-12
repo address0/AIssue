@@ -33,6 +33,20 @@ interface Issue {
   status: 'To Do' | 'In Progress' | 'Done'; // 특정 값만 허용하도록 제한
 }
 
+interface ProjectData {
+  JiraID: string;
+  name: string;
+  description: string;
+  startDate: string;
+  endDate: string;
+  techStack: string;
+  feSkill: string;
+  beSkill: string;
+  infraSkill: string;
+  projectImagePath: string | File;
+  deleteImage: boolean;
+}
+
 const getWeeklyStories = async (projectKey: string): Promise<Story[]> => {
   const res = await privateAPI.get(`/issues/weekly?project=${projectKey}`);
   const issues: Issue[] = res.data.result;
@@ -63,4 +77,30 @@ const getProjectInfo = async (jiraProjectKey: string) => {
   return res.data.result;
 };
 
-export { getProjectList, getWeeklyStories, getProjectInfo };
+const createProject = async (projectData: ProjectData) => {
+  const formData = new FormData();
+  
+  // 폼 데이터에 필드 추가
+  formData.append('JiraID', projectData.JiraID);
+  formData.append('name', projectData.name);
+  formData.append('description', projectData.description);
+  formData.append('startDate', projectData.startDate);
+  formData.append('endDate', projectData.endDate);
+  formData.append('techStack', projectData.techStack);
+  formData.append('feSkill', projectData.feSkill);
+  formData.append('beSkill', projectData.beSkill);
+  formData.append('infraSkill', projectData.infraSkill);
+  formData.append('projectImagePath', projectData.projectImagePath);
+  formData.append('deleteImage', projectData.deleteImage.toString());
+
+  // Axios를 통해 POST 요청 전송
+  const res = await privateAPI.post('/project', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  
+  return res.data;
+};
+
+export { getProjectList, getWeeklyStories, getProjectInfo, createProject };
