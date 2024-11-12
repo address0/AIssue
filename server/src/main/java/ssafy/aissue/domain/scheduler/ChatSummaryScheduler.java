@@ -46,7 +46,7 @@ public class ChatSummaryScheduler {
 
         messagesByProjectKey.forEach((projectKey, projectMessages) -> {
             String combinedMessages = projectMessages.stream()
-                    .map(ChatMessage::getMessage)
+                    .map(msg -> msg.getMemberName() + ": " + msg.getMessage())
                     .collect(Collectors.joining("\n"));
             ChatbotCommand command = new ChatbotCommand(combinedMessages);
 
