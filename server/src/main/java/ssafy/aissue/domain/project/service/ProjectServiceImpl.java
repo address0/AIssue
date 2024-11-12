@@ -62,10 +62,8 @@ public class ProjectServiceImpl implements ProjectService {
         if (!command.deleteImage()) {
             imageUrl = handleProjectImage(profileImageFile, command.jiraId(), currentProject.getProjectImage());
         }
-        log.info("[ProjectService] 프로젝트 이미지 URL: {}", imageUrl);
-        String preSignedUrl = generatePreSignedUrl(imageUrl);
-        log.info("[ProjectService] 프로젝트 이미지 PreSigned URL: {}", preSignedUrl);
 
+        String preSignedUrl = generatePreSignedUrl(imageUrl);
 
         String updatedTitle = getUpdatedField(command.name(), currentProject.getTitle());
         String updatedDescription = getUpdatedField(command.description(), currentProject.getDescription());

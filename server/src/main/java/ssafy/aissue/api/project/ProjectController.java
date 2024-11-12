@@ -2,6 +2,7 @@ package ssafy.aissue.api.project;
 
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +17,7 @@ import ssafy.aissue.domain.project.service.ProjectService;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/project")
+@Tag(name = "Project", description = "프로젝트관리")
 public class ProjectController {
 
     private final ProjectService projectService;
@@ -31,7 +33,7 @@ public class ProjectController {
 
     @PreAuthorize("hasRole('ROLE_MEMBER')")
     @Operation(summary = "프로젝트 정보 수정", description = "프로젝트 정보를 수정하는 API입니다.")
-    @PutMapping(value = "/project", consumes = { "multipart/form-data" })
+    @PutMapping(consumes = { "multipart/form-data" })
     public CommonResponse<ProjectDetailsResponse> updateProject(@ModelAttribute @Validated ProjectUpdateRequest request ) {
         log.info("[ProjectController] 프로젝트 정보 수정 >>>> request: {}", request);
         ProjectDetailsResponse response = projectService.updateProject(request.toCommand());
