@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import ChatModal from '@/components/(Modal)/ChatModal/page';
 import { getWeeklyStories } from '@/api/project';
+import Image from 'next/image';
 
 interface Task {
   title: string;
@@ -29,7 +30,7 @@ export default function WeekPage() {
   const pathname = usePathname();
   const projectId = pathname.split('/')[2];
 
-  const { data: stories = [], isLoading } = useQuery({
+  const { data: stories = [] as Story[], isLoading } = useQuery({
     queryKey: ['weeklyStories', projectId],
     queryFn: () => getWeeklyStories(projectId),
     enabled: !!projectId,
@@ -151,11 +152,11 @@ export default function WeekPage() {
           <div style={{ width: '70%', minWidth: '700px', border: '2px solid #54B2A3' }} className="bg-white p-4 rounded-lg shadow-md">
             <div className="flex justify-center items-center space-x-2">
               <button onClick={() => setWeekOffset(weekOffset - 1)} style={{ width: '24px', height: '24px' }}>
-                <img src="/img/weekleftarrow.png" alt="Previous Week" style={{ width: '100%', height: '100%' }} />
+                <Image src="/img/weekleftarrow.png" alt="Previous Week" width={24} height={24} />
               </button>
               <h3 className="text-2xl font-semibold text-[#54B2A3] mx-2">{`${currentMonth} ${currentWeek}주차`}</h3>
               <button onClick={() => setWeekOffset(weekOffset + 1)} style={{ width: '24px', height: '24px' }}>
-                <img src="/img/weekrightarrow.png" alt="Next Week" style={{ width: '100%', height: '100%' }} />
+                <Image src="/img/weekrightarrow.png" alt="Next Week" width={24} height={24} />
               </button>
             </div>
 
@@ -235,7 +236,7 @@ export default function WeekPage() {
         </div>
 
         <button onClick={toggleChat} className="fixed bottom-8 right-8 w-12 h-12 rounded-full bg-[#54B2A3] flex items-center justify-center shadow-lg">
-          <img src="/img/chaticongreen.png" alt="Chat Icon" className="w-6 h-6" />
+          <Image src="/img/chaticongreen.png" alt="Chat Icon" width={24} height={24} />
         </button>
 
         {isChatOpen && (
