@@ -5,9 +5,9 @@ import Image from 'next/image'
 import Sidebar from '@/components/(Navbar)/Sidebar/Sidebar'
 import Lottie from 'react-lottie-player'
 import lottieJson from '@public/lottie/Animation - 1730424329200.json'
-import highImg from '@public/img/high.png'
-import mediumImg from '@public/img/medium.png'
-import lowImg from '@public/img/low.png'
+// import highImg from '@public/img/high.png'
+// import mediumImg from '@public/img/medium.png'
+// import lowImg from '@public/img/low.png'
 
 interface IssueData {
   pk: string,

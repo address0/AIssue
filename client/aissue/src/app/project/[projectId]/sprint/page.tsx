@@ -83,6 +83,7 @@ export default function SprintPage() {
           setParsedData(jsonData?.result);
         } catch (error) {
           console.log("JSON 부분을 찾을 수 없습니다.");
+          console.log(error)
         }
       }
     } else {
