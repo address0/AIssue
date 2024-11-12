@@ -11,15 +11,17 @@ public interface IssueService {
     @Transactional
     MemberJiraIdResponse getJiraEmail();
 
-    void createIssue(IssueRequest issueRequest);    // Issue 생성
+    String createIssue(IssueRequest issueRequest);    // Issue 생성
 
-    void createBatchIssue(IssueBatchRequest issueBatchRequest); // 여러 개의 Issue 생성
+    String createBatchIssue(IssueBatchRequest issueBatchRequest); // 여러 개의 Issue 생성
 
-    void updateIssues(IssueUpdateRequest issueUpdateRequest);   // Issue 수정
+    String updateIssues(IssueUpdateRequest issueUpdateRequest);   // Issue 수정
 
-    void deleteIssue(IssueDeleteRequest issueDeleteRequest);    // Issue 삭제
+    String deleteIssue(IssueDeleteRequest issueDeleteRequest);    // Issue 삭제
 
-    void linkIssues(IssueLinkRequest issueLinkRequest);     // Issue 종속성 등록
+    String linkIssues(IssueLinkRequest issueLinkRequest);     // Issue 종속성 등록
+
+    String updateIssueSchedule(IssueScheduleRequest issueScheduleRequest);
 
     List<MonthlyIssueResponse> getMonthlyIssues(String projectKey);
 
