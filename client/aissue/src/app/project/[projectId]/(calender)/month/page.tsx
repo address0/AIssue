@@ -23,21 +23,33 @@ interface CalendarEvent {
   borderColor?: string;
 }
 
+
+
 const CalendarComponent = () => {
+  const calendarRef = useRef<FullCalendar | null>(null);
+    // 현재 활성화된 뷰 상태 추가
+    const [activeView, setActiveView] = useState('dayGridMonth');
+
   const [events, setEvents] = useState<CalendarEvent[]>([
-    { title: '예시 이벤트', date: '2024-11-15' },
+    // { title: '예시 이벤트', date: '2024-11-15' },
   ]);
 
   const [tasks, setTasks] = useState([
     { title: '작업 1', color: '#FFB6C1' },
     { title: '작업 2', color: '#FF7F50' },
     { title: '작업 3', color: '#87CEFA' },
+    { title: '작업 4', color: '#87CEFA' },
+    { title: '작업 5', color: '#87CEFA' },
+    { title: '작업 6', color: '#87CEFA' },
+    { title: '작업 7', color: '#87CEFA' },
+    { title: '작업 8', color: '#87CEFA' },
   ]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newEventTitle, setNewEventTitle] = useState('');
   const [newEventColor, setNewEventColor] = useState('#3788d8');
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [isAllDay, setIsAllDay] = useState(true); // Add all-day flag
 
   useEffect(() => {
     const containerEl = document.getElementById('external-events');
@@ -59,6 +71,7 @@ const CalendarComponent = () => {
 
   const handleDateClick = (info: DateClickArg) => {
     setSelectedDate(info.date);
+    setIsAllDay(activeView === 'dayGridMonth'); // Set all-day flag based on view
     setIsModalOpen(true);
   };
 
@@ -70,7 +83,7 @@ const CalendarComponent = () => {
       const newEvent: CalendarEvent = {
         title: newEventTitle,
         start: selectedDate,
-        allDay: true,
+        allDay: isAllDay,
         backgroundColor: newEventColor,
         borderColor: newEventColor,
       };
@@ -87,12 +100,14 @@ const CalendarComponent = () => {
   };
 
   const handleEventReceive = (info: any) => {
-    info.event.setAllDay(true);
-
+    // info.event.setAllDay(true);
+    const isAllDayEvent = activeView === 'dayGridMonth';
+    console.log(isAllDayEvent)
     const newEvent: CalendarEvent = {
       title: info.event.title,
       start: info.event.start,
-      allDay: true,
+      // allDay: true,
+      allDay: isAllDayEvent,
       backgroundColor: info.event.backgroundColor,
       borderColor: info.event.borderColor,
     };
@@ -161,26 +176,170 @@ const CalendarComponent = () => {
 
   useEffect(() => {
     const toolbarChunks = document.querySelectorAll('.fc-toolbar-chunk');
-    if (toolbarChunks[1]) {  // 두 번째 요소가 있는지 확인
-      const toolbarElement = toolbarChunks[1] as HTMLElement; // Cast to HTMLElement
+    const title = document.querySelector('.fc-toolbar-title');
+    const month = document.querySelector('.fc-customMonth-button');
+    const week = document.querySelector('.fc-customWeek-button');
+    const day = document.querySelector('.fc-customDay-button');
+
+
+    if (title) {
+      const titleElement = title as HTMLElement;
+      titleElement.style.margin ='2px 5px';
+      titleElement.style.color ='#4D86FF';
+      titleElement.style.fontWeight='bold';
+    }
+    if (month) {
+      const monthElement = month as HTMLElement;
+      monthElement.style.background = 'transparent';
+      monthElement.style.border = '2px solid';
+      monthElement.style.color = '#7498E5';
+      monthElement.style.fontWeight = 'bold';
+      monthElement.style.fontSize = '1rem'; // Increase font size
+      monthElement.style.padding = '5px'; // Remove padding
+      monthElement.style.margin = '0 5px'; // Add spacing
+      monthElement.style.cursor = 'pointer'; // Change cursor to pointer
+    }
+    if (week) {
+      const weekElement = week as HTMLElement;
+      weekElement.style.background = 'transparent';
+      weekElement.style.border = '2px solid';
+      weekElement.style.color = '#7498E5';
+      weekElement.style.fontWeight = 'bold';
+      weekElement.style.fontSize = '1rem'; // Increase font size
+      weekElement.style.padding = '5px'; // Remove padding
+      weekElement.style.margin = '0 5px'; // Add spacing
+      weekElement.style.cursor = 'pointer'; // Change cursor to pointer
+    }
+    if (day) {
+      const dayElement = day as HTMLElement;
+      dayElement.style.background = 'transparent';
+      dayElement.style.border = '2px solid';
+      dayElement.style.color = '#7498E5';
+      dayElement.style.fontWeight = 'bold';
+      dayElement.style.fontSize = '1rem'; // Increase font size
+      dayElement.style.padding = '5px'; // Remove padding
+      dayElement.style.margin = '0 5px'; // Add spacing
+      dayElement.style.cursor = 'pointer'; // Change cursor to pointer
+    }
+
+    if (toolbarChunks[1]) {  // Ensure the second toolbar chunk exists
+      const toolbarElement = toolbarChunks[1] as HTMLElement;
+      
+      // Center align toolbar elements
       toolbarElement.style.display = 'flex';
       toolbarElement.style.alignItems = 'center';
       toolbarElement.style.gap = '10px';
-      toolbarElement.style.justifyContent = 'center'; // 가운데 정렬
+      toolbarElement.style.justifyContent = 'center';
     }
-  }, [events]); // `events`가 업데이트될 때마다 실행
+  
+    // Apply custom styling to 'prev', 'next', and 'today' buttons
+    const customButtons = ['.fc-prevButton-button', '.fc-nextButton-button', '.fc-todayButton-button'];
+    customButtons.forEach(selector => {
+      const button = document.querySelector(selector) as HTMLElement;
+      if (button) {
+        button.style.background = 'transparent'; // Remove background color
+        button.style.border = 'none'; // Remove border
+        button.style.color = '#7498E5'; // Set custom color
+        button.style.fontWeight = 'bold'; // Set font weight to bold
+        button.style.fontSize = '1.2rem'; // Increase font size
+        button.style.padding = '0'; // Remove padding
+        button.style.margin = '0 5px'; // Add spacing
+        button.style.cursor = 'pointer'; // Change cursor to pointer
+      }
+    });
+
+    // const customTime = ['.fc-customMonth-button', '.fc-customWeek-button', '.fc-customDay-button'];
+    // customTime.forEach(selector => {
+    //   const Time = document.querySelector(selector) as HTMLElement;
+    //   if (Time) {
+    //     Time.style.background = 'transparent'; // Remove background color
+    //     Time.style.border = '2px solid'; // Remove border
+    //     Time.style.color = '#7498E5'; // Set custom color
+    //     Time.style.fontWeight = 'bold'; // Set font weight to bold
+    //     Time.style.fontSize = '1rem'; // Increase font size
+    //     Time.style.padding = '10px'; // Remove padding
+    //     Time.style.margin = '0 5px'; // Add spacing
+    //     Time.style.cursor = 'pointer'; // Change cursor to pointer
+    //   }
+    // });
+  }, [events]);
   
   return (
-    <div className="flex h-screen bg-gray-100 p-6 space-x-4">
+    <div className="flex min-h-screen overflow-auto bg-gray-100 p-6 space-x-4">
       <div className="flex-1 bg-white rounded-lg shadow p-6">
         <FullCalendar
+        ref={calendarRef}
           locale="ko"
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
           initialView="dayGridMonth"
+          height="auto"
           headerToolbar={{
-            left: 'today',
-            center: 'prev title next',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay',
+            left: 'todayButton',
+            center: 'prevButton title nextButton',
+            right: 'customMonth customWeek customDay',
+          }}
+          customButtons={{
+            todayButton: {
+              text: 'Today', // Change 'Today' button text to '오늘'
+              click: () => {
+                if (calendarRef.current) {
+                  calendarRef.current.getApi().today(); // Move to today’s date
+                }
+              },
+            },
+            prevButton: {
+              text: '◀', // Replace with your desired icon or custom HTML
+              click: () => {
+                if (calendarRef.current) {
+                  calendarRef.current.getApi().prev();
+                }
+              },
+            },
+            nextButton: {
+              text: '▶', // Replace with your desired icon or custom HTML
+              click: () => {
+                if (calendarRef.current) {
+                  calendarRef.current.getApi().next();
+                }
+              },
+            },
+            customMonth: {
+              text: 'Month',
+              click: () => {
+                if (calendarRef.current) {
+                  calendarRef.current.getApi().changeView('dayGridMonth');
+                  setActiveView('dayGridMonth');
+                }
+              },
+            },
+            customWeek: {
+              text: 'Week',
+              click: () => {
+                if (calendarRef.current) {
+                  calendarRef.current.getApi().changeView('timeGridWeek');
+                  setActiveView('timeGridWeek');
+                }
+              },
+            },
+            customDay: {
+              text: 'Day',
+              click: () => {
+                if (calendarRef.current) {
+                  calendarRef.current.getApi().changeView('timeGridDay');
+                  setActiveView('timeGridDay');
+                }
+              },
+            },
+          }}
+          views={{
+            timeGridWeek: {
+              slotMinTime: "09:00:00", // 오전 9시부터 시작
+              slotMaxTime: "18:00:00", // 오후 6시까지만 표시
+            },
+            timeGridDay: {
+              slotMinTime: "09:00:00", // 오전 9시부터 시작
+              slotMaxTime: "18:00:00", // 오후 6시까지만 표시
+            },
           }}
           selectable={true}
           editable={true}
@@ -194,8 +353,8 @@ const CalendarComponent = () => {
           eventClick={handleEventClick}
         />
       </div>
-      <div id="external-events" className="w-1/4 bg-white rounded-lg shadow p-4">
-        <h3 className="text-lg font-bold text-blue-600 mb-4">할 일 목록</h3>
+      <div id="external-events" className="w-1/4 bg-white rounded-lg shadow p-4 h-full flex flex-col">
+        <h3 className="text-lg font-bold text-blue-600 mb-4 text-center">Story List</h3>
         {tasks.map((task, index) => (
           <div
             key={index}
