@@ -7,7 +7,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ssafy.aissue.api.CommonResponse;
 import ssafy.aissue.api.member.request.MemberSignupRequest;
@@ -42,7 +41,7 @@ public class MemberController {
     }
 
     @PreAuthorize("hasRole('ROLE_MEMBER')")
-    @Operation(summary = "회원 JiraId 조회", description = "회원의 Jira Id를 조회하는 API입니다.")
+    @Operation(summary = "회원의 JiraId 조회", description = "회원의 Jira Id를 조회하는 API입니다.")
     @GetMapping("/jiraId")
     public CommonResponse<MemberJiraIdResponse> getMemberJiraId() {
         log.info("[PlayerController] 회원 JiraId 조회");
@@ -51,7 +50,7 @@ public class MemberController {
     }
 
     @PreAuthorize("hasRole('ROLE_MEMBER')")
-    @Operation(summary = "회원의 프로젝트 ID 조회", description = "회원이 참여 중인 모든 프로젝트의 ID를 조회합니다.")
+    @Operation(summary = "회원이 참가중인 프로젝트들의 ID 조회", description = "회원이 참여 중인 모든 프로젝트의 ID를 조회합니다.")
     @GetMapping("/projects")
     public CommonResponse<MemberProjectIdsResponse> getMemberProjects() {
         log.info("[MemberController] 회원 프로젝트 조회");

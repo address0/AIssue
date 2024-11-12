@@ -32,7 +32,7 @@ public class S3Util {
     private final S3Properties s3Properties;
     private final S3Presigner s3Presigner;
 
-    private static @NotNull String getS3FileName(MultipartFile image, Long memberId, String location) {
+    private static @NotNull String getS3FileName(MultipartFile image, String memberId, String location) {
         String originalFilename = image.getOriginalFilename();
         String extension = "";
 
@@ -47,7 +47,7 @@ public class S3Util {
         return location + memberId + extension;
     }
 
-    public String uploadImageToS3(MultipartFile image, Long memberId, String location) {
+    public String uploadImageToS3(MultipartFile image, String memberId, String location) {
         if (image == null || image.isEmpty()) {
             return null;
         }
@@ -63,7 +63,7 @@ public class S3Util {
 
     public String getPresignedUrlFromS3(String imagePath) {
         try {
-            String objectKey = imagePath.replace("https://ddada-image.s3.ap-northeast-2.amazonaws.com/", "");
+            String objectKey = imagePath.replace("https://aissue-image.s3.ap-northeast-2.amazonaws.com/", "");
 
             GetObjectRequest getObjectRequest = GetObjectRequest.builder()
                     .bucket(s3Properties.s3().bucket())
