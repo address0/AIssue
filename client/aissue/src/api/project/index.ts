@@ -45,4 +45,9 @@ const getWeeklyStories = async (projectKey: string): Promise<Story[]> => {
   }));
 };
 
-export { getProjectList, getWeeklyStories };
+const getProjectInfo = async (jiraProjectKey: string) => {
+  const res = await privateAPI.get(`/project/${jiraProjectKey}`);
+  return res.data.result;
+};
+
+export { getProjectList, getWeeklyStories, getProjectInfo };
