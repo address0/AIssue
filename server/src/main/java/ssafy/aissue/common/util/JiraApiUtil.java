@@ -6,9 +6,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.http.*;
+import org.springframework.web.util.UriComponentsBuilder;
+import ssafy.aissue.api.issue.response.IssueResponse;
+import ssafy.aissue.api.issue.response.WeeklyIssueResponse;
 import ssafy.aissue.common.exception.member.InvalidJiraCredentialsException;
 import ssafy.aissue.domain.member.entity.Member;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -60,7 +64,7 @@ public class JiraApiUtil {
         try {
             // JSON 배열의 첫 번째 객체에서 "accountId" 추출
             JsonNode rootNode = objectMapper.readTree(responseBody);
-            if (rootNode.isArray() && rootNode.size() > 0) {
+            if (rootNode.isArray() && !rootNode.isEmpty()) {
                 return rootNode.get(0).get("accountId").asText();
             }
         } catch (Exception e) {
@@ -164,4 +168,176 @@ public class JiraApiUtil {
         return members;
     }
 
+    public List<IssueResponse> fetchWeeklyUserIssues(String email, String jiraKey, String projectKey) {
+        log.info("[JiraApiUtil] fetchUserIssues >>>> email: {}, jiraKey: {}", email, jiraKey);
+
+        String jqlQuery = "project = \"" + projectKey + "\" AND sprint in openSprints() AND assignee = \"" + email + "\" AND issuetype = \"Story\"";
+        String jiraStoryPointField = "customfield_10031";
+        String jiraFields = "id,key,summary,priority,subtasks,parent,status,issuetype,assignee," + jiraStoryPointField;
+
+        // UriComponentsBuilder를 사용하여 URL을 생성하고 인코딩
+        URI jiraApiUri = UriComponentsBuilder.fromHttpUrl("https://ssafy.atlassian.net/rest/api/2/search")
+                .queryParam("jql", jqlQuery)
+                .queryParam("fields", jiraFields)
+                .build()
+                .encode()  // URI 인코딩 적용
+                .toUri();  // 완전한 URI 객체로 변환
+
+        log.info("jira 요청 주소: {}", jiraApiUri);
+
+        String auth = email + ":" + jiraKey;
+        String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes());
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "Basic " + encodedAuth);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+        ResponseEntity<String> response = restTemplate.exchange(jiraApiUri, HttpMethod.GET, entity, String.class);
+        log.info("[JiraApiUtil] 유저의 이슈 목록 조회 >>>> response: {}", response);
+
+        if (response.getStatusCode() == HttpStatus.OK) {
+            log.info("[JiraApiUtil] 유저의 이슈 목록 조회 성공: {}", response.getBody());
+            return parseIssuesFromResponse(response.getBody());
+        } else {
+            log.error("[JiraApiUtil] 유저의 이슈 목록 조회 실패. 상태 코드: {}, 응답 본문: {}", response.getStatusCode(), response.getBody());
+            throw new RuntimeException("Failed to fetch user projects from Jira. Response: " + response.getBody());
+        }
+    }
+
+
+    private List<IssueResponse> parseIssuesFromResponse(String responseBody) {
+        List<IssueResponse> issues = new ArrayList<>();
+        // String jiraStoryPointField = "customfield_10031";
+        try {
+            JsonNode root = objectMapper.readTree(responseBody);
+            JsonNode issuesNode = root.path("issues");
+
+            for (JsonNode issueNode : issuesNode) {
+                Long id = issueNode.path("id").asLong();
+                String key = issueNode.path("key").asText();
+                String summary = issueNode.path("fields").path("summary").asText();
+                String status = issueNode.path("fields").path("status").path("name").asText();
+                String priority = issueNode.path("fields").path("priority").path("name").asText();
+                String issuetype = issueNode.path("fields").path("issuetype").path("name").asText();
+                String assignee = issueNode.path("fields").path("assignee").path("displayName").asText();
+//                log.info("이슈 담당자 : " + assignee);
+                IssueResponse.ParentIssue parent = null;
+                if (issueNode.path("fields").has("parent")) {
+                    JsonNode parentNode = issueNode.path("fields").path("parent");
+                    parent = IssueResponse.ParentIssue.builder()
+                            .id(parentNode.path("id").asLong())
+                            .key(parentNode.path("key").asText())
+                            .summary(parentNode.path("fields").path("summary").asText())
+                            .status(parentNode.path("fields").path("status").path("name").asText())
+                            .priority(parentNode.path("fields").path("priority").path("name").asText())
+                            .issuetype(parentNode.path("fields").path("issuetype").path("name").asText())
+                            .build();
+                }
+
+                List<IssueResponse.Subtask> subtasks = new ArrayList<>();
+                if (issueNode.path("fields").has("subtasks")) {
+                    for (JsonNode subtaskNode : issueNode.path("fields").path("subtasks")) {
+                        subtasks.add(IssueResponse.Subtask.builder()
+                                .id(subtaskNode.path("id").asLong())
+                                .key(subtaskNode.path("key").asText())
+                                .summary(subtaskNode.path("fields").path("summary").asText())
+                                .status(subtaskNode.path("fields").path("status").path("name").asText())
+                                .priority(subtaskNode.path("fields").path("priority").path("name").asText())
+                                .issuetype(subtaskNode.path("fields").path("issuetype").path("name").asText())
+                                .build());
+                    }
+                }
+
+                issues.add(IssueResponse.builder()
+                        .id(id)
+                        .key(key)
+                        .summary(summary)
+                        .status(status)
+                        .priority(priority)
+                        .issuetype(issuetype)
+                        .parent(parent)
+                        .subtasks(subtasks)
+                        .assignee(assignee)
+                        .build());
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to parse issues from response", e);
+        }
+        return issues;
+    }
+
+    public List<IssueResponse> fetchMonthlyUserIssues(String email, String jiraKey, String projectKey) {
+        log.info("[JiraApiUtil] fetchUserIssues >>>> email: {}, jiraKey: {}", email, jiraKey);
+
+        String jqlQuery = "project = \"" + projectKey + "\" " + " AND issuetype = \"Epic\"";
+        String jiraStoryPointField = "customfield_10031";
+        String jiraFields = "id,key,summary,priority,subtasks,status,issuetype,assignee," + jiraStoryPointField;
+
+        // UriComponentsBuilder를 사용하여 URL을 생성하고 인코딩
+        URI jiraApiUri = UriComponentsBuilder.fromHttpUrl("https://ssafy.atlassian.net/rest/api/2/search")
+                .queryParam("jql", jqlQuery)
+                .queryParam("fields", jiraFields)
+                .build()
+                .encode()  // URI 인코딩 적용
+                .toUri();  // 완전한 URI 객체로 변환
+
+        log.info("jira 요청 주소: {}", jiraApiUri);
+
+        String auth = email + ":" + jiraKey;
+        String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes());
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "Basic " + encodedAuth);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+        ResponseEntity<String> response = restTemplate.exchange(jiraApiUri, HttpMethod.GET, entity, String.class);
+        log.info("[JiraApiUtil] 유저의 이슈 목록 조회 >>>> response: {}", response);
+
+        if (response.getStatusCode() == HttpStatus.OK) {
+            log.info("[JiraApiUtil] 유저의 이슈 목록 조회 성공: {}", response.getBody());
+            return parseMonthlyIssuesFromResponse((response.getBody()));
+        } else {
+            log.error("[JiraApiUtil] 유저의 이슈 목록 조회 실패. 상태 코드: {}, 응답 본문: {}", response.getStatusCode(), response.getBody());
+            throw new RuntimeException("Failed to fetch user projects from Jira. Response: " + response.getBody());
+        }
+    }
+
+    private List<IssueResponse> parseMonthlyIssuesFromResponse(String responseBody) {
+        List<IssueResponse> issues = new ArrayList<>();
+        // String jiraStoryPointField = "customfield_10031";
+        try {
+            JsonNode root = objectMapper.readTree(responseBody);
+            JsonNode issuesNode = root.path("issues");
+
+            for (JsonNode issueNode : issuesNode) {
+                Long id = issueNode.path("id").asLong();
+                String key = issueNode.path("key").asText();
+                String summary = issueNode.path("fields").path("summary").asText();
+                String status = issueNode.path("fields").path("status").path("name").asText();
+                String priority = issueNode.path("fields").path("priority").path("name").asText();
+                String issuetype = issueNode.path("fields").path("issuetype").path("name").asText();
+                String assignee = issueNode.path("fields").path("assignee").path("displayName").asText();
+//                log.info("이슈 담당자 : " + assignee);
+
+
+                issues.add(IssueResponse.builder()
+                        .id(id)
+                        .key(key)
+                        .summary(summary)
+                        .status(status)
+                        .priority(priority)
+                        .issuetype(issuetype)
+                        .assignee(assignee)
+                        .build());
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to parse issues from response", e);
+        }
+        return issues;
+    }
+
+
 }
+

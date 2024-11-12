@@ -3,7 +3,7 @@ package ssafy.aissue.domain.project.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.joda.time.DateTime;
+import java.time.LocalDate;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,14 +22,26 @@ public class Project extends BaseProjectEntity {
     @Column(unique = true)
     private String jiraProjectKey;
 
+    private String projectImage;
+
     @Column
     private String title;
     private String description;
 
-    private DateTime startAt;
+    private String techStack;
+
+    private String feSkill;
+
+    private String beSkill;
+
+    private String infraSkill;
+
+    private LocalDate startAt;
 
     @Setter
-    private DateTime endAt;
+    private LocalDate endAt;
+
+    private Boolean isCompleted = false;
 
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProjectMember> members;
@@ -40,5 +52,17 @@ public class Project extends BaseProjectEntity {
         this.members = new ArrayList<>();
     }
 
+    public void updateProjectInfo(String title, String description, String techStack, String feSkill, String beSkill, String infraSkill, LocalDate startAt, LocalDate endAt, String projectImage) {
+        this.title = title;
+        this.description = description;
+        this.techStack = techStack;
+        this.feSkill = feSkill;
+        this.beSkill = beSkill;
+        this.infraSkill = infraSkill;
+        this.startAt = startAt;
+        this.endAt = endAt;
+        this.projectImage = projectImage;
+        this.isCompleted = true;
+    }
 
 }
