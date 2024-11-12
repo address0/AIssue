@@ -47,9 +47,10 @@ public class ProjectServiceImpl implements ProjectService {
                 .toList();
         log.info("[ProjectService] 프로젝트에 맴버들 정보 조회: {}", memberList);
 
-        // 프로젝트 데이터를 `ProjectDetailsResponse`에 매핑하여 반환
+        String preSignedUrl = generatePreSignedUrl(project.getProjectImage());
+
         return ProjectDetailsResponse.of(
-                project.getProjectImage(),
+                preSignedUrl,
                 project.getTitle(),
                 project.getDescription(),
                 project.getTechStack(),
@@ -99,11 +100,11 @@ public class ProjectServiceImpl implements ProjectService {
                 updatedInfraSkill,
                 updatedStartAt,
                 updatedEndAt,
-                preSignedUrl
+                imageUrl
         );
         Project updatedProject = projectRepository.save(currentProject);
         return ProjectDetailsResponse.of(
-                updatedProject.getProjectImage(),
+                preSignedUrl,
                 updatedProject.getTitle(),
                 updatedProject.getDescription(),
                 updatedProject.getTechStack(),
