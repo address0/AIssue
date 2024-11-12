@@ -26,12 +26,19 @@ export default function SprintPage() {
   const [loading, setLoading] = useState(false)
   const chatEndRef = useRef<HTMLDivElement | null>(null)
   const [parsedData, setParsedData] = useState<IssueData[]>([])
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0)
+
+  const questions = [
+    '이번 주차의 에픽 목록은 다음과 같습니다. 추가로 작업할 기능이 있다면 알려 주세요!',
+    '다음으로, 아직 끝내지 못한 작업이 있다면 알려 주세요.',
+    '마지막으로, 수정해야 할 버그 목록이 있다면 알려 주세요.'
+  ];
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInput(e.target.value)
   }
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     if (!input) {
       window.alert('정확한 값을 입력해 주세요!')
       return
@@ -40,12 +47,22 @@ export default function SprintPage() {
     const userMessage = input
     setMessages((prev) => [...prev, { user: userMessage, bot: '' }])
     setInput('')
+
+    // 챗봇의 질문 응답 추가
+    if (currentQuestionIndex < questions.length - 1) {
+      setCurrentQuestionIndex(prev => prev + 1);
+    } else {
+      handleCreateIssue(); // 모든 질문이 끝나면 이슈 생성
+    }
+  }
+
+  const handleCreateIssue = async () => {
     setLoading(true)
 
     const response = await fetch('/project/[projectId]/sprint/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: userMessage }),
+      body: JSON.stringify({ message: "AIssue라는 이름의 JIRA 이슈 및 스프린트 자동 생성 애플리케이션을 만들 거야. 적절한 에픽을 8개 생성해 줘." }),
     })
 
     const data = await response.json()
@@ -53,7 +70,6 @@ export default function SprintPage() {
       const resultMatch = data?.response?.match(/result:\s*(\[[\s\S]*?\])\s*}/);
 
       if (resultMatch) {
-        console.log("response: TEXT")
         let jsonString = resultMatch[1];
         jsonString = jsonString.replace(/(\w+):/g, '"$1":')
         try {
@@ -63,18 +79,12 @@ export default function SprintPage() {
         }
       } else {
         try {
-          console.log("response: JSON")
           const jsonData = JSON.parse(data?.response)
           setParsedData(jsonData?.result);
         } catch (error) {
           console.log("JSON 부분을 찾을 수 없습니다.");
         }
       }
-      setMessages((prev) => {
-        const newMessages = [...prev]
-        newMessages[newMessages.length - 1].bot = data?.response
-        return newMessages
-      })
     } else {
       console.error(data.error)
     }
@@ -83,7 +93,7 @@ export default function SprintPage() {
 
   useEffect(() => {
     if (chatEndRef.current) {
-      chatEndRef?.current?.scrollIntoView({ behavior: 'smooth' })
+      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages])
 
@@ -134,7 +144,7 @@ export default function SprintPage() {
             <Image src="/img/chatbot.png" alt="Chatbot" width={50} height={50} />
             <div className="bg-[#B2E0D9] text-gray-700 p-4 rounded-[0px_20px_20px_20px]">
               <p>안녕하세요! 저는 에픽/이슈 생성을 도와주는 AI컨설턴트, AIssue입니다.</p>
-              <p>스프린트 생성에 앞서, 전체 일정(에픽 목록) 생성을 도와 드리겠습니다.</p>
+              <p>프로젝트의 작업 내용 및 일정에 맞춰, 이번 주 스프린트를 제작하겠습니다.</p>
             </div>
           </div>
           <div className="flex items-start space-x-4">
@@ -147,24 +157,29 @@ export default function SprintPage() {
           {/* User Messages and Bot Responses */}
           {messages?.map((msg, index) => (
             <div key={index} className="flex flex-col space-y-2">
-              <div className="self-end max-w-xs p-3 bg-blue-300 text-gray-700 rounded-[20px_0px_20px_20px]">
-                {msg?.user}
-              </div>
-              {msg?.bot && (
+              {msg.user && (
+                <div className="self-end max-w-xs p-3 bg-blue-300 text-gray-700 rounded-[20px_0px_20px_20px]">
+                  {msg.user}
+                </div>
+              )}
+              {msg.bot && (
                 <div className='flex items-start space-x-4'>
                   <Image src="/img/chatbot.png" alt="Chatbot" width={50} height={50} />
-                  <div className='flex flex-col'>
-                    <div className="self-start max-w-xs p-3 bg-[#B2E0D9] text-gray-700 rounded-[0px_20px_20px_20px]">
-                      {parsedData?.length > 0 ? '생성된 이슈는 다음과 같습니다.' : msg?.bot}
-                    </div>
-                    {parsedData?.length > 0 && parsedData?.map((item, index) => (
-                      <li className='text-lg text-gray-700 list-none' key={index}>{item?.summary}</li>
-                    ))}
+                  <div className="self-start max-w-xs p-3 bg-[#B2E0D9] text-gray-700 rounded-[0px_20px_20px_20px]">
+                    {msg.bot}
                   </div>
                 </div>
               )}
             </div>
           ))}
+          {currentQuestionIndex < questions.length && (
+            <div className='flex items-start space-x-4'>
+              <Image src="/img/chatbot.png" alt="Chatbot" width={50} height={50} />
+              <div className="self-start max-w-xs p-3 bg-[#B2E0D9] text-gray-700 rounded-[0px_20px_20px_20px]">
+                {questions[currentQuestionIndex]}
+              </div>
+            </div>
+          )}
           {loading && (
             <div className="flex items-start space-x-4">
               <Image src="/img/chatbot.png" alt="Chatbot" width={50} height={50} />
@@ -178,7 +193,20 @@ export default function SprintPage() {
             </div>
           )}
           <div ref={chatEndRef} />
+          {parsedData.length > 0 && (
+            <div className="mt-4 p-4 bg-white rounded shadow">
+              <h3 className="text-lg">생성된 이슈 목록:</h3>
+              <ul className="list-disc pl-5">
+                {parsedData.map((issue) => (
+                  <li key={issue.pk}>
+                    <strong>{issue.summary}</strong>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
+
 
         {/* Input Area Fixed to Bottom */}
         <div className="fixed bottom-5 left-[20rem] w-[70%] bg-white p-4 shadow-md flex items-center border-2 border-[#4D86FF] rounded-[10px]">
