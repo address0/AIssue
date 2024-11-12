@@ -18,6 +18,7 @@ import ssafy.aissue.domain.issue.repository.*;
 import ssafy.aissue.domain.member.entity.Member;
 import ssafy.aissue.domain.member.repository.MemberRepository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -64,29 +65,75 @@ public class IssueServiceImpl implements IssueService {
     }
 
     @Override
-    public void createIssue(IssueRequest issueRequest) {
+    public String createIssue(IssueRequest issueRequest) {
         // 구현 내용 추가
+        return null;
     }
 
     @Override
-    public void createBatchIssue(IssueBatchRequest issueBatchRequest) {
+    public String createBatchIssue(IssueBatchRequest issueBatchRequest) {
         // 구현 내용 추가
+        return null;
     }
 
     @Override
-    public void updateIssues(IssueUpdateRequest issueUpdateRequest) {
+    public String updateIssues(IssueUpdateRequest issueUpdateRequest) {
         // 구현 내용 추가
+        return null;
     }
 
     @Override
-    public void deleteIssue(IssueDeleteRequest issueDeleteRequest) {
+    public String deleteIssue(IssueDeleteRequest issueDeleteRequest) {
         // 구현 내용 추가
+        return null;
     }
 
     @Override
-    public void linkIssues(IssueLinkRequest issueLinkRequest) {
+    public String linkIssues(IssueLinkRequest issueLinkRequest) {
         // 구현 내용 추가
+        return null;
     }
+
+    @Override
+    public String updateIssueSchedule(IssueScheduleRequest issueScheduleRequest) {
+        Long jiraId = issueScheduleRequest.getIssueId();
+        String issueType = issueScheduleRequest.getIssuetype();
+        LocalDateTime newStartAt = issueScheduleRequest.getStartAt();
+        LocalDateTime newEndAt = issueScheduleRequest.getEndAt();
+
+        // 이슈 조회 및 없으면 생성
+        BaseIssueEntity issueEntity = findOrCreateDbIssue(issueType, jiraId, issueScheduleRequest.getIssueKey());
+
+        // 시작 날짜와 종료 날짜 업데이트
+        try {
+            issueEntity.updateStartAt(newStartAt);
+            issueEntity.updateEndAt(newEndAt);
+        } catch (IllegalArgumentException e) {
+            log.error("유효하지 않은 날짜 업데이트 요청: {}", e.getMessage());
+            return "유효하지 않은 날짜 업데이트 요청: " + e.getMessage();
+        }
+
+        // 업데이트된 엔티티를 저장
+        saveIssue(issueEntity);
+        return "이슈 일정이 성공적으로 업데이트되었습니다.";
+    }
+
+    private void saveIssue(BaseIssueEntity issue) {
+        if (issue instanceof Bug) {
+            bugRepository.save((Bug) issue);
+        } else if (issue instanceof Epic) {
+            epicRepository.save((Epic) issue);
+        } else if (issue instanceof Story) {
+            storyRepository.save((Story) issue);
+        } else if (issue instanceof Task) {
+            taskRepository.save((Task) issue);
+        } else if (issue instanceof SubTask) {
+            subTaskRepository.save((SubTask) issue);
+        } else {
+            throw new IllegalArgumentException("Unknown issue type: " + issue.getClass().getSimpleName());
+        }
+    }
+
 
     @Override
     public List<MonthlyIssueResponse> getMonthlyIssues(String projectKey) {
@@ -113,7 +160,7 @@ public class IssueServiceImpl implements IssueService {
     }
 
     private WeeklyIssueResponse mapToWeeklyIssueResponse(IssueResponse issueResponse) {
-        BaseIssueEntity dbIssue = findDbIssueById(issueResponse.getIssuetype(), issueResponse.getId());
+        BaseIssueEntity dbIssue = findOrCreateDbIssue(issueResponse);
         return WeeklyIssueResponse.builder()
                 .id(issueResponse.getId())
                 .key(issueResponse.getKey())
@@ -121,16 +168,16 @@ public class IssueServiceImpl implements IssueService {
                 .priority(issueResponse.getPriority())
                 .status(issueResponse.getStatus())
                 .issuetype(issueResponse.getIssuetype())
-                .startAt(dbIssue != null ? dbIssue.getStartAt() : null)
-                .endAt(dbIssue != null ? dbIssue.getEndAt() : null)
+                .startAt(dbIssue.getStartAt())
+                .endAt(dbIssue.getEndAt())
                 .parent(mapParent(issueResponse.getParent()))
                 .subtasks(mapSubtasks(issueResponse.getSubtasks()))
-                .assignee((issueResponse.getAssignee()) != null ? issueResponse.getAssignee() : null)
+                .assignee(issueResponse.getAssignee() != null ? issueResponse.getAssignee() : null)
                 .build();
     }
 
     private MonthlyIssueResponse mapToMonthlyIssueResponse(IssueResponse issueResponse) {
-        BaseIssueEntity dbIssue = findDbIssueById(issueResponse.getIssuetype(), issueResponse.getId());
+        BaseIssueEntity dbIssue = findOrCreateDbIssue(issueResponse);
         return MonthlyIssueResponse.builder()
                 .id(issueResponse.getId())
                 .key(issueResponse.getKey())
@@ -138,14 +185,54 @@ public class IssueServiceImpl implements IssueService {
                 .priority(issueResponse.getPriority())
                 .status(issueResponse.getStatus())
                 .issuetype(issueResponse.getIssuetype())
-                .startAt(dbIssue != null ? dbIssue.getStartAt() : null)
-                .endAt(dbIssue != null ? dbIssue.getEndAt() : null)
-                .assignee((issueResponse.getAssignee()) != null ? issueResponse.getAssignee() : null)
+                .startAt(dbIssue.getStartAt())
+                .endAt(dbIssue.getEndAt())
+                .assignee(issueResponse.getAssignee() != null ? issueResponse.getAssignee() : null)
                 .build();
     }
 
+    private BaseIssueEntity findOrCreateDbIssue(IssueResponse issueResponse) {
+        return findOrCreateDbIssue(issueResponse.getIssuetype(), issueResponse.getId(), issueResponse.getKey());
+    }
+
+    private BaseIssueEntity findOrCreateDbIssue(IssueResponse.ParentIssue parent) {
+        return findOrCreateDbIssue(parent.getIssuetype(), parent.getId(), parent.getKey());
+    }
+
+    private BaseIssueEntity findOrCreateDbIssue(IssueResponse.Subtask subtask) {
+        return findOrCreateDbIssue(subtask.getIssuetype(), subtask.getId(), subtask.getKey());
+    }
+
+    private BaseIssueEntity findOrCreateDbIssue(String issueType, Long jiraId, String jiraKey) {
+        BaseIssueEntity dbIssue = findDbIssueById(issueType, jiraId);
+        if (dbIssue == null) {
+            dbIssue = createNewDbIssue(issueType, jiraId, jiraKey);
+        }
+        return dbIssue;
+    }
+
+    private BaseIssueEntity createNewDbIssue(String issueType, Long jiraId, String jiraKey) {
+        switch (issueType.toUpperCase()) {
+            case "BUG", "버그" -> {
+                return bugRepository.save(Bug.builder().jiraId(jiraId).jiraKey(jiraKey).startAt(null).endAt(null).build());
+            }
+            case "STORY", "스토리" -> {
+                return storyRepository.save(Story.builder().jiraId(jiraId).jiraKey(jiraKey).startAt(null).endAt(null).build());
+            }
+            case "EPIC", "에픽" -> {
+                return epicRepository.save(Epic.builder().jiraId(jiraId).jiraKey(jiraKey).startAt(null).endAt(null).build());
+            }
+            case "TASK", "작업" -> {
+                return taskRepository.save(Task.builder().jiraId(jiraId).jiraKey(jiraKey).startAt(null).endAt(null).build());
+            }
+            case "SUB-TASK", "하위 작업" -> {
+                return subTaskRepository.save(SubTask.builder().jiraId(jiraId).jiraKey(jiraKey).startAt(null).endAt(null).build());
+            }
+            default -> throw new IllegalArgumentException("Unknown issue type: " + issueType);
+        }
+    }
+
     private BaseIssueEntity findDbIssueById(String issueType, Long jiraId) {
-        log.info(issueType);
         return switch (issueType.toUpperCase()) {
             case "BUG", "버그" -> bugRepository.findByJiraId(jiraId).orElse(null);
             case "STORY", "스토리" -> storyRepository.findByJiraId(jiraId).orElse(null);
@@ -156,26 +243,9 @@ public class IssueServiceImpl implements IssueService {
         };
     }
 
-    private Class<? extends BaseIssueEntity> getEntityType(String issueType) {
-        if (issueType == null || issueType.trim().isEmpty()) {
-            throw new IllegalArgumentException("Issue type cannot be null or empty");
-        }
-
-        return switch (issueType.toUpperCase()) {
-            case "Bug", "버그" -> Bug.class;
-            case "Story", "스토리" -> Story.class;
-            case "Epic", "에픽" -> Epic.class;
-            case "Task", "작업" -> Task.class;
-            case "Sub-Task", "하위 작업" -> SubTask.class;
-            default -> throw new IllegalArgumentException("Unknown issue type: " + issueType);
-        };
-    }
-
-
     private WeeklyIssueResponse.ParentIssue mapParent(IssueResponse.ParentIssue parent) {
         if (parent == null) return null;
-        BaseIssueEntity dbParent = findDbIssueById(parent.getIssuetype(), parent.getId());
-
+        BaseIssueEntity dbParent = findOrCreateDbIssue(parent);
         return WeeklyIssueResponse.ParentIssue.builder()
                 .id(parent.getId())
                 .key(parent.getKey())
@@ -183,15 +253,15 @@ public class IssueServiceImpl implements IssueService {
                 .priority(parent.getPriority())
                 .status(parent.getStatus())
                 .issuetype(parent.getIssuetype())
-                .startAt(dbParent != null ? dbParent.getStartAt() : null)
-                .endAt(dbParent != null ? dbParent.getEndAt() : null)
+                .startAt(dbParent.getStartAt())
+                .endAt(dbParent.getEndAt())
                 .build();
     }
 
     private List<WeeklyIssueResponse.Subtask> mapSubtasks(List<IssueResponse.Subtask> subtasks) {
         return subtasks.stream()
                 .map(subtask -> {
-                    BaseIssueEntity dbSubtask = findDbIssueById(subtask.getIssuetype(), subtask.getId());
+                    BaseIssueEntity dbSubtask = findOrCreateDbIssue(subtask);
                     return WeeklyIssueResponse.Subtask.builder()
                             .id(subtask.getId())
                             .key(subtask.getKey())
@@ -199,8 +269,8 @@ public class IssueServiceImpl implements IssueService {
                             .priority(subtask.getPriority())
                             .status(subtask.getStatus())
                             .issuetype(subtask.getIssuetype())
-                            .startAt(dbSubtask != null ? dbSubtask.getStartAt() : null)
-                            .endAt(dbSubtask != null ? dbSubtask.getEndAt() : null)
+                            .startAt(dbSubtask.getStartAt())
+                            .endAt(dbSubtask.getEndAt())
                             .build();
                 })
                 .collect(Collectors.toList());
