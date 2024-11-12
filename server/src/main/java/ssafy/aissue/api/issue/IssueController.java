@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import ssafy.aissue.api.CommonResponse;
 import ssafy.aissue.api.issue.request.IssueBatchRequest;
+import ssafy.aissue.api.issue.request.IssueScheduleRequest;
 import ssafy.aissue.api.issue.response.MonthlyIssueResponse;
 import ssafy.aissue.api.issue.response.WeeklyIssueResponse;
 import ssafy.aissue.domain.issue.service.IssueService;
@@ -41,6 +42,16 @@ public class IssueController {
     public CommonResponse<List<MonthlyIssueResponse>> getMonthlyIssues(
             @RequestParam(name = "project") String projectKey) {
         return CommonResponse.ok(issueService.getMonthlyIssues(projectKey));
+    }
+
+    @Operation(summary = "이슈 일정 수정", description = "이슈 일정을 수정합니다.")
+    @PostMapping("/update/schedule")
+    public CommonResponse<?> updateSchedule(
+            @RequestBody IssueScheduleRequest issueScheduleRequest
+    ) {
+        log.info("[IssueController] updateSchedule");
+        String message = issueService.updateIssueSchedule(issueScheduleRequest);
+        return CommonResponse.ok(message, null);
     }
 
 }
