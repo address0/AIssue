@@ -2,10 +2,10 @@ package ssafy.aissue.domain.issue.service;
 
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import ssafy.aissue.api.issue.request.*;
 import ssafy.aissue.api.issue.response.IssueResponse;
+import ssafy.aissue.api.issue.response.MonthlyIssueResponse;
 import ssafy.aissue.api.issue.response.WeeklyIssueResponse;
 import ssafy.aissue.api.member.response.MemberJiraIdResponse;
 import ssafy.aissue.common.exception.member.MemberNotFoundException;
@@ -18,9 +18,7 @@ import ssafy.aissue.domain.issue.repository.*;
 import ssafy.aissue.domain.member.entity.Member;
 import ssafy.aissue.domain.member.repository.MemberRepository;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -91,13 +89,15 @@ public class IssueServiceImpl implements IssueService {
     }
 
     @Override
-    public List<WeeklyIssueResponse> getMonthlyIssues() {
+    public List<MonthlyIssueResponse> getMonthlyIssues(String projectKey) {
         Member currentMember = getCurrentLoggedInMember();
         String email = currentMember.getEmail();
         String jiraKey = currentMember.getJiraKey();
-        List<IssueResponse> jiraIssues = jiraApiUtil.fetchMonthlyUserIssues(email, jiraKey);
+        List<IssueResponse> jiraIssues = jiraApiUtil.fetchMonthlyUserIssues(email, jiraKey, projectKey);
 
-        return List.of();
+        return jiraIssues.stream()
+                .map(this::mapToMonthlyIssueResponse)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -125,6 +125,21 @@ public class IssueServiceImpl implements IssueService {
                 .endAt(dbIssue != null ? dbIssue.getEndAt() : null)
                 .parent(mapParent(issueResponse.getParent()))
                 .subtasks(mapSubtasks(issueResponse.getSubtasks()))
+                .assignee((issueResponse.getAssignee()) != null ? issueResponse.getAssignee() : null)
+                .build();
+    }
+
+    private MonthlyIssueResponse mapToMonthlyIssueResponse(IssueResponse issueResponse) {
+        BaseIssueEntity dbIssue = findDbIssueById(issueResponse.getIssuetype(), issueResponse.getId());
+        return MonthlyIssueResponse.builder()
+                .id(issueResponse.getId())
+                .key(issueResponse.getKey())
+                .summary(issueResponse.getSummary())
+                .priority(issueResponse.getPriority())
+                .status(issueResponse.getStatus())
+                .issuetype(issueResponse.getIssuetype())
+                .startAt(dbIssue != null ? dbIssue.getStartAt() : null)
+                .endAt(dbIssue != null ? dbIssue.getEndAt() : null)
                 .assignee((issueResponse.getAssignee()) != null ? issueResponse.getAssignee() : null)
                 .build();
     }

@@ -21,7 +21,7 @@ public interface IssueService {
 
     void linkIssues(IssueLinkRequest issueLinkRequest);     // Issue 종속성 등록
 
-    List<WeeklyIssueResponse> getMonthlyIssues();
+    List<MonthlyIssueResponse> getMonthlyIssues(String projectKey);
 
     List<WeeklyIssueResponse> getWeeklyIssues(String projectKey);
 

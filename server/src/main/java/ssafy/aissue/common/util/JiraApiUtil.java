@@ -267,8 +267,77 @@ public class JiraApiUtil {
         return issues;
     }
 
-    public List<IssueResponse> fetchMonthlyUserIssues(String email, String jiraKey) {
-        return List.of();
+    public List<IssueResponse> fetchMonthlyUserIssues(String email, String jiraKey, String projectKey) {
+        log.info("[JiraApiUtil] fetchUserIssues >>>> email: {}, jiraKey: {}", email, jiraKey);
+
+        String jqlQuery = "project = \"" + projectKey + "\" " + " AND issuetype = \"Epic\"";
+        String jiraStoryPointField = "customfield_10031";
+        String jiraFields = "id,key,summary,priority,subtasks,status,issuetype,assignee," + jiraStoryPointField;
+
+        // UriComponentsBuilder를 사용하여 URL을 생성하고 인코딩
+        URI jiraApiUri = UriComponentsBuilder.fromHttpUrl("https://ssafy.atlassian.net/rest/api/2/search")
+                .queryParam("jql", jqlQuery)
+                .queryParam("fields", jiraFields)
+                .build()
+                .encode()  // URI 인코딩 적용
+                .toUri();  // 완전한 URI 객체로 변환
+
+        log.info("jira 요청 주소: {}", jiraApiUri);
+
+        String auth = email + ":" + jiraKey;
+        String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes());
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "Basic " + encodedAuth);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+        ResponseEntity<String> response = restTemplate.exchange(jiraApiUri, HttpMethod.GET, entity, String.class);
+        log.info("[JiraApiUtil] 유저의 이슈 목록 조회 >>>> response: {}", response);
+
+        if (response.getStatusCode() == HttpStatus.OK) {
+            log.info("[JiraApiUtil] 유저의 이슈 목록 조회 성공: {}", response.getBody());
+            return parseMonthlyIssuesFromResponse((response.getBody()));
+        } else {
+            log.error("[JiraApiUtil] 유저의 이슈 목록 조회 실패. 상태 코드: {}, 응답 본문: {}", response.getStatusCode(), response.getBody());
+            throw new RuntimeException("Failed to fetch user projects from Jira. Response: " + response.getBody());
+        }
     }
+
+    private List<IssueResponse> parseMonthlyIssuesFromResponse(String responseBody) {
+        List<IssueResponse> issues = new ArrayList<>();
+        // String jiraStoryPointField = "customfield_10031";
+        try {
+            JsonNode root = objectMapper.readTree(responseBody);
+            JsonNode issuesNode = root.path("issues");
+
+            for (JsonNode issueNode : issuesNode) {
+                Long id = issueNode.path("id").asLong();
+                String key = issueNode.path("key").asText();
+                String summary = issueNode.path("fields").path("summary").asText();
+                String status = issueNode.path("fields").path("status").path("name").asText();
+                String priority = issueNode.path("fields").path("priority").path("name").asText();
+                String issuetype = issueNode.path("fields").path("issuetype").path("name").asText();
+                String assignee = issueNode.path("fields").path("assignee").path("displayName").asText();
+//                log.info("이슈 담당자 : " + assignee);
+
+
+                issues.add(IssueResponse.builder()
+                        .id(id)
+                        .key(key)
+                        .summary(summary)
+                        .status(status)
+                        .priority(priority)
+                        .issuetype(issuetype)
+                        .assignee(assignee)
+                        .build());
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to parse issues from response", e);
+        }
+        return issues;
+    }
+
+
 }
 
