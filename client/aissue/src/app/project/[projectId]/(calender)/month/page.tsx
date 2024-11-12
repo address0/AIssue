@@ -1,305 +1,252 @@
-'use client'
+"use client";
 
-import React, { useState, useEffect } from 'react'
-import Link from 'next/link'
-import ChatModal from '@/components/(Modal)/ChatModal/page'
-import styles from '@/app/(Calender)/month/month.module.css'
-import { useParams } from 'next/navigation'
-import axios from 'axios'
-import { usePathname } from 'next/navigation'
+import React, { useState, useEffect, useRef } from 'react';
+import FullCalendar from '@fullcalendar/react';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import timeGridPlugin from '@fullcalendar/timegrid';
+import interactionPlugin, { DateClickArg } from '@fullcalendar/interaction';
+import listPlugin from '@fullcalendar/list';
+import { EventClickArg } from '@fullcalendar/core';
+import { Draggable } from '@fullcalendar/interaction';
+import Modal from 'react-modal';
 
-interface Epic {
-  id: string
-  title: string
-  start: string
-  end: string
+interface CalendarEvent {
+  title: string;
+  date?: string;
+  start?: Date;
+  end?: Date; // 추가: 이벤트 종료일
+  allDay?: boolean;
+  backgroundColor?: string;
+  borderColor?: string;
 }
 
-const epicColors = [
-  'bg-[#FFDDC1]',
-  'bg-[#D3E5FF]',
-  'bg-[#C1FFD6]',
-  'bg-[#FFD6FF]',
-]
+const CalendarComponent = () => {
+  const [events, setEvents] = useState<CalendarEvent[]>([
+    { title: '예시 이벤트', date: '2024-11-15' },
+  ]);
 
-export default function MonthPage() {
-  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date())
-  const [isMonthView, setIsMonthView] = useState(true)
-  const [isChatOpen, setIsChatOpen] = useState(false)
-  const [selectedStory, setSelectedStory] = useState<string | null>(null)
-  const [monthOffset, setMonthOffset] = useState(0)
-  const [epics, setEpics] = useState<Epic[]>([])
-  const [userName, setUserName] = useState<string | null>(null) // 사용자 이름 상태 추가
+  const [tasks, setTasks] = useState([
+    { title: '작업 1', color: '#FFB6C1' },
+    { title: '작업 2', color: '#FF7F50' },
+    { title: '작업 3', color: '#87CEFA' },
+  ]);
 
-  useEffect(() => {
-    // 클라이언트 측에서만 sessionStorage 접근
-    if (typeof window !== 'undefined') {
-      setUserName(sessionStorage.getItem('memberName'))
-    }
-  }, [])
-
-  const accessToken = sessionStorage.getItem('accessToken')
-  const memberId = sessionStorage!.getItem('memberId')
-  const pathname = usePathname()
-  const projectId = pathname.split('/')[2]
-  const currentDate = new Date()
-  const today = new Date()
-  const { userId } = useParams()
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [newEventTitle, setNewEventTitle] = useState('');
+  const [newEventColor, setNewEventColor] = useState('#3788d8');
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
   useEffect(() => {
-    if (projectId && userId) {
-      fetchEpics()
-    }
-  }, [monthOffset, projectId, userId])
-
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'ArrowRight') {
-        setMonthOffset((prev) => prev + 1)
-      } else if (event.key === 'ArrowLeft') {
-        setMonthOffset((prev) => prev - 1)
-      }
-    }
-    window.addEventListener('keydown', handleKeyDown)
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [])
-
-  const fetchEpics = async () => {
-    try {
-      const response = await axios.get(
-        `/projects/${projectId}/${userId}/month`,
-        {
-          params: { monthOffset },
+    const containerEl = document.getElementById('external-events');
+    if (containerEl) {
+      new Draggable(containerEl, {
+        itemSelector: '.fc-event',
+        eventData: (eventEl) => {
+          const title = eventEl.getAttribute('data-title');
+          const color = eventEl.getAttribute('data-color');
+          return {
+            title: title || '새 이벤트',
+            backgroundColor: color || '#3788d8',
+            borderColor: color || '#3788d8',
+          };
         },
-      )
-      setEpics(response.data)
-    } catch (error) {
-      console.error('Error fetching epics:', error)
+      });
     }
-  }
+  }, []);
 
-  const toggleChat = () => {
-    setIsChatOpen(!isChatOpen)
-  }
+  const handleDateClick = (info: DateClickArg) => {
+    setSelectedDate(info.date);
+    setIsModalOpen(true);
+  };
 
-  const handleDayClick = (day: number, month: number, year: number) => {
-    const clickedDate = new Date(year, month, day, 12, 0, 0)
-    if (clickedDate >= today) {
-      setSelectedDate(clickedDate)
+  const eventsRef = useRef(events); // 최신 상태 참조
+  eventsRef.current = events; // 항상 최신 상태 유지
+
+  const handleAddEvent = () => {
+    if (newEventTitle && selectedDate) {
+      const newEvent: CalendarEvent = {
+        title: newEventTitle,
+        start: selectedDate,
+        allDay: true,
+        backgroundColor: newEventColor,
+        borderColor: newEventColor,
+      };
+
+      const updatedEvents = [...eventsRef.current, newEvent];
+      setEvents(updatedEvents);
+      eventsRef.current = updatedEvents; // ref도 최신 상태로 유지
+      syncTasksWithEvents(updatedEvents); // 동기화
+
+      setIsModalOpen(false);
+      setNewEventTitle('');
+      setNewEventColor('#3788d8');
     }
-  }
+  };
 
-  const getMonthData = (year: number, month: number) => {
-    const daysInMonth = new Date(year, month + 1, 0).getDate()
-    const firstDayOfMonth = new Date(year, month, 1).getDay()
-    return { daysInMonth, firstDayOfMonth }
-  }
+  const handleEventReceive = (info: any) => {
+    info.event.setAllDay(true);
 
-  const renderMonth = (monthOffset: number) => {
-    const baseDate = new Date(
-      currentDate.getFullYear(),
-      currentDate.getMonth() + monthOffset,
-      1,
-    )
-    const year = baseDate.getFullYear()
-    const month = baseDate.getMonth()
-    const { daysInMonth, firstDayOfMonth } = getMonthData(year, month)
+    const newEvent: CalendarEvent = {
+      title: info.event.title,
+      start: info.event.start,
+      allDay: true,
+      backgroundColor: info.event.backgroundColor,
+      borderColor: info.event.borderColor,
+    };
 
-    return (
-      <div key={monthOffset} className={styles.monthContainer}>
-        <div className={styles.monthHeader}>
-          <button
-            className={styles.arrowButton}
-            onClick={() => setMonthOffset(monthOffset - 1)}
-          >
-            <img src="/img/leftarrow.png" alt="Previous Month" />
-          </button>
-          <h3 className={`${styles.monthTitle} font-semibold`}>{`${year}년 ${
-            month + 1
-          }월`}</h3>
-          <button
-            className={styles.arrowButton}
-            onClick={() => setMonthOffset(monthOffset + 1)}
-          >
-            <img src="/img/rightarrow.png" alt="Next Month" />
-          </button>
-        </div>
-        <div className={styles.weekdaysContainer}>
-          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(
-            (day, index) => (
-              <div
-                key={index}
-                className={`${styles.weekday} ${
-                  index === 0 ? styles.sunday : ''
-                } ${index === 6 ? styles.saturday : ''}`}
-              >
-                {day}
-              </div>
-            ),
-          )}
-        </div>
+    setEvents((prevEvents) => {
+      const updatedEvents = prevEvents.filter(
+        (event) => !(event.title === newEvent.title && event.start?.getTime() === newEvent.start?.getTime())
+      );
+      syncTasksWithEvents([...updatedEvents, newEvent]);
+      return [...updatedEvents, newEvent];
+    });
 
-        <div className={styles.calendarContainer}>
-          {Array.from({ length: firstDayOfMonth }).map((_, index) => (
-            <div key={`empty-${index}`} className={styles.calendarDay}></div>
-          ))}
-          {Array.from({ length: daysInMonth }, (_, index) => {
-            const day = index + 1
-            const date = new Date(year, month, day)
-            const isToday =
-              day === today.getDate() &&
-              month === today.getMonth() &&
-              year === today.getFullYear()
-            const isSelected =
-              selectedDate?.getDate() === day &&
-              selectedDate?.getMonth() === month &&
-              selectedDate?.getFullYear() === year
-            const isPastDate = date < today && !isToday
+    setTasks((prevTasks) => prevTasks.filter((task) => task.title !== newEvent.title));
+  };
 
-            const dayEpics = epics.filter(
-              (epic) =>
-                date >= new Date(epic.start) && date <= new Date(epic.end),
-            )
+  const handleEventResize = (resizeInfo: any) => {
+    const updatedEvent: CalendarEvent = {
+      title: resizeInfo.event.title,
+      start: resizeInfo.event.start,
+      end: resizeInfo.event.end, // 이벤트 종료일 업데이트
+      allDay: resizeInfo.event.allDay,
+      backgroundColor: resizeInfo.event.backgroundColor,
+      borderColor: resizeInfo.event.borderColor,
+    };
 
-            return (
-              <div
-                key={`day-${year}-${month}-${day}`}
-                className={`${styles.calendarDay} ${
-                  isToday ? styles.today : ''
-                } ${isSelected ? styles.selected : ''} ${
-                  isPastDate ? styles.disabled : ''
-                }`}
-                onClick={() => !isPastDate && handleDayClick(day, month, year)}
-              >
-                {isToday ? '오늘' : day}
-                {dayEpics.map((epic, idx) => (
-                  <div
-                    key={epic.id}
-                    className={`${styles.epicBar} ${
-                      epicColors[idx % epicColors.length]
-                    }`}
-                    title={epic.title}
-                    style={{ marginTop: '2px' }}
-                  />
-                ))}
-              </div>
-            )
-          })}
-        </div>
-      </div>
-    )
-  }
+    setEvents((prevEvents) => {
+      const updatedEvents = prevEvents.map((event) =>
+        event.title === updatedEvent.title ? updatedEvent : event
+      );
+      return updatedEvents;
+    });
+  };
 
+  const handleEventDrop = (dropInfo: any) => {
+    const updatedEvent: CalendarEvent = {
+      title: dropInfo.event.title,
+      start: dropInfo.event.start,
+      end: dropInfo.event.end,
+      allDay: dropInfo.event.allDay,
+      backgroundColor: dropInfo.event.backgroundColor,
+      borderColor: dropInfo.event.borderColor,
+    };
+
+    setEvents((prevEvents) => {
+      const updatedEvents = prevEvents.map((event) =>
+        event.title === updatedEvent.title ? updatedEvent : event
+      );
+      return updatedEvents;
+    });
+  };
+
+  const syncTasksWithEvents = (updatedEvents: CalendarEvent[]) => {
+    setTasks((prevTasks) =>
+      prevTasks.filter((task) => !updatedEvents.some((event) => event.title === task.title))
+    );
+  };
+
+  const handleEventClick = (clickInfo: EventClickArg) => {
+    if (confirm(`'${clickInfo.event.title}' 이벤트를 삭제하시겠습니까?`)) {
+      clickInfo.event.remove();
+      const updatedEvents = events.filter((event) => event.title !== clickInfo.event.title);
+      setEvents(updatedEvents);
+      syncTasksWithEvents(updatedEvents);
+    }
+  };
+
+  useEffect(() => {
+    const toolbarChunks = document.querySelectorAll('.fc-toolbar-chunk');
+    if (toolbarChunks[1]) {  // 두 번째 요소가 있는지 확인
+      toolbarChunks[1].style.display = 'flex';
+      toolbarChunks[1].style.alignItems = 'center';
+      toolbarChunks[1].style.gap = '10px';
+      toolbarChunks[1].style.justifyContent = 'center'; // 가운데 정렬
+    }
+  }, [events]); // `events`가 업데이트될 때마다 실행
+  
   return (
-    <div className="flex min-h-screen bg-gray-100">
-      <div className="flex-1 p-6">
-        <div className="relative flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-semibold text-[#7498E5]">
-            월별 프로젝트 일정
-          </h2>
-
-          <div className="absolute left-1/2 transform -translate-x-1/2 flex">
-            <Link href={`/project/${projectId}/month`}>
-              <button
-                onClick={() => setIsMonthView(true)}
-                className={`px-4 py-2 font-medium text-sm ${
-                  isMonthView
-                    ? 'bg-[#7498E5] text-white'
-                    : 'bg-white text-[#54B2A3]'
-                } rounded-l-lg`}
-              >
-                Month
-              </button>
-            </Link>
-            <Link href={`/project/${projectId}/week`}>
-              <button
-                onClick={() => setIsMonthView(false)}
-                className={`px-4 py-2 font-medium text-sm ${
-                  !isMonthView
-                    ? 'bg-[#54B2A3] text-white'
-                    : 'bg-white text-[#7498E5]'
-                } rounded-r-lg`}
-              >
-                Week
-              </button>
-            </Link>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <span className="text-gray-700">{userName}님</span>
-          
-          </div>
-        </div>
-
-        <div className="flex space-x-4">
-          <div style={{ width: '70%', minWidth: '700px' }}>
-            {renderMonth(monthOffset)}
-          </div>
-          <div
-            style={{ width: '30%', minWidth: '300px' }}
-            className="bg-gray-50 p-4 rounded-lg shadow-lg"
-          >
-            <h3 className="text-lg font-semibold text-[#7498E5] mb-4 bg-[#9EBDFF66] p-2 rounded-md text-center">
-              Epic List
-            </h3>
-            {epics.map((epic, idx) => (
-              <div
-                key={epic.id}
-                className={`mb-4 p-3 rounded-lg shadow-sm border border-gray-200 ${
-                  epicColors[idx % epicColors.length]
-                }`}
-              >
-                <div
-                  className="flex justify-between items-center w-full text-left"
-                  onClick={() =>
-                    setSelectedStory(epic.id === selectedStory ? null : epic.id)
-                  }
-                >
-                  <div className="flex items-center space-x-2">
-                    <div
-                      className={`w-3 h-3 rounded-full ${
-                        epicColors[idx % epicColors.length]
-                      }`}
-                    ></div>
-                    <div>
-                      <span className="font-semibold text-gray-700">
-                        {epic.title}
-                      </span>
-                      <p className="text-sm text-gray-500">
-                        {`${new Date(
-                          epic.start,
-                        ).toLocaleDateString()} - ${new Date(
-                          epic.end,
-                        ).toLocaleDateString()}`}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <button
-          onClick={toggleChat}
-          className="fixed bottom-8 right-8 w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center shadow-lg"
-        >
-          <img src="/img/chaticon.png" alt="Chat Icon" className="w-6 h-6" />
-        </button>
-
-        {isChatOpen && (
-          <ChatModal
-            onClose={toggleChat}
-            memberId={memberId}
-            projectId={projectId}
-            accessToken={accessToken}
-            color={'#7498E5'}
-          />
-        )}
+    <div className="flex h-screen bg-gray-100 p-6 space-x-4">
+      <div className="flex-1 bg-white rounded-lg shadow p-6">
+        <FullCalendar
+          locale="ko"
+          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
+          initialView="dayGridMonth"
+          headerToolbar={{
+            left: 'today',
+            center: 'prev title next',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay',
+          }}
+          selectable={true}
+          editable={true}
+          droppable={true}
+          eventResizableFromStart={true} // 이벤트 시작 시간에서 조정 가능
+          events={events}
+          dateClick={handleDateClick}
+          eventReceive={handleEventReceive}
+          eventResize={handleEventResize} // 추가: 이벤트 길이 조정 핸들러
+          eventDrop={handleEventDrop} // 추가: 이벤트 이동 핸들러
+          eventClick={handleEventClick}
+        />
       </div>
+      <div id="external-events" className="w-1/4 bg-white rounded-lg shadow p-4">
+        <h3 className="text-lg font-bold text-blue-600 mb-4">할 일 목록</h3>
+        {tasks.map((task, index) => (
+          <div
+            key={index}
+            className="fc-event mb-2 p-2 text-white rounded cursor-grab"
+            data-title={task.title}
+            data-color={task.color}
+            style={{
+              backgroundColor: task.color,
+            }}
+          >
+            {task.title}
+          </div>
+        ))}
+      </div>
+
+      <Modal
+        isOpen={isModalOpen}
+        onRequestClose={() => setIsModalOpen(false)}
+        ariaHideApp={false}
+        shouldCloseOnOverlayClick={false}
+        className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex items-center justify-center z-[1000] pointer-events-auto"
+        overlayClassName="fixed inset-0 bg-black bg-opacity-50 z-[999] pointer-events-auto"
+      >
+        <div className="bg-white p-6 rounded-lg shadow-lg w-96 pointer-events-auto">
+          <h2 className="text-xl font-bold mb-4">새 이벤트 추가</h2>
+          <div className="mb-4">
+            <label className="block mb-1">이벤트 제목:</label>
+            <input
+              type="text"
+              value={newEventTitle}
+              onChange={(e) => setNewEventTitle(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded"
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block mb-1">이벤트 색상:</label>
+            <input
+              type="color"
+              value={newEventColor}
+              onChange={(e) => setNewEventColor(e.target.value)}
+              className="w-full p-2"
+            />
+          </div>
+          <div className="flex justify-end space-x-2">
+            <button onClick={handleAddEvent} className="px-4 py-2 bg-blue-500 text-white rounded">
+              추가
+            </button>
+            <button onClick={() => setIsModalOpen(false)} className="px-4 py-2 bg-gray-300 rounded">
+              취소
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
-  )
-}
+  );
+};
+
+export default CalendarComponent;
