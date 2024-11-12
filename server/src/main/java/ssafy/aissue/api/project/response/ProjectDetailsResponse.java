@@ -2,6 +2,8 @@ package ssafy.aissue.api.project.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.util.List;
+
 @Schema(description = "프로젝트 상세 정보 응답 DTO")
 public record ProjectDetailsResponse(
         @Schema(description = "프로젝트 이미지 경로", example = "1")
@@ -32,9 +34,12 @@ public record ProjectDetailsResponse(
         String endAt,
 
         @Schema(description = "프로젝트 상제정보 작성완료 여부/ 작성이필요하면 false", example = "false")
-        Boolean isCompleted
+        Boolean isCompleted,
+
+        @Schema(description = "프로젝트 멤버 정보 목록")
+        List<ProjectMemberResponse> members
 ) {
-    public static ProjectDetailsResponse of(String projectImage, String title, String description, String techStack,String feSkill, String beSkill, String infraSkill, String startAt, String endAt, Boolean isCompleted) {
-        return new ProjectDetailsResponse(projectImage, title, description, techStack,feSkill,beSkill,infraSkill, startAt, endAt, isCompleted);
+    public static ProjectDetailsResponse of(String projectImage, String title, String description, String techStack,String feSkill, String beSkill, String infraSkill, String startAt, String endAt, Boolean isCompleted,List<ProjectMemberResponse> members) {
+        return new ProjectDetailsResponse(projectImage, title, description, techStack,feSkill,beSkill,infraSkill, startAt, endAt, isCompleted, members);
     }
 }
