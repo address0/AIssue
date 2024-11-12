@@ -8,6 +8,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { getProjectList } from '@/api/project'
 import { useState } from 'react'
 import ChatBotModal from '@/components/(Modal)/ChatBotModal/page'
+import ChatModal from '@/components/(Modal)/ChatModal/page'
 
 interface Message {
   text: string
@@ -28,9 +29,15 @@ export default function ProjectLayout({
   const router = useRouter()
   const projectId = pathname.split('/')[2]
   const currentPath = pathname.split('/')[3]
+  const accessToken =
+    typeof window !== 'undefined' ? sessionStorage.getItem('accessToken') : null
+  const memberId =
+    typeof window !== 'undefined' ? sessionStorage.getItem('memberId') : null
   const userName = sessionStorage.getItem('memberName')
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [isChatOpen, setIsChatOpen] = useState(false)
+  const [isProjectChatOpen, setIsProjectChatOpen] = useState(false)
+
   const toggleDropdown = () => setDropdownOpen(!dropdownOpen)
   const [chatBotMessages, setChatBotMessages] = useState<Message[]>([
     {
@@ -40,6 +47,10 @@ export default function ProjectLayout({
   ])
   const toggleChat = () => {
     setIsChatOpen(!isChatOpen)
+  }
+
+  const toggleProjectChat = () => {
+    setIsProjectChatOpen(!isProjectChatOpen)
   }
 
   const handleProjectSelect = (selectedProjectId: string) => {
@@ -184,6 +195,28 @@ export default function ProjectLayout({
             height={50}
           />
         </button>
+
+        <button
+          onClick={toggleProjectChat}
+          className="fixed bottom-8 right-8 w-12 h-12 rounded-full bg-[#54B2A3] flex items-center justify-center shadow-lg"
+        >
+          <Image
+            src="/img/chaticongreen.png"
+            alt="Chat Icon"
+            width={24}
+            height={24}
+          />
+        </button>
+
+        {isProjectChatOpen && (
+          <ChatModal
+            onClose={toggleProjectChat}
+            memberId={memberId}
+            projectId={projectId}
+            accessToken={accessToken}
+            color={'#54B2A3'}
+          />
+        )}
 
         {/* ChatBot Modal */}
         {isChatOpen && (
