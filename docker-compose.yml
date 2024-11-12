@@ -64,14 +64,6 @@ services:
     restart: unless-stopped
 
 
-    # Dozzle 추가
-  dozzle:
-    image: amir20/dozzle:latest
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock  # Docker 소켓 공유
-    ports:
-      - "9999:8080"  # Dozzle UI에 접속할 포트 설정
-
 
 volumes:
   backend_logs:
