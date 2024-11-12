@@ -3,27 +3,27 @@
 
 import React, { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
+import { getWeeklyStories } from '@/api/project';
 
-interface Task {
+interface Issue {
   id: string;
   title: string;
-  issueCode: string;
-  hours: number;
   status: 'To Do' | 'In Progress' | 'Done';
 }
-
-const tasks: Task[] = [
-  { id: '1', title: 'Issue Title 1', issueCode: '#12345', hours: 4, status: 'To Do' },
-  { id: '2', title: 'Issue Title 2', issueCode: '#12346', hours: 4, status: 'To Do' },
-  { id: '3', title: 'Issue Title 3', issueCode: '#12347', hours: 4, status: 'In Progress' },
-  { id: '4', title: 'Issue Title 4', issueCode: '#12348', hours: 4, status: 'In Progress' },
-  { id: '5', title: 'Issue Title 5', issueCode: '#12349', hours: 4, status: 'Done' },
-];
 
 const WorkLogPage = () => {
   const pathname = usePathname();
   const projectId = pathname.split('/')[2];
   const [userName, setUserName] = useState<string | null>(null);
+  const [categorizedIssues, setCategorizedIssues] = useState<{
+    'To Do': Issue[];
+    'In Progress': Issue[];
+    'Done': Issue[];
+  }>({
+    'To Do': [],
+    'In Progress': [],
+    'Done': [],
+  });
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -31,11 +31,25 @@ const WorkLogPage = () => {
     }
   }, []);
 
-  const categorizedTasks: { 'To Do': Task[]; 'In Progress': Task[]; 'Done': Task[] } = {
-    'To Do': tasks.filter((task) => task.status === 'To Do'),
-    'In Progress': tasks.filter((task) => task.status === 'In Progress'),
-    'Done': tasks.filter((task) => task.status === 'Done'),
-  };
+  useEffect(() => {
+    const fetchIssues = async () => {
+      try {
+        const stories = await getWeeklyStories(projectId);
+        console.log(stories);
+        
+        const categorized = {
+          'To Do': stories.filter((story) => story.status === 'To Do'),
+          'In Progress': stories.filter((story) => story.status === 'In Progress'),
+          'Done': stories.filter((story) => story.status === 'Done'),
+        };
+        setCategorizedIssues(categorized);
+      } catch (error) {
+        console.error('Failed to fetch issues:', error);
+      }
+    };
+
+    fetchIssues();
+  }, [projectId]);
 
   return (
     <div className="flex min-h-screen bg-gray-100">
@@ -49,7 +63,6 @@ const WorkLogPage = () => {
 
         <div className="grid grid-cols-3 gap-4">
           {(['To Do', 'In Progress', 'Done'] as const).map((status) => {
-            // 상태별 스타일 지정
             let headerStyle = '';
             let bgStyle = '';
             if (status === 'To Do') {
@@ -65,16 +78,18 @@ const WorkLogPage = () => {
 
             return (
               <div key={status} className={`p-4 rounded-lg shadow-md ${bgStyle}`}>
-                
                 <h2 className={`text-xl font-semibold mb-4 text-center ${headerStyle}`}>
                   {status}
                 </h2>
                 <div className="space-y-4">
-                  {categorizedTasks[status].map((task) => (
-                    <div key={task.id} className="bg-white p-4 rounded-lg shadow-sm flex items-center justify-between">
+                  {categorizedIssues[status].map((issue) => (
+                    <div
+                      key={issue.id}
+                      className="bg-white p-4 rounded-lg shadow-sm flex items-center justify-between"
+                    >
                       <div>
-                        <h3 className="font-semibold text-gray-800">{task.title}</h3>
-                        <p className="text-sm text-gray-500">{task.issueCode} / {task.hours} hours</p>
+                        <h3 className="font-semibold text-gray-800">{issue.title}</h3>
+                        <p className="text-sm text-gray-500">{issue.id}</p>
                       </div>
                       <img src="/img/avatar.png" alt="Avatar" className="w-6 h-6" />
                     </div>
