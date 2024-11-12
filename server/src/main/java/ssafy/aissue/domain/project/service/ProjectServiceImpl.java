@@ -3,10 +3,13 @@ package ssafy.aissue.domain.project.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import java.time.LocalDate;
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import ssafy.aissue.api.project.response.ProjectDetailsResponse;
+import ssafy.aissue.api.project.response.ProjectMemberResponse;
 import ssafy.aissue.common.constant.global.S3_IMAGE;
 import ssafy.aissue.common.exception.chatting.ProjectNotFoundException;
 import ssafy.aissue.common.util.S3Util;
@@ -14,6 +17,8 @@ import ssafy.aissue.domain.chatting.entity.Chatting;
 import ssafy.aissue.domain.chatting.repository.ChattingRepository;
 import ssafy.aissue.domain.project.command.UpdateProjectCommand;
 import ssafy.aissue.domain.project.entity.Project;
+import ssafy.aissue.domain.project.entity.ProjectMember;
+import ssafy.aissue.domain.project.repository.ProjectMemberRepository;
 import ssafy.aissue.domain.project.repository.ProjectRepository;
 
 @Slf4j
@@ -21,6 +26,7 @@ import ssafy.aissue.domain.project.repository.ProjectRepository;
 @RequiredArgsConstructor
 public class ProjectServiceImpl implements ProjectService {
 
+    private final ProjectMemberRepository projectMemberRepository;
     private final ProjectRepository projectRepository;
     private final ChattingRepository chattingRepository;
     private final S3Util s3Util;
@@ -31,9 +37,15 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
+    @Transactional
     public ProjectDetailsResponse getProject(String jiraProjectKey) {
         // `findByJiraProjectKey`를 이용해 프로젝트 조회
         Project project = findByJiraProjectKey(jiraProjectKey);
+        List<ProjectMember> memberList = projectMemberRepository.findAllByProject(project);
+        List<ProjectMemberResponse> members = memberList.stream()
+                .map(pm -> new ProjectMemberResponse(pm.getMember().getEmail(), pm.getMember().getName()))
+                .toList();
+        log.info("[ProjectService] 프로젝트에 맴버들 정보 조회: {}", memberList);
 
         // 프로젝트 데이터를 `ProjectDetailsResponse`에 매핑하여 반환
         return ProjectDetailsResponse.of(
@@ -46,7 +58,8 @@ public class ProjectServiceImpl implements ProjectService {
                 project.getInfraSkill(),
                 project.getEndAt() != null ? project.getEndAt().toString() : null,
                 project.getEndAt() != null ? project.getEndAt().toString() : null,
-                project.getIsCompleted()
+                project.getIsCompleted(),
+                members
         );
     }
 
@@ -55,6 +68,10 @@ public class ProjectServiceImpl implements ProjectService {
     public ProjectDetailsResponse updateProject(UpdateProjectCommand command) {
         log.info("[ProjectService] 프로젝트 정보 업데이트 요청: {}", command);
         Project currentProject = findByJiraProjectKey(command.jiraId());
+        List<ProjectMember> memberList = projectMemberRepository.findAllByProject(currentProject);
+        List<ProjectMemberResponse> members = memberList.stream()
+                .map(pm -> new ProjectMemberResponse(pm.getMember().getEmail(), pm.getMember().getName()))
+                .toList();
 
         MultipartFile profileImageFile = command.projectImagePath();
 
@@ -95,7 +112,8 @@ public class ProjectServiceImpl implements ProjectService {
                 updatedProject.getInfraSkill(),
                 updatedProject.getEndAt() != null ? updatedProject.getEndAt().toString() : null,
                 updatedProject.getEndAt() != null ? updatedProject.getEndAt().toString() : null,
-                updatedProject.getIsCompleted()
+                updatedProject.getIsCompleted(),
+                members
         );
     }
 
