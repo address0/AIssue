@@ -3,8 +3,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { getProjectInfo } from '@/api/project';
-import Image from 'next/image';
+import { getProjectInfo, getProjectFunctions, createProject, updateProjectFunctions } from '@/api/project';
+
+interface FunctionDetail {
+  title: string;
+  description: string;
+}
 
 interface Member {
   name: string;
@@ -30,128 +34,107 @@ export default function InfoPage({
 }) {
   const { projectId } = params;
   const [projectInfo, setProjectInfo] = useState<ProjectInfo | null>(null);
-  const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [projectFunctions, setProjectFunctions] = useState<FunctionDetail[]>([]);
+
+  const [isFunctionEditMode, setIsFunctionEditMode] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editedProjectInfo, setEditedProjectInfo] = useState<ProjectInfo | null>(null);
+  const [editedFunctions, setEditedFunctions] = useState<FunctionDetail[]>([]);
 
   useEffect(() => {
     const fetchProjectData = async () => {
       try {
         const result = await getProjectInfo(projectId);
-        console.log('Project Info:', result);
         setProjectInfo(result);
+        setEditedProjectInfo(result); // 수정 가능한 데이터 초기화
       } catch (error) {
         console.error('Failed to fetch project info:', error);
       }
     };
 
+    const fetchProjectFunctions = async () => {
+      try {
+        const functions = await getProjectFunctions(projectId);
+        setProjectFunctions(functions);
+        setEditedFunctions(functions); // 수정 가능한 함수 초기화
+      } catch (error) {
+        console.error('Failed to fetch project functions:', error);
+      }
+    };
+
     fetchProjectData();
+    fetchProjectFunctions();
   }, [projectId]);
 
-  const handlePrevSlide = () => {
-    setCurrentSlideIndex((prevIndex) =>
-      prevIndex === 0 ? carouselContent.length - 1 : prevIndex - 1
-    );
+  const handleEditClick = async () => {
+    if (isEditMode && editedProjectInfo) {
+      try {
+        // projectData 객체 생성 및 createProject 호출
+        const projectData = {
+          jiraId: projectId,
+          name: editedProjectInfo.title,
+          description: editedProjectInfo.description,
+          // startDate: '2023-01-01', // 여기에 실제 시작일 데이터를 넣어야 함
+          // endDate: '2023-12-31',   // 여기에 실제 종료일 데이터를 넣어야 함
+          // techStack: 'JavaScript, React',
+          feSkill: editedProjectInfo.feSkill,
+          beSkill: editedProjectInfo.beSkill,
+          infraSkill: editedProjectInfo.infraSkill,
+          // projectImagePath: editedProjectInfo.projectImage || '', // 이미지 경로 지정
+          deleteImage: false,
+        };
+
+        await createProject(projectData);
+        setIsEditMode(false); // 저장 후 편집 모드 종료
+        console.log('Project saved successfully');
+        // window.location.reload()
+        const updatedProjectInfo = await getProjectInfo(projectId);
+        setProjectInfo(updatedProjectInfo);
+      } catch (error) {
+        console.error('Failed to save project:', error);
+      }
+    } else {
+      setIsEditMode(true); // 편집 모드 시작
+    }
   };
 
-  const handleNextSlide = () => {
-    setCurrentSlideIndex((prevIndex) =>
-      prevIndex === carouselContent.length - 1 ? 0 : prevIndex + 1
-    );
+  const handleFunctionEditClick = async () => {
+    if (isFunctionEditMode) {
+      try {
+        // 수정된 기능 목록을 updateProjectFunctions 함수로 전송
+        await updateProjectFunctions(projectId, editedFunctions);
+        setProjectFunctions(editedFunctions); // 화면에 업데이트된 목록 반영
+        console.log('Project functions updated successfully');
+      } catch (error) {
+        console.error('Failed to update project functions:', error);
+      }
+    }
+    setIsFunctionEditMode(!isFunctionEditMode); // 수정 모드 전환
   };
 
-  const carouselContent: JSX.Element[] = [
-    (
-      <table
-        className="min-w-full border border-gray-200 rounded-lg overflow-hidden"
-        key="carousel-content-table"
-      >
-        <thead>
-          <tr>
-            <th className="border-b border-gray-200 px-4 py-2 text-left text-gray-600">기능명</th>
-            <th className="border-b border-gray-200 px-4 py-2 text-left text-gray-600">내용</th>
-          </tr>
-        </thead>
-        <tbody>
-          {Array.from({ length: 8 }).map((_, i) => (
-            <tr key={i}>
-              <td className="border-b border-gray-200 px-4 py-2">기능{i + 1}</td>
-              <td className="border-b border-gray-200 px-4 py-2">기능 설명 여기에 추가작업합니다</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    ),
-    (
-      <div className="flex flex-col items-center" key="carousel-content-sprint-schedule">
-        <h3 className="text-lg font-semibold mb-4">Sprint Schedule</h3>
-        <div className="flex space-x-4">
-          <div className="w-1/3 bg-[#B2E0D9] p-4 rounded-lg">
-            <h4 className="text-center font-semibold">Todo</h4>
-            <table className="min-w-full border border-gray-200 rounded-lg overflow-hidden">
-              <thead>
-                <tr>
-                  <th className="border-b border-gray-200 px-4 py-2 text-left text-gray-600">Issue Title</th>
-                  <th className="border-b border-gray-200 px-4 py-2 text-left text-gray-600">내용</th>
-                </tr>
-              </thead>
-              <tbody>
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <tr key={i}>
-                    <td className="border-b border-gray-200 px-4 py-2">이슈{i + 1}</td>
-                    <td className="border-b border-gray-200 px-4 py-2">이슈 설명</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div className="w-1/3 bg-[#FACACA] p-4 rounded-lg">
-            <h4 className="text-center font-semibold">In Progress</h4>
-            <table className="min-w-full border border-gray-200 rounded-lg overflow-hidden">
-              <thead>
-                <tr>
-                  <th className="border-b border-gray-200 px-4 py-2 text-left text-gray-600">Issue Title</th>
-                  <th className="border-b border-gray-200 px-4 py-2 text-left text-gray-600">내용</th>
-                </tr>
-              </thead>
-              <tbody>
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <tr key={i}>
-                    <td className="border-b border-gray-200 px-4 py-2">이슈{i + 1}</td>
-                    <td className="border-b border-gray-200 px-4 py-2">이슈 설명</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div className="w-1/3 bg-[#C0C0C0] p-4 rounded-lg">
-            <h4 className="text-center font-semibold">Done</h4>
-            <table className="min-w-full border border-gray-200 rounded-lg overflow-hidden">
-              <thead>
-                <tr>
-                  <th className="border-b border-gray-200 px-4 py-2 text-left text-gray-600">Issue Title</th>
-                  <th className="border-b border-gray-200 px-4 py-2 text-left text-gray-600">내용</th>
-                </tr>
-              </thead>
-              <tbody>
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <tr key={i}>
-                    <td className="border-b border-gray-200 px-4 py-2">이슈{i + 1}</td>
-                    <td className="border-b border-gray-200 px-4 py-2">이슈 설명</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    ),
-    (
-      <div className="flex justify-center items-center h-full" key="carousel-content-overview">
-        <Image src="/img/project_overview.png" alt="Project Overview" width={600} height={400} />
-      </div>
-    ),
-  ];
 
-  if (!projectInfo) {
+
+  const handleInputChange = (field: keyof ProjectInfo, value: string) => {
+    if (editedProjectInfo) {
+      setEditedProjectInfo({
+        ...editedProjectInfo,
+        [field]: value,
+      });
+    }
+  };
+
+  const handleFunctionChange = (index: number, field: keyof FunctionDetail, value: string) => {
+    const updatedFunctions = [...editedFunctions];
+    updatedFunctions[index] = {
+      ...updatedFunctions[index],
+      [field]: value,
+    };
+    setEditedFunctions(updatedFunctions);
+  };
+
+  if (!projectInfo || !editedProjectInfo) {
     return <div>Loading...</div>;
   }
 
@@ -161,10 +144,13 @@ export default function InfoPage({
 
       <div className="flex space-x-6">
         <div className="flex-1 space-y-6">
+          {/* 프로젝트 개요 섹션 */}
           <div className="bg-white p-6 rounded-lg shadow-md relative">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-semibold text-[#7498E5]">프로젝트 개요</h2>
-              <button className="text-white bg-[#7498E5] px-4 py-2 rounded-lg">수정</button>
+              <button onClick={handleEditClick} className="text-white bg-[#7498E5] px-4 py-2 rounded-lg">
+                {isEditMode ? '저장' : '수정'}
+              </button>
             </div>
 
             <div className="flex items-center mb-4 space-x-8">
@@ -173,47 +159,122 @@ export default function InfoPage({
                 alt="프로젝트 로고"
                 className="w-16 h-16"
               />
-
               <div className="grid grid-cols-[auto_auto_1fr] gap-x-4 gap-y-4">
                 <label className="text-gray-600 text-center font-semibold">프로젝트명</label>
                 <div className="h-full border-l border-[#D9D9D9]"></div>
-                <p className="text-gray-800">{projectInfo.title}</p>
+                {isEditMode ? (
+                  <input
+                    className="border border-gray-300 rounded p-1"
+                    value={editedProjectInfo.title}
+                    onChange={(e) => handleInputChange('title', e.target.value)}
+                  />
+                ) : (
+                  <p className="text-gray-800">{projectInfo.title}</p>
+                )}
 
                 <label className="text-gray-600 text-center font-semibold">주제</label>
                 <div className="h-full border-l border-[#D9D9D9]"></div>
-                <p className="text-gray-800">{projectInfo.description}</p>
+                {isEditMode ? (
+                  <input
+                    className="border border-gray-300 rounded p-1"
+                    value={editedProjectInfo.description}
+                    onChange={(e) => handleInputChange('description', e.target.value)}
+                  />
+                ) : (
+                  <p className="text-gray-800">{projectInfo.description}</p>
+                )}
 
                 <label className="text-gray-600 text-center font-semibold">Backend Skill</label>
                 <div className="h-full border-l border-[#D9D9D9]"></div>
-                <p className="text-gray-800">{projectInfo.beSkill}</p>
+                {isEditMode ? (
+                  <input
+                    className="border border-gray-300 rounded p-1"
+                    value={editedProjectInfo.beSkill}
+                    onChange={(e) => handleInputChange('beSkill', e.target.value)}
+                  />
+                ) : (
+                  <p className="text-gray-800">{projectInfo.beSkill}</p>
+                )}
 
                 <label className="text-gray-600 text-center font-semibold">Frontend Skill</label>
                 <div className="h-full border-l border-[#D9D9D9]"></div>
-                <p className="text-gray-800">{projectInfo.feSkill}</p>
+                {isEditMode ? (
+                  <input
+                    className="border border-gray-300 rounded p-1"
+                    value={editedProjectInfo.feSkill}
+                    onChange={(e) => handleInputChange('feSkill', e.target.value)}
+                  />
+                ) : (
+                  <p className="text-gray-800">{projectInfo.feSkill}</p>
+                )}
 
                 <label className="text-gray-600 text-center font-semibold">Infra Skill</label>
                 <div className="h-full border-l border-[#D9D9D9]"></div>
-                <p className="text-gray-800">{projectInfo.infraSkill}</p>
+                {isEditMode ? (
+                  <input
+                    className="border border-gray-300 rounded p-1"
+                    value={editedProjectInfo.infraSkill}
+                    onChange={(e) => handleInputChange('infraSkill', e.target.value)}
+                  />
+                ) : (
+                  <p className="text-gray-800">{projectInfo.infraSkill}</p>
+                )}
               </div>
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-lg shadow-md relative">
-            <h2 className="text-lg font-semibold mb-4 text-[#54B2A3]">프로젝트 상세</h2>
 
-            <button onClick={handlePrevSlide} className="absolute left-0 top-1/2 transform -translate-y-1/2">
-              <Image src="/img/signleftarrow.png" alt="Previous" width={24} height={24} />
-            </button>
-            <button onClick={handleNextSlide} className="absolute right-0 top-1/2 transform -translate-y-1/2">
-              <Image src="/img/signrightarrow.png" alt="Next" width={24} height={24} />
-            </button>
-
+          {/* 프로젝트 상세 섹션 */}
+          <div className="bg-white p-6 rounded-lg shadow-md">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-semibold text-[#54B2A3]">프로젝트 상세</h2>
+              <button onClick={handleFunctionEditClick} className="text-white bg-[#54B2A3] px-4 py-2 rounded-lg">
+                {isFunctionEditMode ? '저장' : '수정'}
+              </button>
+            </div>
             <div className="flex justify-center items-center">
-              {carouselContent[currentSlideIndex]}
+              <table className="min-w-full border border-gray-200 rounded-lg overflow-hidden">
+                <thead>
+                  <tr>
+                    <th className="border-b border-gray-200 px-4 py-2 text-left text-center text-gray-600 w-1/3">기능명</th>
+                    <th className="border-b border-gray-200 px-4 py-2 text-left text-center text-gray-600 w-2/3">내용</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {editedFunctions.map((func, index) => (
+                    <tr key={index}>
+                      <td className="border-b text-center border-gray-200 px-4 py-2 w-1/3">
+                        {isFunctionEditMode ? (
+                          <input
+                            className="border border-gray-300 rounded p-1 w-full"
+                            value={func.title}
+                            onChange={(e) => handleFunctionChange(index, 'title', e.target.value)}
+                          />
+                        ) : (
+                          func.title
+                        )}
+                      </td>
+                      <td className="border-b text-center border-gray-200 px-4 py-2 w-2/3">
+                        {isFunctionEditMode ? (
+                          <input
+                            className="border border-gray-300 rounded p-1 w-full"
+                            value={func.description}
+                            onChange={(e) => handleFunctionChange(index, 'description', e.target.value)}
+                          />
+                        ) : (
+                          func.description
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
 
+
+        {/* 멤버 섹션 */}
         <div className="w-1/4 bg-white p-6 rounded-lg shadow-md">
           <h2 className="text-lg font-semibold mb-4 text-center text-[#929292]">Members</h2>
           <div className="space-y-4">

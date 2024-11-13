@@ -9,6 +9,7 @@ import { getProjectList, getProjectInfo } from '@/api/project'
 import { useState } from 'react'
 import ChatBotModal from '@/components/(Modal)/ChatBotModal/page'
 import ChatModal from '@/components/(Modal)/ChatModal/page'
+import { logOut } from '@/api/user'
 
 interface Message {
   text: string
@@ -20,8 +21,11 @@ export default function ProjectLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const memberId =
+    typeof window !== 'undefined' ? sessionStorage.getItem('memberId') : null
+
   const { data, isLoading } = useQuery({
-    queryKey: ['projectList'],
+    queryKey: ['projectList', memberId],
     queryFn: () => getProjectList(),
   })
 
@@ -31,9 +35,9 @@ export default function ProjectLayout({
   const currentPath = pathname.split('/')[3]
   const accessToken =
     typeof window !== 'undefined' ? sessionStorage.getItem('accessToken') : null
-  const memberId =
-    typeof window !== 'undefined' ? sessionStorage.getItem('memberId') : null
-  const userName = sessionStorage.getItem('memberName')
+
+  const userName =
+    typeof window !== 'undefined' ? sessionStorage.getItem('memberName') : null
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [isChatOpen, setIsChatOpen] = useState(false)
   const [isProjectChatOpen, setIsProjectChatOpen] = useState(false)
@@ -45,6 +49,20 @@ export default function ProjectLayout({
       isUser: false,
     },
   ])
+
+  const handleLogout = async () => {
+    try {
+      await logOut()
+      sessionStorage.removeItem('accessToken')
+      sessionStorage.removeItem('refreshToken')
+      sessionStorage.removeItem('memberName')
+      sessionStorage.removeItem('memberId')
+      router.push('/login')
+    } catch (error) {
+      console.error('로그아웃에 에러가 생겼습니다.', error)
+    }
+  }
+
   const toggleChat = () => {
     setIsChatOpen(!isChatOpen)
   }
@@ -66,7 +84,7 @@ export default function ProjectLayout({
         router.push(`/project/${selectedProjectId}`)
       }
     } catch (error) {
-      console.error("Failed to fetch project info:", error)
+      console.error('Failed to fetch project info:', error)
       // 에러 발생 시 기본 페이지로 이동
       router.push(`/project/${selectedProjectId}`)
     }
@@ -186,7 +204,7 @@ export default function ProjectLayout({
 
           {/* Logout Button */}
           <button
-            onClick={() => router.push('/login')}
+            onClick={handleLogout}
             className="w-full text-center text-black bg-[#EEEEEE] hover:bg-[#9EBDFF66] py-2 rounded-[20px]"
             style={{ borderRadius: '10px' }}
           >
