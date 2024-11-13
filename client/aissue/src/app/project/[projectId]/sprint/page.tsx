@@ -115,6 +115,9 @@ export default function SprintPage({
     console.log(parsedData)
   },[parsedData])
 
+
+  console.log(process.env.OPENAI_API_KEY)
+
   if (!isSprintPage) {
     return (
       <div className="flex min-h-screen h-screen overflow-hidden bg-gray-100 w-full">
