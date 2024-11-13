@@ -39,17 +39,17 @@ interface FunctionDetail {
 }
 
 interface ProjectData {
-  jiraId: string;
-  name: string;
-  description: string;
-  // startDate: string;
-  // endDate: string;
-  // techStack: string;
-  feSkill: string;
-  beSkill: string;
-  infraSkill: string;
-  // projectImagePath: string | File;
-  deleteImage: boolean;
+  jiraId?: string;
+  name?: string;
+  description?: string;
+  startDate?: string;
+  endDate?: string;
+  techStack?: string;
+  feSkill?: string;
+  beSkill?: string;
+  infraSkill?: string;
+  projectImagePath?: string | File;
+  deleteImage?: boolean;
 }
 
 const getWeeklyStories = async (projectKey: string): Promise<Story[]> => {
@@ -86,19 +86,19 @@ const createProject = async (projectData: ProjectData) => {
   console.log(projectData)
   const formData = new FormData();
   
-  // 폼 데이터에 필드 추가
-  formData.append('jiraId', projectData.jiraId);
-  formData.append('name', projectData.name);
-  formData.append('description', projectData.description);
-  // formData.append('startDate', projectData.startDate);
-  // formData.append('endDate', projectData.endDate);
-  // formData.append('techStack', projectData.techStack);
-  formData.append('feSkill', projectData.feSkill);
-  formData.append('beSkill', projectData.beSkill);
-  formData.append('infraSkill', projectData.infraSkill);
-  // formData.append('projectImagePath', projectData.projectImagePath);
-  formData.append('deleteImage', projectData.deleteImage.toString());
-  
+  // 필드가 존재할 경우에만 formData에 추가
+  if (projectData.jiraId) formData.append('jiraId', projectData.jiraId);
+  if (projectData.name) formData.append('name', projectData.name);
+  if (projectData.description) formData.append('description', projectData.description);
+  if (projectData.startDate) formData.append('startDate', projectData.startDate);
+  if (projectData.endDate) formData.append('endDate', projectData.endDate);
+  if (projectData.techStack) formData.append('techStack', projectData.techStack);
+  if (projectData.feSkill) formData.append('feSkill', projectData.feSkill);
+  if (projectData.beSkill) formData.append('beSkill', projectData.beSkill);
+  if (projectData.infraSkill) formData.append('infraSkill', projectData.infraSkill);
+  if (projectData.projectImagePath) formData.append('projectImagePath', projectData.projectImagePath);
+  if (projectData.deleteImage !== undefined) formData.append('deleteImage', projectData.deleteImage.toString());
+
   formData.forEach((value, key) => {
     console.log(`${key}: ${value}`);
   });
