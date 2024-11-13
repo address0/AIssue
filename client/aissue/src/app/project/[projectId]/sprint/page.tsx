@@ -6,8 +6,9 @@ import Image from 'next/image'
 import Lottie from 'react-lottie-player'
 import NoEpic from '@public/lottie/Animation - 1730424329200.json'
 import LoadingImg from '@public/lottie/Animation - 1731310411267.json'
+import EpicModal from '@/components/(Modal)/EpicModal/page'
 
-interface IssueData {
+export interface IssueData {
   pk: string,
   summary: string,
   description: string,
@@ -19,7 +20,14 @@ interface IssueData {
   manager: null | string
 }
 
-export default function SprintPage() {
+export default function SprintPage({
+  params,
+}: {
+  params: {
+    projectId: string;
+  };
+}) {
+  const { projectId } = params;
   const [isSprintPage, setIsSprintPage] = useState(false)
   const [messages, setMessages] = useState<{ user: string; bot: string }[]>([])
   const [input, setInput] = useState('')
@@ -27,6 +35,7 @@ export default function SprintPage() {
   const chatEndRef = useRef<HTMLDivElement | null>(null)
   const [parsedData, setParsedData] = useState<IssueData[]>([])
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0)
+  const [showEpicModal, setShowEpicModal] = useState<boolean>(false)
 
   const questions = [
     '이번 주차의 에픽 목록은 다음과 같습니다. 추가로 작업할 기능이 있다면 알려 주세요!',
@@ -92,6 +101,10 @@ export default function SprintPage() {
     setLoading(false)
   }
 
+  const handleEpicModal = () => {
+    setShowEpicModal(!showEpicModal)
+  }
+
   useEffect(() => {
     if (chatEndRef.current) {
       chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -119,11 +132,20 @@ export default function SprintPage() {
             <p>AI 컨설턴트와 함께 전체 에픽 목록을 생성해 볼까요?</p>
           </div>
           <button
-            onClick={() => setIsSprintPage(true)}
-            className="bg-purple-500 text-white px-6 py-3 rounded-lg"
+            onClick={() => setShowEpicModal(true)}
+            className="bg-blue-500 text-white px-6 py-3 rounded-lg"
           >
             에픽 생성하기
           </button>
+          <button
+            onClick={() => setIsSprintPage(true)}
+            className="bg-purple-500 text-white px-6 py-3 rounded-lg"
+          >
+            스프린트 생성하기
+          </button>
+          {showEpicModal && (
+            <EpicModal isOpen={showEpicModal} onClose={handleEpicModal} projectId={projectId} />
+          )}
         </div>
       </div>
     )
