@@ -45,6 +45,7 @@ const CalendarComponent = () => {
     { title: '작업 8', color: '#87CEFA' },
   ]);
 
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newEventTitle, setNewEventTitle] = useState('');
   const [newEventColor, setNewEventColor] = useState('#3788d8');
