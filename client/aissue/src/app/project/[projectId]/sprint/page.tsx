@@ -8,7 +8,7 @@ import NoEpic from '@public/lottie/Animation - 1730424329200.json'
 import LoadingImg from '@public/lottie/Animation - 1731310411267.json'
 import EpicModal from '@/components/(Modal)/EpicModal/page'
 
-interface IssueData {
+export interface IssueData {
   pk: string,
   summary: string,
   description: string,
@@ -20,7 +20,14 @@ interface IssueData {
   manager: null | string
 }
 
-export default function SprintPage() {
+export default function SprintPage({
+  params,
+}: {
+  params: {
+    projectId: string;
+  };
+}) {
+  const { projectId } = params;
   const [isSprintPage, setIsSprintPage] = useState(false)
   const [messages, setMessages] = useState<{ user: string; bot: string }[]>([])
   const [input, setInput] = useState('')
@@ -137,7 +144,7 @@ export default function SprintPage() {
             스프린트 생성하기
           </button>
           {showEpicModal && (
-            <EpicModal isOpen={showEpicModal} onClose={handleEpicModal} />
+            <EpicModal isOpen={showEpicModal} onClose={handleEpicModal} projectId={projectId} />
           )}
         </div>
       </div>
