@@ -5,7 +5,7 @@
 import { useQuery } from '@tanstack/react-query'
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
-import { getProjectList } from '@/api/project'
+import { getProjectList, getProjectInfo } from '@/api/project'
 import { useState } from 'react'
 import ChatBotModal from '@/components/(Modal)/ChatBotModal/page'
 import ChatModal from '@/components/(Modal)/ChatModal/page'
@@ -53,9 +53,23 @@ export default function ProjectLayout({
     setIsProjectChatOpen(!isProjectChatOpen)
   }
 
-  const handleProjectSelect = (selectedProjectId: string) => {
+  // 프로젝트 선택 시 프로젝트 완료 여부에 따라 페이지를 이동하도록 수정
+  const handleProjectSelect = async (selectedProjectId: string) => {
     setDropdownOpen(false)
-    router.push(`/project/${selectedProjectId}/sprint`)
+    try {
+      const projectInfo = await getProjectInfo(selectedProjectId) // 프로젝트 정보를 가져옴
+      if (projectInfo && projectInfo.isCompleted) {
+        // 프로젝트가 완료된 경우 info 페이지로 이동
+        router.push(`/project/${selectedProjectId}/info`)
+      } else {
+        // 프로젝트가 완료되지 않은 경우 기본 페이지로 이동
+        router.push(`/project/${selectedProjectId}`)
+      }
+    } catch (error) {
+      console.error("Failed to fetch project info:", error)
+      // 에러 발생 시 기본 페이지로 이동
+      router.push(`/project/${selectedProjectId}`)
+    }
   }
 
   if (isLoading) {
