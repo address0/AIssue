@@ -15,6 +15,6 @@ public record UpdateProjectCommand(
         String beSkill,
         String infraSkill,
         MultipartFile projectImagePath,
-        boolean deleteImage
+        Boolean deleteImage
 ) {
 }
