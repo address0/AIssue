@@ -43,8 +43,13 @@ public class Project extends BaseProjectEntity {
 
     private Boolean isCompleted = false;
 
+
+
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProjectMember> members;
+
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProjectFunction> functions = new ArrayList<>();
 
     // jiraProjectKey만 받는 생성자 추가
     public Project(String jiraProjectKey) {
@@ -64,5 +69,4 @@ public class Project extends BaseProjectEntity {
         this.projectImage = projectImage;
         this.isCompleted = true;
     }
-
 }
