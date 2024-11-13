@@ -42,13 +42,13 @@ interface ProjectData {
   jiraId: string;
   name: string;
   description: string;
-  startDate: string;
-  endDate: string;
-  techStack: string;
+  // startDate: string;
+  // endDate: string;
+  // techStack: string;
   feSkill: string;
   beSkill: string;
   infraSkill: string;
-  projectImagePath: string | File;
+  // projectImagePath: string | File;
   deleteImage: boolean;
 }
 
@@ -90,15 +90,19 @@ const createProject = async (projectData: ProjectData) => {
   formData.append('jiraId', projectData.jiraId);
   formData.append('name', projectData.name);
   formData.append('description', projectData.description);
-  formData.append('startDate', projectData.startDate);
-  formData.append('endDate', projectData.endDate);
-  formData.append('techStack', projectData.techStack);
+  // formData.append('startDate', projectData.startDate);
+  // formData.append('endDate', projectData.endDate);
+  // formData.append('techStack', projectData.techStack);
   formData.append('feSkill', projectData.feSkill);
   formData.append('beSkill', projectData.beSkill);
   formData.append('infraSkill', projectData.infraSkill);
-  formData.append('projectImagePath', projectData.projectImagePath);
+  // formData.append('projectImagePath', projectData.projectImagePath);
   formData.append('deleteImage', projectData.deleteImage.toString());
-
+  
+  formData.forEach((value, key) => {
+    console.log(`${key}: ${value}`);
+  });
+  
   // Axios를 통해 POST 요청 전송
   const res = await privateAPI.put('/project', formData, {
     headers: {

@@ -3,7 +3,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { getProjectInfo, getProjectFunctions } from '@/api/project';
+import { getProjectInfo, getProjectFunctions, createProject, updateProjectFunctions } from '@/api/project';
 
 interface FunctionDetail {
   title: string;
@@ -35,12 +35,17 @@ export default function InfoPage({
   const { projectId } = params;
   const [projectInfo, setProjectInfo] = useState<ProjectInfo | null>(null);
   const [projectFunctions, setProjectFunctions] = useState<FunctionDetail[]>([]);
+  const [isFunctionEditMode, setIsFunctionEditMode] = useState(false); // 프로젝트 상세 수정 모드
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editedProjectInfo, setEditedProjectInfo] = useState<ProjectInfo | null>(null);
+  const [editedFunctions, setEditedFunctions] = useState<FunctionDetail[]>([]);
 
   useEffect(() => {
     const fetchProjectData = async () => {
       try {
         const result = await getProjectInfo(projectId);
         setProjectInfo(result);
+        setEditedProjectInfo(result); // 수정 가능한 데이터 초기화
       } catch (error) {
         console.error('Failed to fetch project info:', error);
       }
@@ -50,6 +55,7 @@ export default function InfoPage({
       try {
         const functions = await getProjectFunctions(projectId);
         setProjectFunctions(functions);
+        setEditedFunctions(functions); // 수정 가능한 함수 초기화
       } catch (error) {
         console.error('Failed to fetch project functions:', error);
       }
@@ -59,7 +65,73 @@ export default function InfoPage({
     fetchProjectFunctions();
   }, [projectId]);
 
-  if (!projectInfo) {
+  const handleEditClick = async () => {
+    if (isEditMode && editedProjectInfo) {
+      try {
+        // projectData 객체 생성 및 createProject 호출
+        const projectData = {
+          jiraId: projectId,
+          name: editedProjectInfo.title,
+          description: editedProjectInfo.description,
+          // startDate: '2023-01-01', // 여기에 실제 시작일 데이터를 넣어야 함
+          // endDate: '2023-12-31',   // 여기에 실제 종료일 데이터를 넣어야 함
+          // techStack: 'JavaScript, React',
+          feSkill: editedProjectInfo.feSkill,
+          beSkill: editedProjectInfo.beSkill,
+          infraSkill: editedProjectInfo.infraSkill,
+          // projectImagePath: editedProjectInfo.projectImage || '', // 이미지 경로 지정
+          deleteImage: false,
+        };
+
+        await createProject(projectData);
+        setIsEditMode(false); // 저장 후 편집 모드 종료
+        console.log('Project saved successfully');
+        // window.location.reload()
+        const updatedProjectInfo = await getProjectInfo(projectId);
+        setProjectInfo(updatedProjectInfo);
+      } catch (error) {
+        console.error('Failed to save project:', error);
+      }
+    } else {
+      setIsEditMode(true); // 편집 모드 시작
+    }
+  };
+
+  const handleFunctionEditClick = async () => {
+    if (isFunctionEditMode) {
+      try {
+        // 수정된 기능 목록을 updateProjectFunctions 함수로 전송
+        await updateProjectFunctions(projectId, editedFunctions);
+        setProjectFunctions(editedFunctions); // 화면에 업데이트된 목록 반영
+        console.log('Project functions updated successfully');
+      } catch (error) {
+        console.error('Failed to update project functions:', error);
+      }
+    }
+    setIsFunctionEditMode(!isFunctionEditMode); // 수정 모드 전환
+  };
+
+
+
+  const handleInputChange = (field: keyof ProjectInfo, value: string) => {
+    if (editedProjectInfo) {
+      setEditedProjectInfo({
+        ...editedProjectInfo,
+        [field]: value,
+      });
+    }
+  };
+
+  const handleFunctionChange = (index: number, field: keyof FunctionDetail, value: string) => {
+    const updatedFunctions = [...editedFunctions];
+    updatedFunctions[index] = {
+      ...updatedFunctions[index],
+      [field]: value,
+    };
+    setEditedFunctions(updatedFunctions);
+  };
+
+  if (!projectInfo || !editedProjectInfo) {
     return <div>Loading...</div>;
   }
 
@@ -73,7 +145,9 @@ export default function InfoPage({
           <div className="bg-white p-6 rounded-lg shadow-md relative">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-semibold text-[#7498E5]">프로젝트 개요</h2>
-              <button className="text-white bg-[#7498E5] px-4 py-2 rounded-lg">수정</button>
+              <button onClick={handleEditClick} className="text-white bg-[#7498E5] px-4 py-2 rounded-lg">
+                {isEditMode ? '저장' : '수정'}
+              </button>
             </div>
 
             <div className="flex items-center mb-4 space-x-8">
@@ -85,46 +159,109 @@ export default function InfoPage({
               <div className="grid grid-cols-[auto_auto_1fr] gap-x-4 gap-y-4">
                 <label className="text-gray-600 text-center font-semibold">프로젝트명</label>
                 <div className="h-full border-l border-[#D9D9D9]"></div>
-                <p className="text-gray-800">{projectInfo.title}</p>
+                {isEditMode ? (
+                  <input
+                    className="border border-gray-300 rounded p-1"
+                    value={editedProjectInfo.title}
+                    onChange={(e) => handleInputChange('title', e.target.value)}
+                  />
+                ) : (
+                  <p className="text-gray-800">{projectInfo.title}</p>
+                )}
 
                 <label className="text-gray-600 text-center font-semibold">주제</label>
                 <div className="h-full border-l border-[#D9D9D9]"></div>
-                <p className="text-gray-800">{projectInfo.description}</p>
+                {isEditMode ? (
+                  <input
+                    className="border border-gray-300 rounded p-1"
+                    value={editedProjectInfo.description}
+                    onChange={(e) => handleInputChange('description', e.target.value)}
+                  />
+                ) : (
+                  <p className="text-gray-800">{projectInfo.description}</p>
+                )}
 
                 <label className="text-gray-600 text-center font-semibold">Backend Skill</label>
                 <div className="h-full border-l border-[#D9D9D9]"></div>
-                <p className="text-gray-800">{projectInfo.beSkill}</p>
+                {isEditMode ? (
+                  <input
+                    className="border border-gray-300 rounded p-1"
+                    value={editedProjectInfo.beSkill}
+                    onChange={(e) => handleInputChange('beSkill', e.target.value)}
+                  />
+                ) : (
+                  <p className="text-gray-800">{projectInfo.beSkill}</p>
+                )}
 
                 <label className="text-gray-600 text-center font-semibold">Frontend Skill</label>
                 <div className="h-full border-l border-[#D9D9D9]"></div>
-                <p className="text-gray-800">{projectInfo.feSkill}</p>
+                {isEditMode ? (
+                  <input
+                    className="border border-gray-300 rounded p-1"
+                    value={editedProjectInfo.feSkill}
+                    onChange={(e) => handleInputChange('feSkill', e.target.value)}
+                  />
+                ) : (
+                  <p className="text-gray-800">{projectInfo.feSkill}</p>
+                )}
 
                 <label className="text-gray-600 text-center font-semibold">Infra Skill</label>
                 <div className="h-full border-l border-[#D9D9D9]"></div>
-                <p className="text-gray-800">{projectInfo.infraSkill}</p>
+                {isEditMode ? (
+                  <input
+                    className="border border-gray-300 rounded p-1"
+                    value={editedProjectInfo.infraSkill}
+                    onChange={(e) => handleInputChange('infraSkill', e.target.value)}
+                  />
+                ) : (
+                  <p className="text-gray-800">{projectInfo.infraSkill}</p>
+                )}
               </div>
             </div>
           </div>
 
+
           {/* 프로젝트 상세 섹션 */}
           <div className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-lg font-semibold mb-4 text-[#54B2A3]">프로젝트 상세</h2>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-semibold text-[#54B2A3]">프로젝트 상세</h2>
+              <button onClick={handleFunctionEditClick} className="text-white bg-[#54B2A3] px-4 py-2 rounded-lg">
+                {isFunctionEditMode ? '저장' : '수정'}
+              </button>
+            </div>
             <div className="flex justify-center items-center">
-            <table
-                className="min-w-full border border-gray-200 rounded-lg overflow-hidden"
-                key="carousel-content-table"
-              >
+              <table className="min-w-full border border-gray-200 rounded-lg overflow-hidden">
                 <thead>
                   <tr>
-                    <th className="border-b border-gray-200 px-4 py-2 text-left text-gray-600">기능명</th>
-                    <th className="border-b border-gray-200 px-4 py-2 text-left text-gray-600">내용</th>
+                    <th className="border-b border-gray-200 px-4 py-2 text-left text-gray-600 w-1/3">기능명</th>
+                    <th className="border-b border-gray-200 px-4 py-2 text-left text-gray-600 w-2/3">내용</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {projectFunctions.map((func, index) => (
+                  {editedFunctions.map((func, index) => (
                     <tr key={index}>
-                      <td className="border-b border-gray-200 px-4 py-2">{func.title}</td>
-                      <td className="border-b border-gray-200 px-4 py-2">{func.description}</td>
+                      <td className="border-b border-gray-200 px-4 py-2 w-1/3">
+                        {isFunctionEditMode ? (
+                          <input
+                            className="border border-gray-300 rounded p-1 w-full"
+                            value={func.title}
+                            onChange={(e) => handleFunctionChange(index, 'title', e.target.value)}
+                          />
+                        ) : (
+                          func.title
+                        )}
+                      </td>
+                      <td className="border-b border-gray-200 px-4 py-2 w-2/3">
+                        {isFunctionEditMode ? (
+                          <input
+                            className="border border-gray-300 rounded p-1 w-full"
+                            value={func.description}
+                            onChange={(e) => handleFunctionChange(index, 'description', e.target.value)}
+                          />
+                        ) : (
+                          func.description
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -132,6 +269,7 @@ export default function InfoPage({
             </div>
           </div>
         </div>
+
 
         {/* 멤버 섹션 */}
         <div className="w-1/4 bg-white p-6 rounded-lg shadow-md">
