@@ -236,14 +236,14 @@ export default function InfoPage({
               <table className="min-w-full border border-gray-200 rounded-lg overflow-hidden">
                 <thead>
                   <tr>
-                    <th className="border-b border-gray-200 px-4 py-2 text-left text-gray-600 w-1/3">기능명</th>
-                    <th className="border-b border-gray-200 px-4 py-2 text-left text-gray-600 w-2/3">내용</th>
+                    <th className="border-b border-gray-200 px-4 py-2 text-left text-center text-gray-600 w-1/3">기능명</th>
+                    <th className="border-b border-gray-200 px-4 py-2 text-left text-center text-gray-600 w-2/3">내용</th>
                   </tr>
                 </thead>
                 <tbody>
                   {editedFunctions.map((func, index) => (
                     <tr key={index}>
-                      <td className="border-b border-gray-200 px-4 py-2 w-1/3">
+                      <td className="border-b text-center border-gray-200 px-4 py-2 w-1/3">
                         {isFunctionEditMode ? (
                           <input
                             className="border border-gray-300 rounded p-1 w-full"
@@ -254,7 +254,7 @@ export default function InfoPage({
                           func.title
                         )}
                       </td>
-                      <td className="border-b border-gray-200 px-4 py-2 w-2/3">
+                      <td className="border-b text-center border-gray-200 px-4 py-2 w-2/3">
                         {isFunctionEditMode ? (
                           <input
                             className="border border-gray-300 rounded p-1 w-full"

@@ -1,7 +1,7 @@
 // src/app/project/[projectId]/projectDetailPage.tsx
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { createProject, updateProjectFunctions } from '@/api/project';
 import Image from 'next/image';
@@ -46,17 +46,21 @@ export default function ProjectDetailPage({
   const [functionDescription, setFunctionDescription] = useState('');
   const [step, setStep] = useState(1);
 
-  const isButtonActive =
-    step === 1
-      ? name && description
-      : step === 2
-      ? startDate && endDate
-      : functions.length > 0;
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newName = e.target.value;
+    setName(newName);
+  };
+
+  const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newDescription = e.target.value;
+    setDescription(newDescription);
+  };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     setProjectImage(file);
   };
+
   const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedCategory(e.target.value);
   };
@@ -97,7 +101,6 @@ export default function ProjectDetailPage({
 
   const submitProject = async () => {
     try {
-      // 1. 프로젝트 생성
       await createProject({
         jiraId: projectId,
         name,
@@ -111,10 +114,9 @@ export default function ProjectDetailPage({
         projectImagePath: projectImage || '',
         deleteImage: false,
       });
-  
-      // 2. 기능 목록 업데이트
+
       await updateProjectFunctions(projectId, functions);
-  
+
       alert('프로젝트와 기능 목록이 성공적으로 생성되었습니다.');
       router.push(`/project/${projectId}/info`);
     } catch (error) {
@@ -122,64 +124,89 @@ export default function ProjectDetailPage({
     }
   };
 
+  const isButtonActive = useMemo(() => {
+    if (step === 1) return Boolean(name && description);
+    if (step === 2) return Boolean(startDate && endDate);
+    return functions.length > 0;
+  }, [step, name, description, startDate, endDate, functions]);
+
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100 p-6">
       <div className="bg-white p-10 rounded-lg shadow-md w-full max-w-lg">
         {step === 1 ? (
           <>
-            {/* 첫 번째 단계: 프로젝트명, 주제, 이미지 입력 */}
-            <div className="text-center mb-6">
+            <div className="flex flex-col items-center text-center mb-6">
               <Image src="/img/chatbot.png" alt="Chatbot Icon" width={50} height={50} />
               <p className="text-[#54B2A3] font-semibold mt-2">
                 안녕하세요, JIRA Sprint 관리 서비스 AIssue입니다. 프로젝트 관리에 앞서, 정보를 입력해 주세요.
               </p>
             </div>
-            <div className="space-y-4">
-              <label className="block text-[#54B2A3] font-semibold">사진 업로드</label>
-              <input type="file" accept="image/*" onChange={handleImageUpload} />
-              {projectImage && (
-                <button onClick={() => setProjectImage(null)} className="text-red-500">
-                  사진 삭제
-                </button>
-              )}
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="프로젝트명 입력"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none"
-              />
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="프로젝트 주제 입력"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none"
-                rows={4}
-              />
+            <div className="flex space-x-6">
+              <div className="bg-[#D9D9D9] p-6 rounded-lg text-center relative flex justify-center items-center">
+                <label htmlFor="file-input" className="cursor-pointer block">
+                  <Image src='/img/camera.png' alt="Upload Project" width={50} height={50} className="mx-auto" />
+                </label>
+                <input
+                  id="file-input"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                />
+                {projectImage && (
+                  <button
+                    onClick={() => setProjectImage(null)}
+                    className="absolute top-2 right-2 text-red-500 border border-red-500 px-2 py-1 rounded-lg text-xs"
+                  >
+                    사진 삭제
+                  </button>
+                )}
+              </div>
+              <div className="flex-1" id="project">
+                <label className="block text-[#54B2A3] font-semibold mb-2">프로젝트명</label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={handleNameChange}
+                  placeholder="프로젝트명 입력"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-[#54B2A3]"
+                />
+                <label className="block text-[#54B2A3] font-semibold mt-4 mb-2">주제</label>
+                <textarea
+                  value={description}
+                  onChange={handleDescriptionChange}
+                  placeholder="프로젝트 주제 입력"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-[#54B2A3] resize-none"
+                  rows={4}
+                />
+              </div>
             </div>
           </>
         ) : step === 2 ? (
           <>
-            {/* 두 번째 단계: 개발 일정 및 기술 스택 입력 */}
-            <div className="text-center mb-6">
+            <div className="flex flex-col items-center text-center mb-6">
               <Image src="/img/chatbot.png" alt="Chatbot Icon" width={50} height={50} />
               <p className="text-[#54B2A3] font-semibold mt-2">
                 감사합니다. 다음으로, 개발 일정과 포지션 별 기술 스택을 입력해 주세요.
               </p>
             </div>
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="w-full px-4 py-2 mb-4 border border-gray-300 rounded-lg"
-            />
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="w-full px-4 py-2 mb-4 border border-gray-300 rounded-lg"
-            />
-            <div className="flex items-center space-x-2 mb-4">
+            <div>
+              <label className="block text-[#54B2A3] font-semibold mb-2">개발 일정</label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full px-4 py-2 mb-4 border border-gray-300 rounded-lg"
+              />
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="w-full px-4 py-2 mb-4 border border-gray-300 rounded-lg"
+              />
+            </div>
+            <div className="mt-4">
+              <label className="block text-[#54B2A3] font-semibold mb-2">기술 스택</label>
               <select
                 value={selectedCategory}
                 onChange={handleCategoryChange}
@@ -218,8 +245,7 @@ export default function ProjectDetailPage({
           </>
         ) : (
           <>
-            {/* 세 번째 단계: 기능 입력 */}
-            <div className="text-center mb-6">
+            <div className="flex flex-col items-center text-center mb-6">
               <Image src="/img/chatbot.png" alt="Chatbot Icon" width={50} height={50} />
               <p className="text-[#54B2A3] font-semibold mt-2">
                 마지막 단계입니다. 이제 프로젝트의 기능을 알려 주세요!
@@ -227,7 +253,7 @@ export default function ProjectDetailPage({
             </div>
             {functions.map((func, index) => (
               <div key={index} className="border border-[#54B2A3] rounded-lg p-4 mb-4">
-                <p className="font-semibold text-[#54B2A3]">Title {index + 1}</p>
+                <p className="font-semibold text-[#54B2A3]">{func.title}</p>
                 <p>{func.description}</p>
               </div>
             ))}
@@ -250,7 +276,6 @@ export default function ProjectDetailPage({
             </button>
           </>
         )}
-
         <button
           onClick={handleNextStep}
           disabled={!isButtonActive}
