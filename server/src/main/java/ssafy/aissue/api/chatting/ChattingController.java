@@ -15,11 +15,7 @@ import ssafy.aissue.api.chatting.request.ChatMessageRequest;
 import ssafy.aissue.api.chatting.response.ChatMessageResponse;
 import ssafy.aissue.api.chatting.response.ChatSummaryResponse;
 import ssafy.aissue.domain.chatting.entity.ChatMessage;
-import ssafy.aissue.domain.chatting.entity.Chatting;
-import ssafy.aissue.domain.chatting.repository.ChattingRepository;
 import ssafy.aissue.domain.chatting.service.ChattingService;
-import ssafy.aissue.domain.project.entity.Project;
-import ssafy.aissue.domain.project.service.ProjectService;
 import ssafy.aissue.domain.scheduler.ChatSummaryScheduler;
 
 import java.time.LocalDate;
