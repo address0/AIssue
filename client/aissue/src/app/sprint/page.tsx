@@ -5,74 +5,20 @@ import Image from 'next/image'
 import Sidebar from '@/components/(Navbar)/Sidebar/Sidebar'
 import Lottie from 'react-lottie-player'
 import lottieJson from '@public/lottie/Animation - 1730424329200.json'
-// import highImg from '@public/img/high.png'
-// import mediumImg from '@public/img/medium.png'
-// import lowImg from '@public/img/low.png'
 
-interface IssueData {
-  pk: string,
-  summary: string,
-  description: string,
-  issuetype: string,
-  priority: null | string,
-  parent: null | string,
-  issuelink: null | string,
-  storyPoint: null | string,
-  manager: null | string
-}
+// interface SprintResponses {
+//   epics: string;
+//   tasks: string;
+//   bugs: string;
+//   members: string;
+//   date: string;
+// }
 
 export default function SprintPage() {
   const [isSprintPage, setIsSprintPage] = useState<boolean>(false)
   const [input, setInput] = useState<string>('')
   const [messages, setMessages] = useState<{ user: string; bot: string }[]>([])
   console.log(messages)
-
-  const IssueList:IssueData[] = [
-    {
-      pk: 'IDC-1',
-      summary: '이슈제목제목제목 1',
-      description: '어쩌구저쩌구내용내용내용',
-      issuetype: 'story',
-      priority: 'medium',
-      parent: null,
-      issuelink: null,
-      storyPoint: '4',
-      manager: "3"
-    },
-    {
-      pk: 'IDC-1',
-      summary: '이슈제목제목제목 1',
-      description: '어쩌구저쩌구내용내용내용',
-      issuetype: 'story',
-      priority: 'medium',
-      parent: null,
-      issuelink: null,
-      storyPoint: '4',
-      manager: "3"
-    },
-    {
-      pk: 'IDC-1',
-      summary: '이슈제목제목제목 1',
-      description: '어쩌구저쩌구내용내용내용',
-      issuetype: 'story',
-      priority: 'medium',
-      parent: null,
-      issuelink: null,
-      storyPoint: '4',
-      manager: "3"
-    },
-    {
-      pk: 'IDC-1',
-      summary: '이슈제목제목제목 1',
-      description: '어쩌구저쩌구내용내용내용',
-      issuetype: 'story',
-      priority: 'medium',
-      parent: null,
-      issuelink: null,
-      storyPoint: '4',
-      manager: "3"
-    }
-  ]
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInput(e.target.value)
@@ -183,16 +129,27 @@ export default function SprintPage() {
             </div>
           </div>
         </div>
-        <div className='border-2 rounded-lg bg-white p-4'>
-          {IssueList?.map((item, index) => (
-            <div key={index} className='w-2/3 h-20'>
-              <h1 className='text-lg text-gray-700 text-bold'>
-                {/* <img src={item?.priority === "high"? highImg : item?.priority === "medium"? mediumImg : lowImg} alt="priority_img" /> */}
-                {item?.summary} 
-                <span className='text-gray-500 text-base ml-4'>{item?.issuetype}</span>
-              </h1>
-            </div>
-          ))}
+
+        {/* Suggested Questions */}
+        <div className="flex space-x-4 mb-6">
+          <div className="bg-white p-4 rounded-lg shadow-md text-center">
+            <p>추천 질문 1</p>
+            <button className="bg-blue-300 text-white px-4 py-2 mt-2 rounded">
+              질문하기
+            </button>
+          </div>
+          <div className="bg-white p-4 rounded-lg shadow-md text-center">
+            <p>추천 질문 2</p>
+            <button className="bg-blue-300 text-white px-4 py-2 mt-2 rounded">
+              질문하기
+            </button>
+          </div>
+          <div className="bg-white p-4 rounded-lg shadow-md text-center">
+            <p>추천 질문 3</p>
+            <button className="bg-blue-300 text-white px-4 py-2 mt-2 rounded">
+              질문하기
+            </button>
+          </div>
         </div>
       </div>
 

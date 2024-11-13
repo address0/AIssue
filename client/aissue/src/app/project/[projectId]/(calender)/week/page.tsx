@@ -3,10 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { useQuery } from '@tanstack/react-query';
 import ChatModal from '@/components/(Modal)/ChatModal/page';
-import { getWeeklyStories } from '@/api/project';
-import Image from 'next/image';
 
 interface Task {
   title: string;
@@ -26,15 +23,6 @@ export default function WeekPage() {
   const [selectedStory, setSelectedStory] = useState<string | null>(null);
   const [weekOffset, setWeekOffset] = useState(0);
   const [userName, setUserName] = useState<string | null>(null);
-
-  const pathname = usePathname();
-  const projectId = pathname.split('/')[2];
-
-  const { data: stories = [] as Story[], isLoading } = useQuery({
-    queryKey: ['weeklyStories', projectId],
-    queryFn: () => getWeeklyStories(projectId),
-    enabled: !!projectId,
-  });
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -71,6 +59,8 @@ export default function WeekPage() {
 
   const accessToken = typeof window !== 'undefined' ? sessionStorage.getItem('accessToken') : null;
   const memberId = typeof window !== 'undefined' ? sessionStorage.getItem('memberId') : null;
+  const pathname = usePathname();
+  const projectId = pathname.split('/')[2];
 
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const currentDay = dayNames[today.getDay()];
@@ -81,6 +71,24 @@ export default function WeekPage() {
   const toggleChat = () => {
     setIsChatOpen(!isChatOpen);
   };
+
+  const stories: Story[] = [
+    {
+      id: 'story1',
+      title: 'Sample Story 1',
+      tasks: [
+        { title: 'Task 1', start: new Date(2024, 9, 10, 9, 0), end: new Date(2024, 9, 10, 10, 30) },
+        { title: 'Task 2', start: new Date(2024, 9, 10, 13, 0), end: new Date(2024, 9, 10, 14, 30) },
+      ],
+    },
+    {
+      id: 'story2',
+      title: 'Sample Story 2',
+      tasks: [
+        { title: 'Task A', start: new Date(2024, 9, 11, 10, 0), end: new Date(2024, 9, 11, 12, 0) },
+      ],
+    },
+  ];
 
   const getTasksForDay = (day: string) => {
     const dayIndex = daysOfWeek.indexOf(day);
@@ -102,19 +110,13 @@ export default function WeekPage() {
     return today >= startOfWeek && today <= endOfWeek;
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex h-screen items-center justify-center text-white">
-        주간 업무 일정을 불러오는 중입니다.
-      </div>
-    );
-  }
-
   return (
     <div className="flex min-h-screen bg-gray-100">
       <div className="flex-1 p-6 overflow-hidden">
         <div className="relative flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-semibold text-[#54B2A3]">주간 업무 일정</h2>
+          <h2 className="text-2xl font-semibold text-[#54B2A3]">
+            주간 업무 일정
+          </h2>
 
           <div className="absolute left-1/2 transform -translate-x-1/2 flex">
             <Link href={`/project/${projectId}/month`}>
@@ -151,19 +153,32 @@ export default function WeekPage() {
         <div className="flex space-x-4">
           <div style={{ width: '70%', minWidth: '700px', border: '2px solid #54B2A3' }} className="bg-white p-4 rounded-lg shadow-md">
             <div className="flex justify-center items-center space-x-2">
-              <button onClick={() => setWeekOffset(weekOffset - 1)} style={{ width: '24px', height: '24px' }}>
-                <Image src="/img/weekleftarrow.png" alt="Previous Week" width={24} height={24} />
+              <button
+                onClick={() => setWeekOffset(weekOffset - 1)}
+                style={{ width: '24px', height: '24px' }}
+              >
+                <img src="/img/weekleftarrow.png" alt="Previous Week" style={{ width: '100%', height: '100%' }} />
               </button>
-              <h3 className="text-2xl font-semibold text-[#54B2A3] mx-2">{`${currentMonth} ${currentWeek}주차`}</h3>
-              <button onClick={() => setWeekOffset(weekOffset + 1)} style={{ width: '24px', height: '24px' }}>
-                <Image src="/img/weekrightarrow.png" alt="Next Week" width={24} height={24} />
+
+              <h3 className="text-2xl font-semibold text-[#54B2A3] mx-2">
+                {`${currentMonth} ${currentWeek}주차`}
+              </h3>
+
+              <button
+                onClick={() => setWeekOffset(weekOffset + 1)}
+                style={{ width: '24px', height: '24px' }}
+              >
+                <img src="/img/weekrightarrow.png" alt="Next Week" style={{ width: '100%', height: '100%' }} />
               </button>
             </div>
 
             <div className="grid grid-cols-6 gap-0 relative">
               <div className="flex flex-col pt-2">
                 {hours.map((hour) => (
-                  <div key={hour} className="text-center font-semibold text-gray-500 h-12 flex items-center justify-center">
+                  <div
+                    key={hour}
+                    className="text-center font-semibold text-gray-500 h-12 flex items-center justify-center"
+                  >
                     {`${hour}:00`}
                   </div>
                 ))}
@@ -171,7 +186,11 @@ export default function WeekPage() {
 
               {daysOfWeek.map((day) => (
                 <div key={day} className="flex flex-col relative">
-                  <div className={`text-center font-semibold mb-1 ${isTodayInCurrentWeek() && day === currentDay ? 'bg-red-400 text-white' : 'text-gray-500'}`}>
+                  <div
+                    className={`text-center font-semibold mb-1 ${
+                      isTodayInCurrentWeek() && day === currentDay ? 'bg-red-400 text-white' : 'text-gray-500'
+                    }`}
+                  >
                     {day}
                     {isTodayInCurrentWeek() && day === currentDay && (
                       <span className="text-sm text-gray-100 ml-1">
@@ -179,7 +198,11 @@ export default function WeekPage() {
                       </span>
                     )}
                   </div>
-                  <div className={`border-l border-r border-b h-full ${isTodayInCurrentWeek() && day === currentDay ? 'bg-red-100' : ''}`}>
+                  <div
+                    className={`border-l border-r border-b h-full ${
+                      isTodayInCurrentWeek() && day === currentDay ? 'bg-red-100' : ''
+                    }`}
+                  >
                     {hours.map((hour) => (
                       <div key={hour} className="border-t h-12 relative">
                         {isTodayInCurrentWeek() && day === currentDay && hour === today.getHours() && (
@@ -188,10 +211,15 @@ export default function WeekPage() {
                         {getTasksForDay(day)
                           .filter((task) => task.start.getHours() === hour)
                           .map((task, idx) => (
-                            <div key={idx} className="absolute top-0 left-0 w-full bg-[#54B2A3] text-white rounded-md text-sm p-1" style={{
-                              top: (task.start.getMinutes() / 60) * 100 + '%',
-                              height: ((task.end.getTime() - task.start.getTime()) / 1000 / 60 / 60) * 100 + '%',
-                            }}>
+                            <div
+                              key={idx}
+                              className="absolute top-0 left-0 w-full bg-[#54B2A3] text-white rounded-md text-sm p-1"
+                              style={{
+                                top: (task.start.getMinutes() / 60) * 100 + '%',
+                                height:
+                                  ((task.end.getTime() - task.start.getTime()) / 1000 / 60 / 60) * 100 + '%',
+                              }}
+                            >
                               {task.title}
                             </div>
                           ))}
@@ -203,19 +231,27 @@ export default function WeekPage() {
             </div>
           </div>
 
+          {/* Story List with Task Toggle Section */}
           <div style={{ width: '30%', minWidth: '300px' }} className="bg-gray-50 p-4 rounded-lg shadow-lg">
             <h3 className="text-lg font-semibold text-[#54B2A3] mb-4 bg-[#C2F4EC] p-2 rounded-md text-center">
               Story List
             </h3>
             {stories.map((story) => (
               <div key={story.id} className="mb-4 p-3 bg-white rounded-lg shadow-sm border border-gray-200">
-                <button className="flex justify-between items-center w-full text-left" onClick={() => setSelectedStory(story.id === selectedStory ? null : story.id)}>
+                <button
+                  className="flex justify-between items-center w-full text-left"
+                  onClick={() => setSelectedStory(story.id === selectedStory ? null : story.id)}
+                >
                   <div className="flex items-center space-x-2">
                     <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                    <div><span className="font-semibold text-gray-700">{story.title}</span></div>
+                    <div>
+                      <span className="font-semibold text-gray-700">{story.title}</span>
+                    </div>
                   </div>
                   <span className="text-gray-500">{story.id === selectedStory ? '▲' : '▼'}</span>
                 </button>
+
+                {/* Task list under each story */}
                 {story.id === selectedStory && (
                   <div className="mt-2 pl-4 space-y-2">
                     {story.tasks.map((task, idx) => (
@@ -234,15 +270,24 @@ export default function WeekPage() {
             ))}
           </div>
         </div>
-
-        <button onClick={toggleChat} className="fixed bottom-8 right-8 w-12 h-12 rounded-full bg-[#54B2A3] flex items-center justify-center shadow-lg">
-          <Image src="/img/chaticongreen.png" alt="Chat Icon" width={24} height={24} />
+        <button
+          onClick={toggleChat}
+          className="fixed bottom-8 right-8 w-12 h-12 rounded-full bg-[#54B2A3] flex items-center justify-center shadow-lg"
+        >
+          <img src="/img/chaticongreen.png" alt="Chat Icon" className="w-6 h-6" />
         </button>
 
         {isChatOpen && (
-          <ChatModal onClose={toggleChat} memberId={memberId} projectId={projectId} accessToken={accessToken} color={'#54B2A3'} />
+          <ChatModal
+            onClose={toggleChat}
+            memberId={memberId}
+            projectId={projectId}
+            accessToken={accessToken}
+            color={'#54B2A3'}
+          />
         )}
       </div>
     </div>
+
   );
 }
