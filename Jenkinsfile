@@ -29,15 +29,13 @@ pipeline {
 
         stage('Build Frontend') {
             steps {
-                withCredentials([file(credentialsId: 'dev-be-env-file', variable: 'ENV_FILE')]) {
-                    dir('client/aissue') {
-                        sh '''
-                        docker run --rm -u $(id -u):$(id -g) --env-file $ENV_FILE -v "$PWD":/app -w /app node:20.15.1 bash -c "
-                        npm install &&
-                        npm run build
-                        "
-                        '''
-                    }
+                dir('client/aissue') {
+                    sh '''
+                    docker run --rm -u $(id -u):$(id -g) -v "$PWD":/app -w /app node:20.15.1 bash -c "
+                    npm install &&
+                    npm run build
+                    "
+                    '''
                 }
             }
         }
