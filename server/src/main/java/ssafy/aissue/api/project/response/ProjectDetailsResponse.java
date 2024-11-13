@@ -37,9 +37,12 @@ public record ProjectDetailsResponse(
         Boolean isCompleted,
 
         @Schema(description = "프로젝트 멤버 정보 목록")
-        List<ProjectMemberResponse> members
+        List<ProjectMemberResponse> members,
+
+         @Schema(description = "프로젝트 기능 목록")
+        List<ProjectFunctionResponse> functions
 ) {
-    public static ProjectDetailsResponse of(String projectImage, String title, String description, String techStack,String feSkill, String beSkill, String infraSkill, String startAt, String endAt, Boolean isCompleted,List<ProjectMemberResponse> members) {
-        return new ProjectDetailsResponse(projectImage, title, description, techStack,feSkill,beSkill,infraSkill, startAt, endAt, isCompleted, members);
+    public static ProjectDetailsResponse of(String projectImage, String title, String description, String techStack,String feSkill, String beSkill, String infraSkill, String startAt, String endAt, Boolean isCompleted,List<ProjectMemberResponse> members, List<ProjectFunctionResponse> functions) {
+        return new ProjectDetailsResponse(projectImage, title, description, techStack,feSkill,beSkill,infraSkill, startAt, endAt, isCompleted, members, functions);
     }
 }
