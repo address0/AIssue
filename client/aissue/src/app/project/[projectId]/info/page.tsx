@@ -34,8 +34,11 @@ export default function InfoPage({
 }) {
   const { projectId } = params;
   const [projectInfo, setProjectInfo] = useState<ProjectInfo | null>(null);
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [projectFunctions, setProjectFunctions] = useState<FunctionDetail[]>([]);
-  const [isFunctionEditMode, setIsFunctionEditMode] = useState(false); // 프로젝트 상세 수정 모드
+
+  const [isFunctionEditMode, setIsFunctionEditMode] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editedProjectInfo, setEditedProjectInfo] = useState<ProjectInfo | null>(null);
   const [editedFunctions, setEditedFunctions] = useState<FunctionDetail[]>([]);
