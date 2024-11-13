@@ -2,11 +2,15 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { createProject } from '@/api/project';
 import Image from 'next/image';
 
 interface TechStack {
-  [position: string]: string[];
+  beSkill: string[];
+  feSkill: string[];
+  infraSkill: string[];
+  etc: string[];
 }
 
 export default function ProjectDetailPage({
@@ -17,13 +21,20 @@ export default function ProjectDetailPage({
   };
 }) {
   const { projectId } = params;
+  const router = useRouter(); // useRouter 훅 사용
+
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [newTech, setNewTech] = useState('');
-  const [techStack, setTechStack] = useState<TechStack>({});
+  const [techStack, setTechStack] = useState<TechStack>({
+    beSkill: [],
+    feSkill: [],
+    infraSkill: [],
+    etc: [],
+  });
   const [isButtonActive, setIsButtonActive] = useState(false);
   const [projectImage, setProjectImage] = useState<File | null>(null);
   const [step, setStep] = useState(1); // 현재 단계 추적
@@ -60,10 +71,19 @@ export default function ProjectDetailPage({
 
   const addTechStack = () => {
     if (selectedCategory && newTech) {
-      setTechStack((prevStack) => ({
-        ...prevStack,
-        [selectedCategory]: [...(prevStack[selectedCategory] || []), newTech],
-      }));
+      setTechStack((prevStack) => {
+        const updatedStack = { ...prevStack };
+        if (selectedCategory === 'Backend') {
+          updatedStack.beSkill = [...updatedStack.beSkill, newTech];
+        } else if (selectedCategory === 'Frontend') {
+          updatedStack.feSkill = [...updatedStack.feSkill, newTech];
+        } else if (selectedCategory === 'Infra') {
+          updatedStack.infraSkill = [...updatedStack.infraSkill, newTech];
+        } else if (selectedCategory === 'Etc') {
+          updatedStack.etc = [...updatedStack.etc, newTech];
+        }
+        return updatedStack;
+      });
       setNewTech('');
     }
   };
@@ -83,21 +103,20 @@ export default function ProjectDetailPage({
   const submitProject = async () => {
     try {
       await createProject({
-        JiraID: projectId,
+        jiraId: projectId,
         name,
         description,
         startDate,
         endDate,
-        techStack: Object.entries(techStack)
-          .map(([position, techs]) => `${position}: ${techs.join(', ')}`)
-          .join('; '), // 기술 스택을 포지션별로 문자열로 결합
-        feSkill: '',
-        beSkill: '',
-        infraSkill: '',
+        techStack: techStack.etc.join(', '), // "Etc"는 techStack으로 전달
+        feSkill: techStack.feSkill.join(', '),
+        beSkill: techStack.beSkill.join(', '),
+        infraSkill: techStack.infraSkill.join(', '),
         projectImagePath: projectImage || '',
         deleteImage: false,
       });
       alert('프로젝트가 성공적으로 생성되었습니다.');
+      router.push(`/project/${projectId}/info`); // 프로젝트 생성 후 페이지 이동
     } catch (error) {
       console.error('프로젝트 생성 중 오류 발생:', error);
     }
@@ -193,7 +212,7 @@ export default function ProjectDetailPage({
                   className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-[#54B2A3]"
                 >
                   <option value="">포지션 선택</option>
-                  {['Backend', 'Frontend', 'Database', 'Infra', 'Embedded', 'Mobile', 'Etc'].map((category) => (
+                  {['Backend', 'Frontend', 'Infra', 'Etc'].map((category) => (
                     <option key={category} value={category}>
                       {category}
                     </option>
@@ -211,10 +230,10 @@ export default function ProjectDetailPage({
                 </button>
               </div>
               <div className="mt-4">
-                {Object.entries(techStack).map(([position, techs], index) => (
-                  <div key={index} className="mb-2">
+                {Object.entries(techStack).map(([position, techs]) => (
+                  <div key={position} className="mb-2">
                     <p className="text-[#54B2A3] font-semibold mb-1">{position}</p>
-                    {techs.map((tech, i) => (
+                    {techs.map((tech: string, i: number) => (
                       <p key={i} className="text-gray-700 text-sm border-b border-gray-300 pb-1 mb-1">
                         {tech}
                       </p>
