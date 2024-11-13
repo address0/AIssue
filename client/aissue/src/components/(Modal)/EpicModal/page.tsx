@@ -54,7 +54,7 @@ export default function EpicModal({
       body: JSON.stringify({ message: `적절한 에픽을 8개 생성해 줘. 프로젝트에 대한 정보는 다음과 같아. \n
         ${projectData}` }),
     })
-
+    
     const data = await response.json()
     if (response.ok) {
       console.log(data)
