@@ -33,7 +33,8 @@ export default function ProjectLayout({
     typeof window !== 'undefined' ? sessionStorage.getItem('accessToken') : null
   const memberId =
     typeof window !== 'undefined' ? sessionStorage.getItem('memberId') : null
-  const userName = sessionStorage.getItem('memberName')
+  const userName = 
+    typeof window !== 'undefined' ?sessionStorage.getItem('memberName'): null
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [isChatOpen, setIsChatOpen] = useState(false)
   const [isProjectChatOpen, setIsProjectChatOpen] = useState(false)
