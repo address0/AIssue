@@ -134,6 +134,11 @@ export default function InfoPage({
     setEditedFunctions(updatedFunctions);
   };
 
+    // + 버튼을 눌러 새로운 기능 항목 추가
+    const handleAddFunction = () => {
+      setEditedFunctions([...editedFunctions, { title: '', description: '' }]);
+    };
+
   if (!projectInfo || !editedProjectInfo) {
     return <div>Loading...</div>;
   }
@@ -270,6 +275,16 @@ export default function InfoPage({
                 </tbody>
               </table>
             </div>
+            <div className="flex justify-center">
+              {isFunctionEditMode && (
+                <button
+                  onClick={handleAddFunction}
+                  className="mt-3 text-white bg-[#54B2A3] px-4 py-2 rounded-lg"
+                >
+                  + 
+                </button>
+              )}
+              </div>
           </div>
         </div>
 

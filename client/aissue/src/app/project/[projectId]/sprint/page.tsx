@@ -14,7 +14,7 @@ export interface IssueData {
   description: string,
   issuetype: string,
   priority: null | string,
-  parent: string,
+  parent: null | string,
   issuelink: null | string,
   storyPoint: null | string,
   manager: null | string
@@ -121,7 +121,7 @@ export default function SprintPage({
   if (!isSprintPage) {
     return (
       <div className="flex min-h-screen h-screen overflow-hidden bg-gray-100 w-full">
-        <div className="flex-1 p-6 flex flex-col items-center justify-center space-y-6 overflow-hidden">
+        <div className="flex-1 p-6 flex flex-col items-center justify-center overflow-hidden">
           <div className="w-[60%] h-[50%] flex justify-center items-center">
             <Lottie
               loop
