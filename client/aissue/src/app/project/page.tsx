@@ -16,19 +16,26 @@ export default function ProjectPage() {
   const handleProjectClick = useCallback(
     async (projectId: string) => {
       try {
-        const projectInfo = await getProjectInfo(projectId); // 요청해서 프로젝트 정보를 받아옴
-        if (projectInfo.isCompleted) {
-          router.push(`/project/${projectId}/info`); // 완료된 경우 info 페이지로 이동
+        // 프로젝트 정보를 서버에서 가져오고, 반환된 데이터와 ID를 콘솔에 출력하여 확인합니다.
+        const projectInfo = await getProjectInfo(projectId);
+        console.log('Project ID:', projectId);
+        console.log('Project Info:', projectInfo);
+
+        if (projectInfo && projectInfo.isCompleted) {
+          // 프로젝트 정보가 존재하고 완료된 경우 info 페이지로 이동
+          router.push(`/project/${projectId}/info`);
         } else {
-          router.push(`/project/${projectId}`); // 완료되지 않은 경우 기본 페이지로 이동
+          // 프로젝트 정보가 없거나 완료되지 않은 경우 기본 페이지로 이동
+          router.push(`/project/${projectId}`);
         }
       } catch (error) {
         console.error("Failed to fetch project info:", error);
+        // 에러 발생 시 기본 페이지로 이동
+        router.push(`/project/${projectId}`);
       }
     },
     [router]
   );
-  
 
   if (isLoading) {
     return (
@@ -47,11 +54,11 @@ export default function ProjectPage() {
       <div className="flex flex-col items-center gap-y-4">
         {data.map((project: string) => (
           <button
-            key={project}
-            onClick={() => handleProjectClick(project)}
+            key={project} // 프로젝트 ID를 key로 사용
+            onClick={() => handleProjectClick(project)} // 클릭 시 해당 프로젝트로 이동
             className="px-8 py-4 rounded-lg bg-[#7498e5] font-semibold shadow-lg transition-transform duration-200 transform hover:scale-105 hover:bg-[#82e5d6]/80"
           >
-            {project}
+            {project} {/* 프로젝트 이름을 버튼 텍스트로 표시 */}
           </button>
         ))}
       </div>
