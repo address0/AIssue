@@ -67,7 +67,7 @@ export async function POST(request: Request) {
             },
             {
                 headers: {
-                    'Authorization': `Bearer ${process.env.NEXT_PUBLIC_OPENAI_API_KEY}`,
+                    'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
                     'Content-Type': 'application/json',
                 },
             }
