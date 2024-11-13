@@ -33,6 +33,11 @@ interface Issue {
   status: 'To Do' | 'In Progress' | 'Done'; // 특정 값만 허용하도록 제한
 }
 
+interface FunctionDetail {
+  title: string;
+  description: string;
+}
+
 interface ProjectData {
   jiraId: string;
   name: string;
@@ -104,4 +109,22 @@ const createProject = async (projectData: ProjectData) => {
   return res.data;
 };
 
-export { getProjectList, getWeeklyStories, getProjectInfo, createProject };
+// 프로젝트의 기능 목록을 업데이트하는 함수
+const updateProjectFunctions = async (
+  jiraProjectKey: string,
+  functions: FunctionDetail[]
+) => {
+  try {
+    const res = await privateAPI.put(`/project/${jiraProjectKey}/functions`, functions, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    return res.data;
+  } catch (error) {
+    console.error('Failed to update project functions:', error);
+    throw error;
+  }
+};
+
+export { getProjectList, getWeeklyStories, getProjectInfo, createProject, updateProjectFunctions };
