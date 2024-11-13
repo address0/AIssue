@@ -34,7 +34,7 @@ interface Issue {
 }
 
 interface ProjectData {
-  JiraID: string;
+  jiraId: string;
   name: string;
   description: string;
   startDate: string;
@@ -78,10 +78,11 @@ const getProjectInfo = async (jiraProjectKey: string) => {
 };
 
 const createProject = async (projectData: ProjectData) => {
+  console.log(projectData)
   const formData = new FormData();
   
   // 폼 데이터에 필드 추가
-  formData.append('JiraID', projectData.JiraID);
+  formData.append('jiraId', projectData.jiraId);
   formData.append('name', projectData.name);
   formData.append('description', projectData.description);
   formData.append('startDate', projectData.startDate);
@@ -94,7 +95,7 @@ const createProject = async (projectData: ProjectData) => {
   formData.append('deleteImage', projectData.deleteImage.toString());
 
   // Axios를 통해 POST 요청 전송
-  const res = await privateAPI.post('/project', formData, {
+  const res = await privateAPI.put('/project', formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
