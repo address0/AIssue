@@ -127,4 +127,15 @@ const updateProjectFunctions = async (
   }
 };
 
-export { getProjectList, getWeeklyStories, getProjectInfo, createProject, updateProjectFunctions };
+// 프로젝트의 기능 목록을 가져오는 함수
+const getProjectFunctions = async (jiraProjectKey: string): Promise<FunctionDetail[]> => {
+  try {
+    const res = await privateAPI.get(`/project/${jiraProjectKey}/functions`);
+    return res.data.result; // result에서 title과 description 정보가 포함된 배열 반환
+  } catch (error) {
+    console.error('Failed to fetch project functions:', error);
+    throw error;
+  }
+};
+
+export { getProjectList, getWeeklyStories, getProjectInfo, createProject, updateProjectFunctions, getProjectFunctions };
