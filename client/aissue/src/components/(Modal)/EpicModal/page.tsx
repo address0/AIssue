@@ -18,13 +18,24 @@ export default function EpicModal({
   onClose,
   projectId
 }: EpicModalProps) {
-
-  if (!isOpen) return null
-
   const [Loading, setLoading] = useState<boolean>(false)
   const [isError, setIsError] = useState<boolean>(false)
   const [parsedData, setParsedData] = useState<IssueData[]>([])
   const [projectData, setProjectData] = useState<string>('')
+
+  useEffect(() => {
+    getProjectInfo(projectId)
+    .then((data) => {
+      console.log(data)
+      setProjectData(data)
+      handleCreateIssue(data)
+    })
+    .catch((error) => {
+      console.log(error)
+    })
+  },[])
+
+  if (!isOpen) return null
 
   const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) {
@@ -32,10 +43,10 @@ export default function EpicModal({
     }
   }
 
-  const handleCreateIssue = async (projectData:any) => {
+  const handleCreateIssue = async (projectData:string) => {
     setLoading(true)
     setIsError(false)
-    console.log("개빡치네 ", projectData)
+    console.log("project data: ", projectData)
 
     const response = await fetch('/project/[projectId]/sprint/chat', {
       method: 'POST',
@@ -72,18 +83,6 @@ export default function EpicModal({
     }
     setLoading(false)
   }
-
-  useEffect(() => {
-    getProjectInfo(projectId)
-    .then((data) => {
-      console.log(data)
-      setProjectData(data)
-      handleCreateIssue(data)
-    })
-    .catch((error) => {
-      console.log(error)
-    })
-  },[])
 
   return (
     <div className="fixed h-screen inset-0 bg-black bg-opacity-50 flex justify-center items-center"
