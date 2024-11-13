@@ -3,8 +3,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { getProjectInfo } from '@/api/project';
-import Image from 'next/image';
+import { getProjectInfo, getProjectFunctions } from '@/api/project';
+
+interface FunctionDetail {
+  title: string;
+  description: string;
+}
 
 interface Member {
   name: string;
@@ -30,126 +34,30 @@ export default function InfoPage({
 }) {
   const { projectId } = params;
   const [projectInfo, setProjectInfo] = useState<ProjectInfo | null>(null);
-  const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+  const [projectFunctions, setProjectFunctions] = useState<FunctionDetail[]>([]);
 
   useEffect(() => {
     const fetchProjectData = async () => {
       try {
         const result = await getProjectInfo(projectId);
-        console.log('Project Info:', result);
         setProjectInfo(result);
       } catch (error) {
         console.error('Failed to fetch project info:', error);
       }
     };
 
+    const fetchProjectFunctions = async () => {
+      try {
+        const functions = await getProjectFunctions(projectId);
+        setProjectFunctions(functions);
+      } catch (error) {
+        console.error('Failed to fetch project functions:', error);
+      }
+    };
+
     fetchProjectData();
+    fetchProjectFunctions();
   }, [projectId]);
-
-  const handlePrevSlide = () => {
-    setCurrentSlideIndex((prevIndex) =>
-      prevIndex === 0 ? carouselContent.length - 1 : prevIndex - 1
-    );
-  };
-
-  const handleNextSlide = () => {
-    setCurrentSlideIndex((prevIndex) =>
-      prevIndex === carouselContent.length - 1 ? 0 : prevIndex + 1
-    );
-  };
-
-  const carouselContent: JSX.Element[] = [
-    (
-      <table
-        className="min-w-full border border-gray-200 rounded-lg overflow-hidden"
-        key="carousel-content-table"
-      >
-        <thead>
-          <tr>
-            <th className="border-b border-gray-200 px-4 py-2 text-left text-gray-600">기능명</th>
-            <th className="border-b border-gray-200 px-4 py-2 text-left text-gray-600">내용</th>
-          </tr>
-        </thead>
-        <tbody>
-          {Array.from({ length: 8 }).map((_, i) => (
-            <tr key={i}>
-              <td className="border-b border-gray-200 px-4 py-2">기능{i + 1}</td>
-              <td className="border-b border-gray-200 px-4 py-2">기능 설명 여기에 추가작업합니다</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    ),
-    (
-      <div className="flex flex-col items-center" key="carousel-content-sprint-schedule">
-        <h3 className="text-lg font-semibold mb-4">Sprint Schedule</h3>
-        <div className="flex space-x-4">
-          <div className="w-1/3 bg-[#B2E0D9] p-4 rounded-lg">
-            <h4 className="text-center font-semibold">Todo</h4>
-            <table className="min-w-full border border-gray-200 rounded-lg overflow-hidden">
-              <thead>
-                <tr>
-                  <th className="border-b border-gray-200 px-4 py-2 text-left text-gray-600">Issue Title</th>
-                  <th className="border-b border-gray-200 px-4 py-2 text-left text-gray-600">내용</th>
-                </tr>
-              </thead>
-              <tbody>
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <tr key={i}>
-                    <td className="border-b border-gray-200 px-4 py-2">이슈{i + 1}</td>
-                    <td className="border-b border-gray-200 px-4 py-2">이슈 설명</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div className="w-1/3 bg-[#FACACA] p-4 rounded-lg">
-            <h4 className="text-center font-semibold">In Progress</h4>
-            <table className="min-w-full border border-gray-200 rounded-lg overflow-hidden">
-              <thead>
-                <tr>
-                  <th className="border-b border-gray-200 px-4 py-2 text-left text-gray-600">Issue Title</th>
-                  <th className="border-b border-gray-200 px-4 py-2 text-left text-gray-600">내용</th>
-                </tr>
-              </thead>
-              <tbody>
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <tr key={i}>
-                    <td className="border-b border-gray-200 px-4 py-2">이슈{i + 1}</td>
-                    <td className="border-b border-gray-200 px-4 py-2">이슈 설명</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div className="w-1/3 bg-[#C0C0C0] p-4 rounded-lg">
-            <h4 className="text-center font-semibold">Done</h4>
-            <table className="min-w-full border border-gray-200 rounded-lg overflow-hidden">
-              <thead>
-                <tr>
-                  <th className="border-b border-gray-200 px-4 py-2 text-left text-gray-600">Issue Title</th>
-                  <th className="border-b border-gray-200 px-4 py-2 text-left text-gray-600">내용</th>
-                </tr>
-              </thead>
-              <tbody>
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <tr key={i}>
-                    <td className="border-b border-gray-200 px-4 py-2">이슈{i + 1}</td>
-                    <td className="border-b border-gray-200 px-4 py-2">이슈 설명</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    ),
-    (
-      <div className="flex justify-center items-center h-full" key="carousel-content-overview">
-        <Image src="/img/project_overview.png" alt="Project Overview" width={600} height={400} />
-      </div>
-    ),
-  ];
 
   if (!projectInfo) {
     return <div>Loading...</div>;
@@ -161,6 +69,7 @@ export default function InfoPage({
 
       <div className="flex space-x-6">
         <div className="flex-1 space-y-6">
+          {/* 프로젝트 개요 섹션 */}
           <div className="bg-white p-6 rounded-lg shadow-md relative">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-semibold text-[#7498E5]">프로젝트 개요</h2>
@@ -173,7 +82,6 @@ export default function InfoPage({
                 alt="프로젝트 로고"
                 className="w-16 h-16"
               />
-
               <div className="grid grid-cols-[auto_auto_1fr] gap-x-4 gap-y-4">
                 <label className="text-gray-600 text-center font-semibold">프로젝트명</label>
                 <div className="h-full border-l border-[#D9D9D9]"></div>
@@ -198,22 +106,34 @@ export default function InfoPage({
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-lg shadow-md relative">
+          {/* 프로젝트 상세 섹션 */}
+          <div className="bg-white p-6 rounded-lg shadow-md">
             <h2 className="text-lg font-semibold mb-4 text-[#54B2A3]">프로젝트 상세</h2>
-
-            <button onClick={handlePrevSlide} className="absolute left-0 top-1/2 transform -translate-y-1/2">
-              <Image src="/img/signleftarrow.png" alt="Previous" width={24} height={24} />
-            </button>
-            <button onClick={handleNextSlide} className="absolute right-0 top-1/2 transform -translate-y-1/2">
-              <Image src="/img/signrightarrow.png" alt="Next" width={24} height={24} />
-            </button>
-
             <div className="flex justify-center items-center">
-              {carouselContent[currentSlideIndex]}
+            <table
+                className="min-w-full border border-gray-200 rounded-lg overflow-hidden"
+                key="carousel-content-table"
+              >
+                <thead>
+                  <tr>
+                    <th className="border-b border-gray-200 px-4 py-2 text-left text-gray-600">기능명</th>
+                    <th className="border-b border-gray-200 px-4 py-2 text-left text-gray-600">내용</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {projectFunctions.map((func, index) => (
+                    <tr key={index}>
+                      <td className="border-b border-gray-200 px-4 py-2">{func.title}</td>
+                      <td className="border-b border-gray-200 px-4 py-2">{func.description}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
 
+        {/* 멤버 섹션 */}
         <div className="w-1/4 bg-white p-6 rounded-lg shadow-md">
           <h2 className="text-lg font-semibold mb-4 text-center text-[#929292]">Members</h2>
           <div className="space-y-4">
