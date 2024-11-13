@@ -9,7 +9,7 @@ export async function POST(request: Request) {
         const response = await axios.post(
             'https://api.openai.com/v1/chat/completions',
             {
-                model: 'gpt-3.5-turbo',
+                model: 'gpt-4-turbo',
                 messages: [
                     {
                         role: 'system',
@@ -67,7 +67,7 @@ export async function POST(request: Request) {
             },
             {
                 headers: {
-                    'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+                    'Authorization': `Bearer ${process.env.NEXT_PUBLIC_OPENAI_API_KEY}`,
                     'Content-Type': 'application/json',
                 },
             }
