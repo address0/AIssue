@@ -14,7 +14,7 @@ export interface IssueData {
   description: string,
   issuetype: string,
   priority: null | string,
-  parent: string,
+  parent: null | string,
   issuelink: null | string,
   storyPoint: null | string,
   manager: null | string

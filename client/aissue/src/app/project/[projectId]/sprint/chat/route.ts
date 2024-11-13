@@ -23,7 +23,7 @@ export async function POST(request: Request) {
                                 {5: total sum(story point IN SPTINT) == 40},
                                 {6: 각 업무의 summary에는 [FE], [BE], [Infra], [UX/UI] 와 같은 업무 별 태그를 앞에 명시},
                                 {7: Epic의 업무 기간이 스프린트 종료 시간보다 늦을 경우, 해당 Epic의 모든 작업을 이번 스프린트 내에 종료할 필요 없음},
-                                {8: 각 업무 별 중요도는 high/mid/low 중 하나로 설정},
+                                {8: 각 업무 별 중요도는 high/medium/low 중 하나로 설정},
                                 {9: 각각의 업무들은 종속성을 가질 수 있음. 먼저 수행하는 업무가 존재할 경우, 해당 업무의 summary 명시}]
                         응답 형식: json, 기타 세부 설명 필요 없음 - {
                         result: [
@@ -50,7 +50,7 @@ export async function POST(request: Request) {
                             {"pk": 3,
                             "summary": "[FE] 회원 정보 입력 input 컴포넌트 작성",
                             "issuetype": {"name": "Sub-task"},
-                            "priority": "mid",
+                            "priority": "medium",
                             "parent": { "summary": "[FE] 사용자 회원가입 페이지 제작" },
                             "issuelink" : "[BE] 사용자 회원가입 기능 구현",
                             "storyPoint": 2,
