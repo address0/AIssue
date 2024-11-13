@@ -21,8 +21,11 @@ export default function ProjectLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const memberId =
+    typeof window !== 'undefined' ? sessionStorage.getItem('memberId') : null
+
   const { data, isLoading } = useQuery({
-    queryKey: ['projectList'],
+    queryKey: ['projectList', memberId],
     queryFn: () => getProjectList(),
   })
 
@@ -32,8 +35,7 @@ export default function ProjectLayout({
   const currentPath = pathname.split('/')[3]
   const accessToken =
     typeof window !== 'undefined' ? sessionStorage.getItem('accessToken') : null
-  const memberId =
-    typeof window !== 'undefined' ? sessionStorage.getItem('memberId') : null
+
   const userName =
     typeof window !== 'undefined' ? sessionStorage.getItem('memberName') : null
   const [dropdownOpen, setDropdownOpen] = useState(false)
