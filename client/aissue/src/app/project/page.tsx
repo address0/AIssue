@@ -1,49 +1,58 @@
-'use client';
+'use client'
 
-import { useQuery } from '@tanstack/react-query';
-import { getProjectList, getProjectInfo } from '@/api/project';
-import { useRouter } from 'next/navigation';
-import { useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query'
+import { getProjectList, getProjectInfo } from '@/api/project'
+import { useRouter } from 'next/navigation'
+import { useCallback } from 'react'
 
 export default function ProjectPage() {
-  const router = useRouter();
+  const router = useRouter()
+
+  const memberId =
+    typeof window !== 'undefined' ? sessionStorage.getItem('memberId') : null
 
   const { data, isLoading } = useQuery({
-    queryKey: ['projectList'],
+    queryKey: ['projectList', memberId],
     queryFn: () => getProjectList(),
-  });
+  })
 
   const handleProjectClick = useCallback(
     async (projectId: string) => {
       try {
         // 프로젝트 정보를 서버에서 가져오고, 반환된 데이터와 ID를 콘솔에 출력하여 확인합니다.
+<<<<<<< HEAD
         const projectInfo = await getProjectInfo(projectId);
         console.log('Project ID:', projectId);
         sessionStorage.setItem('projectId', projectId);
         console.log('Project Info:', projectInfo);
+=======
+        const projectInfo = await getProjectInfo(projectId)
+        console.log('Project ID:', projectId)
+        console.log('Project Info:', projectInfo)
+>>>>>>> ec8cd4d7d274e9d880d148f01caade662bf7eab4
 
         if (projectInfo && projectInfo.isCompleted) {
           // 프로젝트 정보가 존재하고 완료된 경우 info 페이지로 이동
-          router.push(`/project/${projectId}/info`);
+          router.push(`/project/${projectId}/info`)
         } else {
           // 프로젝트 정보가 없거나 완료되지 않은 경우 기본 페이지로 이동
-          router.push(`/project/${projectId}`);
+          router.push(`/project/${projectId}`)
         }
       } catch (error) {
-        console.error("Failed to fetch project info:", error);
+        console.error('Failed to fetch project info:', error)
         // 에러 발생 시 기본 페이지로 이동
-        router.push(`/project/${projectId}`);
+        router.push(`/project/${projectId}`)
       }
     },
-    [router]
-  );
+    [router],
+  )
 
   if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center text-white">
         프로젝트 목록을 불러오는 중입니다.
       </div>
-    );
+    )
   }
 
   return (
@@ -64,5 +73,5 @@ export default function ProjectPage() {
         ))}
       </div>
     </div>
-  );
+  )
 }
