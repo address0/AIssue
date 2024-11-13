@@ -1,5 +1,6 @@
 package ssafy.aissue.domain.issue.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -71,10 +72,22 @@ public class IssueServiceImpl implements IssueService {
     }
 
     @Override
-    public String createBatchIssue(IssueBatchRequest issueBatchRequest) {
-        // 구현 내용 추가
-        return null;
+    public String createBatchIssue(IssueBatchRequest issueBatchRequest) throws JsonProcessingException {
+        Member currentMember = getCurrentLoggedInMember();
+        String jiraEmail = currentMember.getEmail();
+        String jiraKey = currentMember.getJiraKey();
+        String jiraId = currentMember.getJiraId();
+        String projectKey = issueBatchRequest.getProjectKey();  // 요청 본문에서 projectKey 가져오기
+        Long sprintId = jiraApiUtil.fetchActiveSprintId(projectKey, jiraEmail, jiraKey);
+
+        // 각 이슈 요청을 JIRA 형식의 Fields 객체로 변환
+        List<JiraIssueCreateRequest.IssueUpdate> issueUpdates = issueBatchRequest.toIssueUpdates(jiraId, sprintId);
+
+        // Jira에 벌크 이슈 생성 요청
+        List<String> issueKeys = jiraApiUtil.createBulkIssues(issueUpdates, jiraEmail, jiraKey);
+        return "Successfully created issues with keys: " + String.join(", ", issueKeys);
     }
+
 
     @Override
     public String updateIssues(IssueUpdateRequest issueUpdateRequest) {

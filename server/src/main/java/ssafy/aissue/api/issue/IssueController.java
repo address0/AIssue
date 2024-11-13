@@ -1,5 +1,6 @@
 package ssafy.aissue.api.issue;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -25,9 +26,10 @@ public class IssueController {
 
     @Operation(summary = "이슈 등록", description = "생성된 이슈를 JIRA에 등록합니다.")
     @PostMapping
-    public CommonResponse<?> createBatchIssue(@RequestParam(name="issue")IssueBatchRequest issueBatchRequest) {
+    public CommonResponse<?> createBatchIssue(@RequestBody IssueBatchRequest issueBatchRequest) throws JsonProcessingException {
         log.info("[IssueController] createBatchIssue");
-        return CommonResponse.ok();
+        String resultMessage = issueService.createBatchIssue(issueBatchRequest);
+        return CommonResponse.ok(resultMessage);
     }
 
     @Operation(summary = "주간 일정 조회", description = "스프린트 일정을 제공합니다.")
@@ -53,5 +55,6 @@ public class IssueController {
         String message = issueService.updateIssueSchedule(issueScheduleRequest);
         return CommonResponse.ok(message, null);
     }
+
 
 }

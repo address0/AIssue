@@ -1,4 +1,5 @@
 package ssafy.aissue.domain.issue.service;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.transaction.Transactional;
 import ssafy.aissue.api.issue.request.*;
 import ssafy.aissue.api.issue.response.*;
@@ -13,7 +14,7 @@ public interface IssueService {
 
     String createIssue(IssueRequest issueRequest);    // Issue 생성
 
-    String createBatchIssue(IssueBatchRequest issueBatchRequest); // 여러 개의 Issue 생성
+    String createBatchIssue(IssueBatchRequest issueBatchRequest) throws JsonProcessingException; // 여러 개의 Issue 생성
 
     String updateIssues(IssueUpdateRequest issueUpdateRequest);   // Issue 수정
 

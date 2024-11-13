@@ -1,14 +1,17 @@
 package ssafy.aissue.common.util;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.http.*;
 import org.springframework.web.util.UriComponentsBuilder;
+import ssafy.aissue.api.issue.request.JiraIssueCreateRequest;
 import ssafy.aissue.api.issue.response.IssueResponse;
-import ssafy.aissue.api.issue.response.WeeklyIssueResponse;
 import ssafy.aissue.common.exception.member.InvalidJiraCredentialsException;
 import ssafy.aissue.domain.member.entity.Member;
 
@@ -336,6 +339,106 @@ public class JiraApiUtil {
             throw new RuntimeException("Failed to parse issues from response", e);
         }
         return issues;
+    }
+
+    public List<String> createBulkIssues(List<JiraIssueCreateRequest.IssueUpdate> issueFieldsList, String email, String jiraKey) throws JsonProcessingException {
+        String jiraApiUrl = "https://ssafy.atlassian.net/rest/api/2/issue/bulk";
+
+        String auth = email + ":" + jiraKey;
+        String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes());
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "Basic " + encodedAuth);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        // 이미 IssueUpdate 객체가 있으므로 이를 그대로 사용
+        JiraIssueCreateRequest bulkRequest = JiraIssueCreateRequest.builder()
+                .issueUpdates(issueFieldsList)
+                .build();
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        String jsonString = objectMapper.writeValueAsString(bulkRequest);
+        log.info(jsonString);
+
+
+        try {
+            HttpEntity<JiraIssueCreateRequest> entity = new HttpEntity<>(bulkRequest, headers);
+            ResponseEntity<String> response = restTemplate.exchange(jiraApiUrl, HttpMethod.POST, entity, String.class);
+
+            if (response.getStatusCode() == HttpStatus.CREATED) {
+                // 응답이 성공적인 경우, issue keys를 추출
+                JsonNode responseNode = objectMapper.readTree(response.getBody());
+                return extractIssueKeys(responseNode);
+            } else {
+                // 응답 상태가 CREATED가 아닌 경우, 상세 로그 추가
+                log.error("Bulk issue creation failed with status code {}. Response: {}", response.getStatusCode(), response.getBody());
+                throw new RuntimeException("Failed to create issues in Jira. Status: " + response.getStatusCode());
+            }
+        } catch (HttpClientErrorException | HttpServerErrorException e) {
+            log.error("HTTP error during bulk issue creation: {}", e.getMessage());
+            throw new RuntimeException("HTTP error during bulk issue creation", e);
+        } catch (Exception e) {
+            log.error("Exception during bulk issue creation: {}", e.getMessage());
+            throw new RuntimeException("Exception during bulk issue creation", e);
+        }
+    }
+
+    private List<String> extractIssueKeys(JsonNode responseNode) {
+        List<String> issueKeys = new ArrayList<>();
+        JsonNode issuesNode = responseNode.path("issues");
+        for (JsonNode issueNode : issuesNode) {
+            issueKeys.add(issueNode.get("key").asText());
+        }
+        return issueKeys;
+    }
+
+
+    public Long fetchActiveSprintId(String projectKey, String email, String jiraKey) throws JsonProcessingException {
+        // 1. 보드 ID 조회
+        String boardApiUrl = "https://ssafy.atlassian.net/rest/agile/1.0/board";
+        String auth = email + ":" + jiraKey;
+        String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes());
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "Basic " + encodedAuth);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+        ResponseEntity<String> boardResponse = restTemplate.exchange(boardApiUrl, HttpMethod.GET, entity, String.class);
+        log.info("[JiraApiUtil] fetchBoardId >>>> response: {}", boardResponse);
+
+        if (boardResponse.getStatusCode() == HttpStatus.OK) {
+            JsonNode boards = objectMapper.readTree(boardResponse.getBody()).get("values");
+
+            // 프로젝트 키와 동일한 객체의 보드 ID 찾기
+            Long boardId = null;
+            for (JsonNode board : boards) {
+                if (board.path("location").path("projectKey").asText().equals(projectKey)) {
+                    boardId = board.path("id").asLong();
+                    break;
+                }
+            }
+            if (boardId == null) {
+                throw new RuntimeException("Board ID not found for project key: " + projectKey);
+            }
+
+            // 2. 보드 ID를 통해 스프린트 조회
+            String sprintApiUrl = "https://ssafy.atlassian.net/rest/agile/1.0/board/" + boardId + "/sprint";
+            ResponseEntity<String> sprintResponse = restTemplate.exchange(sprintApiUrl, HttpMethod.GET, entity, String.class);
+            log.info("[JiraApiUtil] fetchSprintId >>>> response: {}", sprintResponse);
+
+            if (sprintResponse.getStatusCode() == HttpStatus.OK) {
+                JsonNode sprints = objectMapper.readTree(sprintResponse.getBody()).get("values");
+
+                // 상태가 active인 스프린트 찾기
+                for (JsonNode sprint : sprints) {
+                    if ("active".equals(sprint.path("state").asText()) || "future".equals(sprint.path("state").asText())) {
+                        return sprint.path("id").asLong();
+                    }
+                }
+            }
+        }
+
+        throw new RuntimeException("Active sprint not found for project key: " + projectKey);
     }
 
 
