@@ -36,11 +36,23 @@ interface Subtask {
   endAt: string | null;
 }
 
+interface Parent {
+  id: number;
+  key: string;
+  summary: string;
+  priority: string;
+  status: string;
+  issuetype: string;
+  startAt: string | null;
+  endAt: string | null;
+}
+
 interface Issue {
   key: string;
   summary: string;
   subtasks: Subtask[];
   status: 'To Do' | 'In Progress' | 'Done'; // 특정 값만 허용하도록 제한
+  parent?: Parent;
 }
 
 interface UpdateIssue {
@@ -111,13 +123,15 @@ const updateIssue = async (
 
 const getWeeklyStories = async (projectKey: string): Promise<Story[]> => {
   const res = await privateAPI.get(`/issues/weekly?project=${projectKey}`);
-  const issues: Issue[] = res.data.result;
-
-  return issues.map((issue) => ({
+  const issues: Issue[] = res.data.result; // Issue 타입 명시
+  issues.map((issue:Issue) => console.log(issue.parent?.summary))
+  return issues.map((issue: Issue) => ({
     id: issue.key,
     title: issue.summary,
-    // 상태를 문자열에 맞게 변환
     status: convertStatus(issue.status),
+    parent: {
+      summary: issue.parent?.summary,
+    },
     tasks: issue.subtasks.map((subtask) => ({
       title: subtask.summary,
       start: subtask.startAt ? new Date(subtask.startAt) : new Date(),
