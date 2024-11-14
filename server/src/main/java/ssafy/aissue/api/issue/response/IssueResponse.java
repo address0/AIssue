@@ -11,6 +11,7 @@ public class IssueResponse {
     private Long id;
     private String key;
     private String summary;
+    private String description;
     private String status;
     private String priority;
     private String issuetype;
@@ -25,6 +26,7 @@ public class IssueResponse {
         private Long id;
         private String key;
         private String summary;
+        private String description;
         private String priority;
         private String status;
         private String issuetype;
@@ -36,6 +38,7 @@ public class IssueResponse {
         private Long id;
         private String key;
         private String summary;
+        private String description;
         private String priority;
         private String status;
         private String issuetype;

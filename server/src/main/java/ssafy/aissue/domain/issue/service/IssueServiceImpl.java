@@ -1,5 +1,6 @@
 package ssafy.aissue.domain.issue.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -10,6 +11,7 @@ import ssafy.aissue.api.issue.response.WeeklyIssueResponse;
 import ssafy.aissue.api.member.response.MemberJiraIdResponse;
 import ssafy.aissue.common.exception.member.MemberNotFoundException;
 import ssafy.aissue.common.exception.security.NotAuthenticatedException;
+import ssafy.aissue.common.util.DateConverter;
 import ssafy.aissue.common.util.JiraApiUtil;
 import ssafy.aissue.common.util.SecurityUtil;
 import ssafy.aissue.domain.issue.common.BaseIssueEntity;
@@ -57,7 +59,6 @@ public class IssueServiceImpl implements IssueService {
         return member;
     }
 
-    @Transactional
     @Override
     public MemberJiraIdResponse getJiraEmail() {
         Member currentMember = getCurrentLoggedInMember();
@@ -65,13 +66,67 @@ public class IssueServiceImpl implements IssueService {
     }
 
     @Override
-    public String createIssue(IssueRequest issueRequest) {
-        // 구현 내용 추가
-        return null;
+    public String createBatchIssue(IssueBatchRequest issueBatchRequest) throws JsonProcessingException {
+        Member currentMember = getCurrentLoggedInMember();
+        String jiraEmail = currentMember.getEmail();
+        String jiraKey = currentMember.getJiraKey();
+        String jiraId = currentMember.getJiraId();
+        String projectKey = issueBatchRequest.getProjectKey();  // 요청 본문에서 projectKey 가져오기
+        Long sprintId = jiraApiUtil.fetchActiveSprintId(projectKey, jiraEmail, jiraKey);
+
+        // 각 이슈 요청을 JIRA 형식의 Fields 객체로 변환
+        List<JiraIssueCreateRequest.IssueUpdate> issueUpdates = issueBatchRequest.toIssueUpdates(jiraId, sprintId);
+
+        // Jira에 벌크 이슈 생성 요청
+        List<String> issueKeys = jiraApiUtil.createBulkIssues(issueUpdates, jiraEmail, jiraKey);
+
+        log.info("이슈 생성 성공");
+
+        // Jira에서 이슈 조회 후 일정 등록
+        List<IssueResponse> issuesFromJira = jiraApiUtil.fetchIssuesByKeys(issueKeys, jiraEmail, jiraKey);
+
+        log.info("생성 이슈 불러오기 성공");
+
+        // 받은 이슈 데이터와 사용자가 보낸 데이터를 매칭하여 일정을 DB에 저장
+        handleIssueBatchRequest(issueBatchRequest, issuesFromJira);
+        return issueUpdates.size() + "개 중 " + issueKeys.size() + "개의 이슈가 성공적으로 생성되었습니다.";
+    }
+
+    public void handleIssueBatchRequest(IssueBatchRequest batchRequest, List<IssueResponse> issuesFromJira) {
+        // 요청 데이터에서 start_at, end_at을 LocalDateTime으로 변환하고
+        // 일정을 DB에 저장할 데이터와 Jira API 요청용 데이터를 분리합니다.
+        batchRequest.getIssues().forEach(issueRequest -> {
+            // Jira 이슈와 매칭하여 일정 등록
+            issuesFromJira.stream()
+                    .filter(issueFromJira -> issueFromJira.getSummary().equals(issueRequest.getSummary()))
+                    .findFirst()
+                    .ifPresent(matchingIssue -> {
+                        log.info(matchingIssue.getIssuetype());
+                        // 변환된 start_at, end_at을 일정 DB용으로 저장
+                        LocalDateTime startAt = DateConverter.convertStartAtToLocalDateTime(issueRequest.getStartAt());
+                        LocalDateTime endAt = DateConverter.convertEndAtToLocalDateTime(issueRequest.getEndAt());
+                        scheduleIssueInDb(matchingIssue.getKey(), matchingIssue.getId(), matchingIssue.getIssuetype(), startAt, endAt);
+                    });
+        });
+    }
+
+
+    private void scheduleIssueInDb(String issueKey, Long issueId, String issueType, LocalDateTime startAt, LocalDateTime endAt) {
+        // DB에 일정 정보를 저장하는 로직
+        IssueScheduleRequest issueSchedule = IssueScheduleRequest.builder()
+                .issueId(issueId)
+                .issueKey(issueKey)
+                .issuetype(issueType)
+                .startAt(startAt)
+                .endAt(endAt)
+                .build();
+
+        // DB에 저장
+        updateIssueSchedule(issueSchedule);
     }
 
     @Override
-    public String createBatchIssue(IssueBatchRequest issueBatchRequest) {
+    public String createIssue(IssueRequest issueRequest) {
         // 구현 내용 추가
         return null;
     }
@@ -91,6 +146,11 @@ public class IssueServiceImpl implements IssueService {
     @Override
     public String linkIssues(IssueLinkRequest issueLinkRequest) {
         // 구현 내용 추가
+        return null;
+    }
+
+    @Override
+    public String getIssueDetail() {
         return null;
     }
 
@@ -165,6 +225,7 @@ public class IssueServiceImpl implements IssueService {
                 .id(issueResponse.getId())
                 .key(issueResponse.getKey())
                 .summary(issueResponse.getSummary())
+                .description(issueResponse.getDescription())
                 .priority(issueResponse.getPriority())
                 .status(issueResponse.getStatus())
                 .issuetype(issueResponse.getIssuetype())
@@ -182,6 +243,7 @@ public class IssueServiceImpl implements IssueService {
                 .id(issueResponse.getId())
                 .key(issueResponse.getKey())
                 .summary(issueResponse.getSummary())
+                .description(issueResponse.getDescription())
                 .priority(issueResponse.getPriority())
                 .status(issueResponse.getStatus())
                 .issuetype(issueResponse.getIssuetype())
