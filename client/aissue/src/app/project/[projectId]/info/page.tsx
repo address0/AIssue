@@ -103,9 +103,14 @@ export default function InfoPage({
   const handleFunctionEditClick = async () => {
     if (isFunctionEditMode) {
       try {
+        // title 또는 description이 비어 있지 않은 항목만 필터링
+        const filteredFunctions = editedFunctions.filter(
+          (func) => func.title.trim() !== '' || func.description.trim() !== ''
+        );
+  
         // 수정된 기능 목록을 updateProjectFunctions 함수로 전송
-        await updateProjectFunctions(projectId, editedFunctions);
-        setProjectFunctions(editedFunctions); // 화면에 업데이트된 목록 반영
+        await updateProjectFunctions(projectId, filteredFunctions);
+        setProjectFunctions(filteredFunctions); // 화면에 업데이트된 목록 반영
         console.log('Project functions updated successfully');
       } catch (error) {
         console.error('Failed to update project functions:', error);
