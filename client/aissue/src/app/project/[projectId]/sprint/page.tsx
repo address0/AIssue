@@ -36,6 +36,7 @@ export default function SprintPage({
   const [parsedData, setParsedData] = useState<IssueData[]>([])
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0)
   const [showEpicModal, setShowEpicModal] = useState<boolean>(false)
+  const [animate, setAnimate] = useState(false);
 
   const questions = [
     '이번 주차의 에픽 목록은 다음과 같습니다. 추가로 작업할 기능이 있다면 알려 주세요!',
@@ -57,11 +58,13 @@ export default function SprintPage({
     setMessages((prev) => [...prev, { user: userMessage, bot: '' }])
     setInput('')
 
-    // 챗봇의 질문 응답 추가
-    if (currentQuestionIndex < questions.length - 1) {
+    if (currentQuestionIndex < questions.length) {
+      const botMessage = questions[currentQuestionIndex];
+      setMessages((prev) => [...prev, { user: '', bot: botMessage }])
       setCurrentQuestionIndex(prev => prev + 1);
+      setAnimate(true)
     } else {
-      handleCreateIssue(); // 모든 질문이 끝나면 이슈 생성
+      handleCreateIssue();
     }
   }
 
@@ -75,6 +78,7 @@ export default function SprintPage({
     })
 
     const data = await response.json()
+    
     if (response.ok) {
       const resultMatch = data?.response?.match(/result:\s*(\[[\s\S]*?\])\s*}/);
 
@@ -114,6 +118,13 @@ export default function SprintPage({
   useEffect(() => {
     console.log(parsedData)
   },[parsedData])
+
+  useEffect(() => {
+    if (animate) {
+      const timer = setTimeout(() => setAnimate(false), 500); // 애니메이션이 끝난 후 상태 초기화
+      return () => clearTimeout(timer);
+    }
+  }, [animate])
 
   if (!isSprintPage) {
     return (
@@ -162,7 +173,7 @@ export default function SprintPage({
         </div>
 
         {/* Chat Area */}
-        <div className="flex flex-col space-y-4 mb-6 overflow-y-auto h-[70vh] w-[90%]">
+        <div className="flex flex-col space-y-4 mb-6 overflow-y-auto h-[70vh] w-[90%] animate-fadeIn">
           <div className="flex items-start space-x-4">
             <Image src="/img/chatbot.png" alt="Chatbot" width={50} height={50} />
             <div className="bg-[#B2E0D9] text-gray-700 p-4 rounded-[0px_20px_20px_20px]">
@@ -179,14 +190,14 @@ export default function SprintPage({
 
           {/* User Messages and Bot Responses */}
           {messages?.map((msg, index) => (
-            <div key={index} className="flex flex-col space-y-2">
+            <div key={index} className="flex flex-col space-y-2 animate-fadeIn">
               {msg.user && (
                 <div className="self-end max-w-xs p-3 bg-blue-300 text-gray-700 rounded-[20px_0px_20px_20px]">
                   {msg.user}
                 </div>
               )}
               {msg.bot && (
-                <div className='flex items-start space-x-4'>
+                <div className='flex items-start space-x-4 animate-fadeIn'>
                   <Image src="/img/chatbot.png" alt="Chatbot" width={50} height={50} />
                   <div className="self-start max-w-xs p-3 bg-[#B2E0D9] text-gray-700 rounded-[0px_20px_20px_20px]">
                     {msg.bot}
@@ -195,14 +206,14 @@ export default function SprintPage({
               )}
             </div>
           ))}
-          {currentQuestionIndex < questions.length && (
-            <div className='flex items-start space-x-4'>
+          {/* {currentQuestionIndex < questions.length && (
+            <div className={`flex items-start space-x-4 ${animate ? 'animate-fadeIn' : ''}`}>
               <Image src="/img/chatbot.png" alt="Chatbot" width={50} height={50} />
               <div className="self-start max-w-xs p-3 bg-[#B2E0D9] text-gray-700 rounded-[0px_20px_20px_20px]">
                 {questions[currentQuestionIndex]}
               </div>
             </div>
-          )}
+          )} */}
           {loading && (
             <div className="flex items-start space-x-4">
               <Image src="/img/chatbot.png" alt="Chatbot" width={50} height={50} />

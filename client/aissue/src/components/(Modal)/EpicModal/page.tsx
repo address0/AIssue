@@ -216,6 +216,7 @@ export default function EpicModal({
     })
 
     const data = await response.json()
+    console.log(data)
     if (response.ok) {
       const resultMatch = data?.response?.match(/result:\s*(\[[\s\S]*?\])\s*}/);
 
