@@ -19,6 +19,16 @@ interface Story {
   status: 'To Do' | 'In Progress' | 'Done'; // 특정 값만 허용하도록 제한
 }
 
+interface Epic {
+  id: number;
+  key: string;
+  summary: string;
+  description: string;
+  priority: string;
+  startAt: string;
+  endAt: string;
+}
+
 // 추가된 인터페이스 정의
 interface Subtask {
   summary: string;
@@ -51,6 +61,22 @@ interface ProjectData {
   projectImagePath?: string | File;
   deleteImage?: boolean;
 }
+
+const getMonthlyEpics = async (projectKey: string): Promise<Epic[]> => {
+  const res = await privateAPI.get(`/issues/monthly?project=${projectKey}`);
+  const issues = res.data.result;
+
+  return issues.map((epic: Epic) => ({
+    id: epic.id,
+    key: epic.key,
+    summary: epic.summary,
+    description: epic.description,
+    priority: epic.priority,
+    startAt: epic.startAt ? new Date(epic.startAt) : new Date(),
+    endAt: epic.endAt ? new Date(epic.endAt) : new Date(),
+  }));
+};
+
 
 const getWeeklyStories = async (projectKey: string): Promise<Story[]> => {
   const res = await privateAPI.get(`/issues/weekly?project=${projectKey}`);
@@ -109,7 +135,7 @@ const createProject = async (projectData: ProjectData) => {
       'Content-Type': 'multipart/form-data',
     },
   });
-  
+
   return res.data;
 };
 
@@ -142,4 +168,4 @@ const getProjectFunctions = async (jiraProjectKey: string): Promise<FunctionDeta
   }
 };
 
-export { getProjectList, getWeeklyStories, getProjectInfo, createProject, updateProjectFunctions, getProjectFunctions };
+export { getProjectList, getWeeklyStories, getProjectInfo, createProject, updateProjectFunctions, getProjectFunctions, getMonthlyEpics };
