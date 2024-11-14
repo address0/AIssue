@@ -12,7 +12,7 @@ import listPlugin from '@fullcalendar/list';
 import { EventClickArg } from '@fullcalendar/core';
 import { Draggable } from '@fullcalendar/interaction';
 import Modal from 'react-modal';
-import { getMonthlyEpics } from '@/api/project';
+import { getMonthlyEpics, updateIssue } from '@/api/project';
 
 interface CalendarEvent {
   title: string;
@@ -56,18 +56,38 @@ const CalendarComponent = () => {
         console.warn('project id가 없습니다.');
         return;
       }
-
       try {
         const epics = await getMonthlyEpics(projectKey);
-        const epicTasks = epics.map((epic) => ({
-          id: epic.id,
-          key: epic.key,
-          title: epic.summary,
-          color: '#87CEFA',
-          description: epic.description,
-        }));
-        console.log(epics);
+        const epicTasks = epics
+          .filter((epic) => !epic.startAt)
+          .map((epic) => ({
+            id: epic.id,
+            key: epic.key,
+            title: epic.summary,
+            color: '#87CEFA',
+            description: epic.description,
+          }));
+
         setTasks(epicTasks);
+
+        const eventsWithDates: CalendarEvent[] = epics
+          .filter((epic) => epic.startAt)
+          .map((epic) => ({
+            title: epic.summary,
+            start: new Date(epic.startAt),
+            end: epic.endAt ? new Date(epic.endAt) : undefined,
+            allDay: true,
+            backgroundColor: '#87CEFA',
+            borderColor: '#87CEFA',
+            extendedProps: {
+              id: epic.id,
+              key: epic.key,
+              description: epic.description,
+            },
+          }));
+
+        setEvents(eventsWithDates);
+
       } catch (error) {
         console.error('Error fetching epics:', error);
       }
@@ -171,7 +191,7 @@ const CalendarComponent = () => {
     setTasks((prevTasks) => prevTasks.filter((task) => task.title !== newEvent.title));
   };
 
-  const handleEventResize = (resizeInfo: any) => {
+  const handleEventResize = async (resizeInfo: any) => {
     const updatedEvent: CalendarEvent = {
       title: resizeInfo.event.title,
       start: resizeInfo.event.start,
@@ -186,6 +206,14 @@ const CalendarComponent = () => {
       }
     };
 
+    await updateIssue(
+      resizeInfo.event.extendedProps.id,
+      resizeInfo.event.extendedProps.key,
+      '에픽',
+      updatedEvent.start ? updatedEvent.start.toISOString() : null,
+      updatedEvent.end ? updatedEvent.end.toISOString() : null
+    );
+
     setEvents((prevEvents) => {
       const updatedEvents = prevEvents.map((event) =>
         event.title === updatedEvent.title ? updatedEvent : event
@@ -194,7 +222,7 @@ const CalendarComponent = () => {
     });
   };
 
-  const handleEventDrop = (dropInfo: any) => {
+  const handleEventDrop = async (dropInfo: any) => {
     const updatedEvent: CalendarEvent = {
       title: dropInfo.event.title,
       start: dropInfo.event.start,
@@ -208,6 +236,14 @@ const CalendarComponent = () => {
         description: dropInfo.event.extendedProps.description
       }
     };
+
+    await updateIssue(
+      dropInfo.event.extendedProps.id,
+      dropInfo.event.extendedProps.key,
+      '에픽',
+      updatedEvent.start ? updatedEvent.start.toISOString() : null,
+      updatedEvent.end ? updatedEvent.end.toISOString() : null
+    );
 
     setEvents((prevEvents) => {
       const updatedEvents = prevEvents.map((event) =>

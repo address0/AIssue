@@ -43,6 +43,14 @@ interface Issue {
   status: 'To Do' | 'In Progress' | 'Done'; // 특정 값만 허용하도록 제한
 }
 
+interface UpdateIssue {
+  "issue_id": number;
+  "issue_key": string;
+  "issuetype": string;
+  "start_at": string | null;
+  "end_at": string | null;
+}
+
 interface FunctionDetail {
   title: string;
   description: string;
@@ -77,6 +85,29 @@ const getMonthlyEpics = async (projectKey: string): Promise<Epic[]> => {
   }));
 };
 
+const updateIssue = async (
+  issue_id: number,
+  issue_key: string,
+  issuetype: string,
+  start_at: string | null,
+  end_at: string | null
+): Promise<any> => {
+  const requestData: UpdateIssue = {
+    issue_id,
+    issue_key,
+    issuetype,
+    start_at,
+    end_at,
+  };
+  try {
+    const res = await privateAPI.post('/issues/update/schedule', requestData);
+    console.log('수정 요청');
+    return res.data;
+  } catch (error) {
+    console.error('Error updating issue:', error);
+    throw error;
+  }
+};
 
 const getWeeklyStories = async (projectKey: string): Promise<Story[]> => {
   const res = await privateAPI.get(`/issues/weekly?project=${projectKey}`);
@@ -111,7 +142,7 @@ const getProjectInfo = async (jiraProjectKey: string) => {
 const createProject = async (projectData: ProjectData) => {
   console.log(projectData)
   const formData = new FormData();
-  
+
   // 필드가 존재할 경우에만 formData에 추가
   if (projectData.jiraId) formData.append('jiraId', projectData.jiraId);
   if (projectData.name) formData.append('name', projectData.name);
@@ -128,7 +159,7 @@ const createProject = async (projectData: ProjectData) => {
   formData.forEach((value, key) => {
     console.log(`${key}: ${value}`);
   });
-  
+
   // Axios를 통해 POST 요청 전송
   const res = await privateAPI.put('/project', formData, {
     headers: {
@@ -168,4 +199,4 @@ const getProjectFunctions = async (jiraProjectKey: string): Promise<FunctionDeta
   }
 };
 
-export { getProjectList, getWeeklyStories, getProjectInfo, createProject, updateProjectFunctions, getProjectFunctions, getMonthlyEpics };
+export { getProjectList, getWeeklyStories, getProjectInfo, createProject, updateProjectFunctions, getProjectFunctions, getMonthlyEpics, updateIssue };
