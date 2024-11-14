@@ -176,7 +176,7 @@ public class JiraApiUtil {
 
         String jqlQuery = "project = \"" + projectKey + "\" AND sprint in openSprints() AND assignee = \"" + email + "\" AND issuetype = \"Story\"";
         String jiraStoryPointField = "customfield_10031";
-        String jiraFields = "id,key,summary,priority,subtasks,parent,status,issuetype,assignee," + jiraStoryPointField;
+        String jiraFields = "id,key,summary,description,priority,subtasks,parent,status,issuetype,assignee," + jiraStoryPointField;
 
         // UriComponentsBuilder를 사용하여 URL을 생성하고 인코딩
         URI jiraApiUri = UriComponentsBuilder.fromHttpUrl("https://ssafy.atlassian.net/rest/api/2/search")
@@ -220,6 +220,7 @@ public class JiraApiUtil {
                 Long id = issueNode.path("id").asLong();
                 String key = issueNode.path("key").asText();
                 String summary = issueNode.path("fields").path("summary").asText();
+                String description = issueNode.path("fields").path("description").asText("");
                 String status = issueNode.path("fields").path("status").path("name").asText();
                 String priority = issueNode.path("fields").path("priority").path("name").asText();
                 String issuetype = issueNode.path("fields").path("issuetype").path("name").asText();
@@ -232,6 +233,7 @@ public class JiraApiUtil {
                             .id(parentNode.path("id").asLong())
                             .key(parentNode.path("key").asText())
                             .summary(parentNode.path("fields").path("summary").asText())
+                            .description(parentNode.path("fields").path("description").asText(""))
                             .status(parentNode.path("fields").path("status").path("name").asText())
                             .priority(parentNode.path("fields").path("priority").path("name").asText())
                             .issuetype(parentNode.path("fields").path("issuetype").path("name").asText())
@@ -245,6 +247,7 @@ public class JiraApiUtil {
                                 .id(subtaskNode.path("id").asLong())
                                 .key(subtaskNode.path("key").asText())
                                 .summary(subtaskNode.path("fields").path("summary").asText())
+                                .description(subtaskNode.path("fields").path("description").asText(""))
                                 .status(subtaskNode.path("fields").path("status").path("name").asText())
                                 .priority(subtaskNode.path("fields").path("priority").path("name").asText())
                                 .issuetype(subtaskNode.path("fields").path("issuetype").path("name").asText())
@@ -256,6 +259,7 @@ public class JiraApiUtil {
                         .id(id)
                         .key(key)
                         .summary(summary)
+                        .description(description)
                         .status(status)
                         .priority(priority)
                         .issuetype(issuetype)
@@ -275,7 +279,7 @@ public class JiraApiUtil {
 
         String jqlQuery = "project = \"" + projectKey + "\" " + " AND issuetype = \"Epic\"";
         String jiraStoryPointField = "customfield_10031";
-        String jiraFields = "id,key,summary,priority,subtasks,status,issuetype,assignee," + jiraStoryPointField;
+        String jiraFields = "id,key,summary,description,priority,subtasks,status,issuetype,assignee," + jiraStoryPointField;
 
         // UriComponentsBuilder를 사용하여 URL을 생성하고 인코딩
         URI jiraApiUri = UriComponentsBuilder.fromHttpUrl("https://ssafy.atlassian.net/rest/api/2/search")
@@ -318,17 +322,18 @@ public class JiraApiUtil {
                 Long id = issueNode.path("id").asLong();
                 String key = issueNode.path("key").asText();
                 String summary = issueNode.path("fields").path("summary").asText();
+                String description = issueNode.path("fields").path("description").asText("");
                 String status = issueNode.path("fields").path("status").path("name").asText();
                 String priority = issueNode.path("fields").path("priority").path("name").asText();
                 String issuetype = issueNode.path("fields").path("issuetype").path("name").asText();
                 String assignee = issueNode.path("fields").path("assignee").path("displayName").asText();
 //                log.info("이슈 담당자 : " + assignee);
 
-
                 issues.add(IssueResponse.builder()
                         .id(id)
                         .key(key)
                         .summary(summary)
+                        .description(description)
                         .status(status)
                         .priority(priority)
                         .issuetype(issuetype)
@@ -350,37 +355,47 @@ public class JiraApiUtil {
         headers.set("Authorization", "Basic " + encodedAuth);
         headers.setContentType(MediaType.APPLICATION_JSON);
 
-        // 이미 IssueUpdate 객체가 있으므로 이를 그대로 사용
-        JiraIssueCreateRequest bulkRequest = JiraIssueCreateRequest.builder()
-                .issueUpdates(issueFieldsList)
-                .build();
+        List<String> allIssueKeys = new ArrayList<>();
+        int batchSize = 50;  // 한 번에 처리할 최대 이슈 개수
+        int totalSize = issueFieldsList.size();
+        int batchCount = (totalSize + batchSize - 1) / batchSize;  // 배치 수 계산
 
-        ObjectMapper objectMapper = new ObjectMapper();
-        String jsonString = objectMapper.writeValueAsString(bulkRequest);
-        log.info(jsonString);
+        for (int i = 0; i < batchCount; i++) {
+            int start = i * batchSize;
+            int end = Math.min(start + batchSize, totalSize);
+            List<JiraIssueCreateRequest.IssueUpdate> batchIssueUpdates = issueFieldsList.subList(start, end);
 
+            // 벌크 요청을 보내는 부분
+            JiraIssueCreateRequest bulkRequest = JiraIssueCreateRequest.builder()
+                    .issueUpdates(batchIssueUpdates)
+                    .build();
 
-        try {
-            HttpEntity<JiraIssueCreateRequest> entity = new HttpEntity<>(bulkRequest, headers);
-            ResponseEntity<String> response = restTemplate.exchange(jiraApiUrl, HttpMethod.POST, entity, String.class);
+            ObjectMapper objectMapper = new ObjectMapper();
+            String jsonString = objectMapper.writeValueAsString(bulkRequest);
+            log.info("Sending bulk request: {}", jsonString);
 
-            if (response.getStatusCode() == HttpStatus.CREATED) {
-                // 응답이 성공적인 경우, issue keys를 추출
-                JsonNode responseNode = objectMapper.readTree(response.getBody());
-                return extractIssueKeys(responseNode);
-            } else {
-                // 응답 상태가 CREATED가 아닌 경우, 상세 로그 추가
-                log.error("Bulk issue creation failed with status code {}. Response: {}", response.getStatusCode(), response.getBody());
-                throw new RuntimeException("Failed to create issues in Jira. Status: " + response.getStatusCode());
+            try {
+                HttpEntity<JiraIssueCreateRequest> entity = new HttpEntity<>(bulkRequest, headers);
+                ResponseEntity<String> response = restTemplate.exchange(jiraApiUrl, HttpMethod.POST, entity, String.class);
+
+                if (response.getStatusCode() == HttpStatus.CREATED) {
+                    // 응답이 성공적이면, issue keys를 추출
+                    JsonNode responseNode = objectMapper.readTree(response.getBody());
+                    List<String> issueKeys = extractIssueKeys(responseNode);
+                    allIssueKeys.addAll(issueKeys);  // 모든 이슈 키를 수집
+                } else {
+                    log.error("Bulk issue creation failed with status code {}. Response: {}", response.getStatusCode(), response.getBody());
+                    throw new RuntimeException("Failed to create issues in Jira. Status: " + response.getStatusCode());
+                }
+            } catch (Exception e) {
+                log.error("Exception during bulk issue creation: {}", e.getMessage());
+                throw new RuntimeException("Exception during bulk issue creation", e);
             }
-        } catch (HttpClientErrorException | HttpServerErrorException e) {
-            log.error("HTTP error during bulk issue creation: {}", e.getMessage());
-            throw new RuntimeException("HTTP error during bulk issue creation", e);
-        } catch (Exception e) {
-            log.error("Exception during bulk issue creation: {}", e.getMessage());
-            throw new RuntimeException("Exception during bulk issue creation", e);
         }
+
+        return allIssueKeys;  // 모든 배치에서 생성된 이슈 키를 반환
     }
+
 
     private List<String> extractIssueKeys(JsonNode responseNode) {
         List<String> issueKeys = new ArrayList<>();
@@ -441,6 +456,34 @@ public class JiraApiUtil {
         throw new RuntimeException("Active sprint not found for project key: " + projectKey);
     }
 
+    public List<IssueResponse> fetchIssuesByKeys(List<String> issueKeys, String email, String jiraKey) {
 
+        // JQL로 다수의 이슈를 조회하는 쿼리
+        String jqlQuery = String.format("key in (%s)", String.join(",", issueKeys));
+
+        String jiraFields = "id,key,summary,issuetype";
+        URI jiraApiUri = UriComponentsBuilder.fromHttpUrl("https://ssafy.atlassian.net/rest/api/2/search")
+                .queryParam("jql", jqlQuery)
+                .queryParam("fields", jiraFields)
+                .build()
+                .encode()
+                .toUri();
+
+        String auth = email + ":" + jiraKey;
+        String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes());
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "Basic " + encodedAuth);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+        ResponseEntity<String> response = restTemplate.exchange(jiraApiUri, HttpMethod.GET, entity, String.class);
+
+        if (response.getStatusCode() == HttpStatus.OK) {
+            return parseIssuesFromResponse(response.getBody());
+        } else {
+            throw new RuntimeException("Failed to fetch issues from Jira. Response: " + response.getBody());
+        }
+    }
 }
 

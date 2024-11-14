@@ -56,5 +56,10 @@ public class IssueController {
         return CommonResponse.ok(message, null);
     }
 
-
+    @Operation(summary = "에픽 목록 불러오기", description = "스프린트 생성을 위한 에픽 정보를 불러옵니다.")
+    @GetMapping("/sprint")
+    public CommonResponse<List<MonthlyIssueResponse>> getEpicIssues(
+            @RequestParam(name = "project") String projectKey) {
+        return CommonResponse.ok(issueService.getMonthlyIssues(projectKey));
+    }
 }

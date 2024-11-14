@@ -22,6 +22,8 @@ public interface IssueService {
 
     String linkIssues(IssueLinkRequest issueLinkRequest);     // Issue 종속성 등록
 
+    String getIssueDetail();
+
     String updateIssueSchedule(IssueScheduleRequest issueScheduleRequest);
 
     List<MonthlyIssueResponse> getMonthlyIssues(String projectKey);
