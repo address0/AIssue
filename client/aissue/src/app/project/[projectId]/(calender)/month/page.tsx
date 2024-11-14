@@ -12,45 +12,69 @@ import listPlugin from '@fullcalendar/list';
 import { EventClickArg } from '@fullcalendar/core';
 import { Draggable } from '@fullcalendar/interaction';
 import Modal from 'react-modal';
+import { getMonthlyEpics } from '@/api/project';
 
 interface CalendarEvent {
   title: string;
   date?: string;
   start?: Date;
-  end?: Date; // 추가: 이벤트 종료일
+  end?: Date;
   allDay?: boolean;
   backgroundColor?: string;
   borderColor?: string;
+  extendedProps: {
+    id: number;
+    key: string;
+    description: string;
+  };
 }
-
-
 
 const CalendarComponent = () => {
   const calendarRef = useRef<FullCalendar | null>(null);
-    // 현재 활성화된 뷰 상태 추가
-    const [activeView, setActiveView] = useState('dayGridMonth');
+  // 현재 활성화된 뷰 상태 추가
+  const [activeView, setActiveView] = useState('dayGridMonth');
 
-  const [events, setEvents] = useState<CalendarEvent[]>([
-    // { title: '예시 이벤트', date: '2024-11-15' },
-  ]);
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
 
-  const [tasks, setTasks] = useState([
-    { title: '작업 1', color: '#FFB6C1' },
-    { title: '작업 2', color: '#FF7F50' },
-    { title: '작업 3', color: '#87CEFA' },
-    { title: '작업 4', color: '#87CEFA' },
-    { title: '작업 5', color: '#87CEFA' },
-    { title: '작업 6', color: '#87CEFA' },
-    { title: '작업 7', color: '#87CEFA' },
-    { title: '작업 8', color: '#87CEFA' },
-  ]);
-
+  const [tasks, setTasks] = useState<{ id: number; key: string; title: string; color: string; description: string; }[]>([]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [newEventId, setNewEventId] = useState(0);
+  const [newEventKey, setNewEventKey] = useState('');
   const [newEventTitle, setNewEventTitle] = useState('');
+  const [newEventDescription, setNewEventDescription] = useState('');
   const [newEventColor, setNewEventColor] = useState('#3788d8');
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [isAllDay, setIsAllDay] = useState(true); // Add all-day flag
+  const [isAllDay, setIsAllDay] = useState(true);
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+
+  useEffect(() => {
+    const fetchEpics = async () => {
+      const projectKey = sessionStorage.getItem('projectId');
+
+      if (!projectKey) {
+        console.warn('project id가 없습니다.');
+        return;
+      }
+
+      try {
+        const epics = await getMonthlyEpics(projectKey);
+        const epicTasks = epics.map((epic) => ({
+          id: epic.id,
+          key: epic.key,
+          title: epic.summary,
+          color: '#87CEFA',
+          description: epic.description,
+        }));
+        console.log(epics);
+        setTasks(epicTasks);
+      } catch (error) {
+        console.error('Error fetching epics:', error);
+      }
+    };
+
+    fetchEpics();
+  }, []);
 
   useEffect(() => {
     const containerEl = document.getElementById('external-events');
@@ -58,12 +82,16 @@ const CalendarComponent = () => {
       new Draggable(containerEl, {
         itemSelector: '.fc-event',
         eventData: (eventEl) => {
+          const id = eventEl.getAttribute('data-id');
+          const key = eventEl.getAttribute('data-key');
           const title = eventEl.getAttribute('data-title');
           const color = eventEl.getAttribute('data-color');
+          const description = eventEl.getAttribute('data-description');
           return {
             title: title || '새 이벤트',
             backgroundColor: color || '#3788d8',
             borderColor: color || '#3788d8',
+            extendedProps: { id, key, description },
           };
         },
       });
@@ -73,6 +101,7 @@ const CalendarComponent = () => {
   const handleDateClick = (info: DateClickArg) => {
     setSelectedDate(info.date);
     setIsAllDay(activeView === 'dayGridMonth'); // Set all-day flag based on view
+    setSelectedEvent(null);
     setIsModalOpen(true);
   };
 
@@ -87,7 +116,15 @@ const CalendarComponent = () => {
         allDay: isAllDay,
         backgroundColor: newEventColor,
         borderColor: newEventColor,
+        extendedProps: {
+          id: newEventId,
+          key: newEventKey,
+          description: newEventDescription
+        },
       };
+
+      setEvents((prevEvents) => [...prevEvents, newEvent]);
+      setIsModalOpen(false);
 
       const updatedEvents = [...eventsRef.current, newEvent];
       setEvents(updatedEvents);
@@ -95,13 +132,17 @@ const CalendarComponent = () => {
       syncTasksWithEvents(updatedEvents); // 동기화
 
       setIsModalOpen(false);
+      setNewEventId(0);
+      setNewEventKey('');
       setNewEventTitle('');
       setNewEventColor('#3788d8');
+      setNewEventDescription('');
     }
   };
 
   const handleEventReceive = (info: any) => {
     // info.event.setAllDay(true);
+    console.log("Received Event Extended Props:", info.event.extendedProps);
     const isAllDayEvent = activeView === 'dayGridMonth';
     console.log(isAllDayEvent)
     const newEvent: CalendarEvent = {
@@ -111,6 +152,12 @@ const CalendarComponent = () => {
       allDay: isAllDayEvent,
       backgroundColor: info.event.backgroundColor,
       borderColor: info.event.borderColor,
+      extendedProps: {
+        id: info.event.extendedProps.id,
+        key: info.event.extendedProps.key,
+        description: info.event.extendedProps.description
+      }
+
     };
 
     setEvents((prevEvents) => {
@@ -132,6 +179,11 @@ const CalendarComponent = () => {
       allDay: resizeInfo.event.allDay,
       backgroundColor: resizeInfo.event.backgroundColor,
       borderColor: resizeInfo.event.borderColor,
+      extendedProps: {
+        id: resizeInfo.event.extendedProps.id,
+        key: resizeInfo.event.extendedProps.key,
+        description: resizeInfo.event.extendedProps.description
+      }
     };
 
     setEvents((prevEvents) => {
@@ -150,6 +202,11 @@ const CalendarComponent = () => {
       allDay: dropInfo.event.allDay,
       backgroundColor: dropInfo.event.backgroundColor,
       borderColor: dropInfo.event.borderColor,
+      extendedProps: {
+        id: dropInfo.event.extendedProps.id,
+        key: dropInfo.event.extendedProps.key,
+        description: dropInfo.event.extendedProps.description
+      }
     };
 
     setEvents((prevEvents) => {
@@ -166,13 +223,21 @@ const CalendarComponent = () => {
     );
   };
 
-  const handleEventClick = (clickInfo: EventClickArg) => {
-    if (confirm(`'${clickInfo.event.title}' 이벤트를 삭제하시겠습니까?`)) {
-      clickInfo.event.remove();
-      const updatedEvents = events.filter((event) => event.title !== clickInfo.event.title);
-      setEvents(updatedEvents);
-      syncTasksWithEvents(updatedEvents);
-    }
+  const handleEventClick = (info: EventClickArg) => {
+    console.log(info.event.extendedProps);
+    setSelectedEvent({
+      title: info.event.title,
+      start: info.event.start ? new Date(info.event.start) : undefined,
+      end: info.event.end ? new Date(info.event.end) : undefined,
+      backgroundColor: info.event.backgroundColor || '',
+      borderColor: info.event.borderColor || '',
+      extendedProps: {
+        id: info.event.extendedProps.id,
+        key: info.event.extendedProps.key,
+        description: info.event.extendedProps.description
+      }
+    });
+    setIsModalOpen(true);
   };
 
   useEffect(() => {
@@ -182,12 +247,11 @@ const CalendarComponent = () => {
     const week = document.querySelector('.fc-customWeek-button');
     const day = document.querySelector('.fc-customDay-button');
 
-
     if (title) {
       const titleElement = title as HTMLElement;
-      titleElement.style.margin ='2px 5px';
-      titleElement.style.color ='#4D86FF';
-      titleElement.style.fontWeight='bold';
+      titleElement.style.margin = '2px 5px';
+      titleElement.style.color = '#4D86FF';
+      titleElement.style.fontWeight = 'bold';
     }
     if (month) {
       const monthElement = month as HTMLElement;
@@ -225,14 +289,14 @@ const CalendarComponent = () => {
 
     if (toolbarChunks[1]) {  // Ensure the second toolbar chunk exists
       const toolbarElement = toolbarChunks[1] as HTMLElement;
-      
+
       // Center align toolbar elements
       toolbarElement.style.display = 'flex';
       toolbarElement.style.alignItems = 'center';
       toolbarElement.style.gap = '10px';
       toolbarElement.style.justifyContent = 'center';
     }
-  
+
     // Apply custom styling to 'prev', 'next', and 'today' buttons
     const customButtons = ['.fc-prevButton-button', '.fc-nextButton-button', '.fc-todayButton-button'];
     customButtons.forEach(selector => {
@@ -264,16 +328,17 @@ const CalendarComponent = () => {
     //   }
     // });
   }, [events]);
-  
+
   return (
     <div className="flex min-h-screen overflow-auto bg-gray-100 p-6 space-x-4">
       <div className="flex-1 bg-white rounded-lg shadow p-6">
         <FullCalendar
-        ref={calendarRef}
+          ref={calendarRef}
           locale="ko"
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
           initialView="dayGridMonth"
           height="auto"
+          allDaySlot={false}
           headerToolbar={{
             left: 'todayButton',
             center: 'prevButton title nextButton',
@@ -355,13 +420,16 @@ const CalendarComponent = () => {
         />
       </div>
       <div id="external-events" className="w-1/4 bg-white rounded-lg shadow p-4 h-full flex flex-col">
-        <h3 className="text-lg font-bold text-blue-600 mb-4 text-center">Story List</h3>
+        <h3 className="text-lg font-bold text-blue-600 mb-4 text-center">Epic List</h3>
         {tasks.map((task, index) => (
           <div
             key={index}
             className="fc-event mb-2 p-2 text-white rounded cursor-grab"
+            data-id={task.id}
+            data-key={task.key}
             data-title={task.title}
             data-color={task.color}
+            data-description={task.description}
             style={{
               backgroundColor: task.color,
             }}
@@ -375,38 +443,53 @@ const CalendarComponent = () => {
         isOpen={isModalOpen}
         onRequestClose={() => setIsModalOpen(false)}
         ariaHideApp={false}
-        shouldCloseOnOverlayClick={false}
+        shouldCloseOnOverlayClick={true}
         className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex items-center justify-center z-[1000] pointer-events-auto"
         overlayClassName="fixed inset-0 bg-black bg-opacity-50 z-[999] pointer-events-auto"
       >
         <div className="bg-white p-6 rounded-lg shadow-lg w-96 pointer-events-auto">
-          <h2 className="text-xl font-bold mb-4">새 이벤트 추가</h2>
-          <div className="mb-4">
-            <label className="block mb-1">이벤트 제목:</label>
-            <input
-              type="text"
-              value={newEventTitle}
-              onChange={(e) => setNewEventTitle(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded"
-            />
-          </div>
-          <div className="mb-4">
-            <label className="block mb-1">이벤트 색상:</label>
-            <input
-              type="color"
-              value={newEventColor}
-              onChange={(e) => setNewEventColor(e.target.value)}
-              className="w-full p-2"
-            />
-          </div>
-          <div className="flex justify-end space-x-2">
-            <button onClick={handleAddEvent} className="px-4 py-2 bg-blue-500 text-white rounded">
-              추가
-            </button>
-            <button onClick={() => setIsModalOpen(false)} className="px-4 py-2 bg-gray-300 rounded">
-              취소
-            </button>
-          </div>
+          {selectedEvent ? (
+            <div>
+              <p className='font-bold mb-4'>{selectedEvent.extendedProps.key}</p>
+              <h2 className="text-xl font-bold mb-4">{selectedEvent.title}</h2>
+              <p>{selectedEvent.extendedProps.description}</p>
+              <h3 className="text-lg font-bold mt-4">기간</h3>
+              <p>
+                {selectedEvent.start ? selectedEvent.start.toLocaleDateString() : ''} -{' '}
+                {selectedEvent.end ? selectedEvent.end.toLocaleDateString() : ''}
+              </p>
+            </div>
+          ) : (
+            <>
+              <h2 className="text-xl font-bold mb-4">새 이벤트 추가</h2>
+              <div className="mb-4">
+                <label className="block mb-1">이벤트 제목:</label>
+                <input
+                  type="text"
+                  value={newEventTitle}
+                  onChange={(e) => setNewEventTitle(e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded"
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block mb-1">이벤트 색상:</label>
+                <input
+                  type="color"
+                  value={newEventColor}
+                  onChange={(e) => setNewEventColor(e.target.value)}
+                  className="w-full p-2"
+                />
+              </div>
+              <div className="flex justify-end space-x-2">
+                <button onClick={handleAddEvent} className="px-4 py-2 bg-blue-500 text-white rounded">
+                  추가
+                </button>
+                <button onClick={() => setIsModalOpen(false)} className="px-4 py-2 bg-gray-300 rounded">
+                  취소
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </Modal>
     </div>
