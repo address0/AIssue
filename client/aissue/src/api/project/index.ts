@@ -92,8 +92,8 @@ const getMonthlyEpics = async (projectKey: string): Promise<Epic[]> => {
     summary: epic.summary,
     description: epic.description,
     priority: epic.priority,
-    startAt: epic.startAt ? new Date(epic.startAt) : new Date(),
-    endAt: epic.endAt ? new Date(epic.endAt) : new Date(),
+    startAt: epic.startAt ? new Date(epic.startAt) : null,
+    endAt: epic.endAt ? new Date(epic.endAt) : null,
   }));
 };
 
@@ -104,16 +104,19 @@ const updateIssue = async (
   start_at: string | null,
   end_at: string | null
 ): Promise<any> => {
+  const adjustedStartAt = start_at ? new Date(new Date(start_at).setDate(new Date(start_at).getDate() + 1)).toISOString() : null;
+  const adjustedEndAt = end_at ? new Date(new Date(end_at).setDate(new Date(end_at).getDate() + 1)).toISOString() : null;
+
   const requestData: UpdateIssue = {
     issue_id,
     issue_key,
     issuetype,
-    start_at,
-    end_at,
+    start_at: adjustedStartAt,
+    end_at: adjustedEndAt,
   };
   try {
     const res = await privateAPI.post('/issues/update/schedule', requestData);
-    console.log('수정 요청');
+    console.log('수정 요청: ', requestData);
     return res.data;
   } catch (error) {
     console.error('Error updating issue:', error);
@@ -124,7 +127,7 @@ const updateIssue = async (
 const getWeeklyStories = async (projectKey: string): Promise<Story[]> => {
   const res = await privateAPI.get(`/issues/weekly?project=${projectKey}`);
   const issues: Issue[] = res.data.result; // Issue 타입 명시
-  issues.map((issue:Issue) => console.log(issue.parent?.summary))
+  issues.map((issue: Issue) => console.log(issue.parent?.summary))
   return issues.map((issue: Issue) => ({
     id: issue.key,
     title: issue.summary,

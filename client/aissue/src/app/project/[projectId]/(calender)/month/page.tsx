@@ -51,13 +51,15 @@ const CalendarComponent = () => {
   useEffect(() => {
     const fetchEpics = async () => {
       const projectKey = sessionStorage.getItem('projectId');
-
+  
       if (!projectKey) {
         console.warn('project id가 없습니다.');
         return;
       }
+  
       try {
         const epics = await getMonthlyEpics(projectKey);
+        console.log(epics);
         const epicTasks = epics
           .filter((epic) => !epic.startAt)
           .map((epic) => ({
@@ -67,14 +69,14 @@ const CalendarComponent = () => {
             color: '#87CEFA',
             description: epic.description,
           }));
-
+  
         setTasks(epicTasks);
-
+  
         const eventsWithDates: CalendarEvent[] = epics
-          .filter((epic) => epic.startAt)
+          .filter((epic) => epic.startAt !== null)
           .map((epic) => ({
             title: epic.summary,
-            start: new Date(epic.startAt),
+            start: epic.startAt ? new Date(epic.startAt) : undefined,
             end: epic.endAt ? new Date(epic.endAt) : undefined,
             allDay: true,
             backgroundColor: '#87CEFA',
@@ -85,14 +87,14 @@ const CalendarComponent = () => {
               description: epic.description,
             },
           }));
-
+  
         setEvents(eventsWithDates);
-
+  
       } catch (error) {
         console.error('Error fetching epics:', error);
       }
     };
-
+  
     fetchEpics();
   }, []);
 
@@ -311,17 +313,6 @@ const CalendarComponent = () => {
       weekElement.style.margin = '0 5px'; // Add spacing
       weekElement.style.cursor = 'pointer'; // Change cursor to pointer
     }
-    if (day) {
-      const dayElement = day as HTMLElement;
-      dayElement.style.background = 'transparent';
-      dayElement.style.border = '2px solid';
-      dayElement.style.color = '#7498E5';
-      dayElement.style.fontWeight = 'bold';
-      dayElement.style.fontSize = '1rem'; // Increase font size
-      dayElement.style.padding = '5px'; // Remove padding
-      dayElement.style.margin = '0 5px'; // Add spacing
-      dayElement.style.cursor = 'pointer'; // Change cursor to pointer
-    }
 
     if (toolbarChunks[1]) {  // Ensure the second toolbar chunk exists
       const toolbarElement = toolbarChunks[1] as HTMLElement;
@@ -349,20 +340,6 @@ const CalendarComponent = () => {
       }
     });
 
-    // const customTime = ['.fc-customMonth-button', '.fc-customWeek-button', '.fc-customDay-button'];
-    // customTime.forEach(selector => {
-    //   const Time = document.querySelector(selector) as HTMLElement;
-    //   if (Time) {
-    //     Time.style.background = 'transparent'; // Remove background color
-    //     Time.style.border = '2px solid'; // Remove border
-    //     Time.style.color = '#7498E5'; // Set custom color
-    //     Time.style.fontWeight = 'bold'; // Set font weight to bold
-    //     Time.style.fontSize = '1rem'; // Increase font size
-    //     Time.style.padding = '10px'; // Remove padding
-    //     Time.style.margin = '0 5px'; // Add spacing
-    //     Time.style.cursor = 'pointer'; // Change cursor to pointer
-    //   }
-    // });
   }, [events]);
 
   return (
@@ -378,7 +355,7 @@ const CalendarComponent = () => {
           headerToolbar={{
             left: 'todayButton',
             center: 'prevButton title nextButton',
-            right: 'customMonth customWeek customDay',
+            right: 'customMonth customWeek',
           }}
           customButtons={{
             todayButton: {
@@ -420,15 +397,6 @@ const CalendarComponent = () => {
                 if (calendarRef.current) {
                   calendarRef.current.getApi().changeView('timeGridWeek');
                   setActiveView('timeGridWeek');
-                }
-              },
-            },
-            customDay: {
-              text: 'Day',
-              click: () => {
-                if (calendarRef.current) {
-                  calendarRef.current.getApi().changeView('timeGridDay');
-                  setActiveView('timeGridDay');
                 }
               },
             },
@@ -492,7 +460,7 @@ const CalendarComponent = () => {
               <h3 className="text-lg font-bold mt-4">기간</h3>
               <p>
                 {selectedEvent.start ? selectedEvent.start.toLocaleDateString() : ''} -{' '}
-                {selectedEvent.end ? selectedEvent.end.toLocaleDateString() : ''}
+                {selectedEvent.end ? new Date(new Date(selectedEvent.end).setDate(selectedEvent.end.getDate() - 1)).toLocaleDateString() : ''}
               </p>
             </div>
           ) : (
