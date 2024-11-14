@@ -11,11 +11,20 @@ import {
 import { getWeeklyStories } from '@/api/project'
 import { useQuery } from '@tanstack/react-query'
 import LoadingSpinner from '@/static/svg/blue-spinner.svg'
+import IssueModal from '@/components/(Modal)/IssueModal/IssueModal'
+
+interface Task {
+  title: string;
+  start: Date;
+  end: Date;
+}
 
 interface Story {
   id: string
   title: string
   status: 'To Do' | 'In Progress' | 'Done'
+  parent?: { summary: string };
+  tasks: Task[];
 }
 
 interface Issue {
@@ -28,6 +37,8 @@ const WorkLogPage = () => {
   const pathname = usePathname()
   const projectId = pathname.split('/')[2]
   const [userName, setUserName] = useState<string | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedIssue, setSelectedIssue] = useState<Story | null>(null);
   const [categorizedIssues, setCategorizedIssues] = useState<{
     ToDo: Issue[]
     InProgress: Issue[]
@@ -80,6 +91,20 @@ const WorkLogPage = () => {
         return 'Done'
     }
   }
+  const openModal = (issueId: string) => {
+    if (data) {
+      const story = data.find((story: Story) => story.id === issueId);
+      if (story) {
+        setSelectedIssue(story);
+        setIsModalOpen(true);
+      }
+    }
+  };
+
+  const closeModal = () => {
+    setSelectedIssue(null);
+    setIsModalOpen(false);
+  };
   if (isLoading)
     return (
       <div className="flex justify-center items-center h-full w-full">
@@ -125,7 +150,7 @@ const WorkLogPage = () => {
 
     setCategorizedIssues(updatedIssues)
   }
-
+  console.log("이슈목록:", selectedIssue ? selectedIssue : null)
   return (
     <div className="flex min-h-screen bg-gray-100">
       <div className="w-4/5 p-8">
@@ -188,6 +213,7 @@ const WorkLogPage = () => {
                                 style={{
                                   ...provided.draggableProps.style,
                                 }}
+                                onClick={() => openModal(issue.id)}
                               >
                                 <div>
                                   <h3 className="font-semibold text-gray-800">
@@ -215,6 +241,18 @@ const WorkLogPage = () => {
             })}
           </div>
         </DragDropContext>
+
+        {/* Issue Details Modal */}
+        {selectedIssue && (
+          <IssueModal
+            isOpen={isModalOpen}
+            onClose={closeModal}
+            title={selectedIssue.title}
+            parentSummary={selectedIssue.parent?.summary || ''}
+            tasks={selectedIssue.tasks} // 여기서 tasks 배열을 그대로 전달
+          />
+        )}
+     
       </div>
     </div>
   )
