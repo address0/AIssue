@@ -20,16 +20,10 @@ export default function ProjectPage() {
     async (projectId: string) => {
       try {
         // 프로젝트 정보를 서버에서 가져오고, 반환된 데이터와 ID를 콘솔에 출력하여 확인합니다.
-<<<<<<< HEAD
-        const projectInfo = await getProjectInfo(projectId);
-        console.log('Project ID:', projectId);
-        sessionStorage.setItem('projectId', projectId);
-        console.log('Project Info:', projectInfo);
-=======
         const projectInfo = await getProjectInfo(projectId)
         console.log('Project ID:', projectId)
+        sessionStorage.setItem('projectId', projectId)
         console.log('Project Info:', projectInfo)
->>>>>>> ec8cd4d7d274e9d880d148f01caade662bf7eab4
 
         if (projectInfo && projectInfo.isCompleted) {
           // 프로젝트 정보가 존재하고 완료된 경우 info 페이지로 이동
