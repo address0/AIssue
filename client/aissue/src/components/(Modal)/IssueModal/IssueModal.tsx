@@ -41,10 +41,10 @@ const IssueModal: React.FC<IssueDetailsModalProps> = ({
           ✕
         </button>
 
-        <h2 className="text-center text-lg font-semibold text-teal-600">
-          이슈 : {title}
+        <h2 className="text-center text-lg font-semibold text-[#7498E5]">
+          에픽 : {parentSummary}
         </h2>
-        <h3>에픽 : {parentSummary}</h3>
+        <h3 className="text-center text-lg font-semibold text-teal-600">이슈 : {title}</h3>
 
         <div className="mt-4 space-y-2 max-h-64 overflow-y-auto">
           {tasks.map((task, index) => (
