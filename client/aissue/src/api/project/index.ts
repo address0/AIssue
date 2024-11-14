@@ -103,7 +103,7 @@ const updateIssue = async (
   issuetype: string,
   start_at: string | null,
   end_at: string | null
-): Promise<any> => {
+): Promise<void> => {
   const adjustedStartAt = start_at ? new Date(new Date(start_at).setDate(new Date(start_at).getDate() + 1)).toISOString() : null;
   const adjustedEndAt = end_at ? new Date(new Date(end_at).setDate(new Date(end_at).getDate() + 1)).toISOString() : null;
 

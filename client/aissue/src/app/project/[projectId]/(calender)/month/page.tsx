@@ -283,7 +283,6 @@ const CalendarComponent = () => {
     const title = document.querySelector('.fc-toolbar-title');
     const month = document.querySelector('.fc-customMonth-button');
     const week = document.querySelector('.fc-customWeek-button');
-    const day = document.querySelector('.fc-customDay-button');
 
     if (title) {
       const titleElement = title as HTMLElement;
