@@ -6,10 +6,7 @@ interface Task {
   end: Date;
 }
 
-interface Subtask {
-  summary: string;
-  status: string;
-}
+
 
 interface IssueDetailsModalProps {
   isOpen: boolean;
