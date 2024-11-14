@@ -46,17 +46,19 @@ public class WeeklyIssueResponse {
         private Long id;
         private String key;
         private String summary;
+        private String description;
         private String priority;
         private String status;
         private String issuetype;
         private LocalDateTime startAt;
         private LocalDateTime endAt;
 
-        public ParentIssue(Long id, String key, String summary, String priority, String status, String issuetype,
+        public ParentIssue(Long id, String key, String summary, String description, String priority, String status, String issuetype,
                            LocalDateTime startAt, LocalDateTime endAt) {
             this.id = id;
             this.key = key;
             this.summary = summary;
+            this.description = description;
             this.priority = priority;
             this.status = status;
             this.issuetype = issuetype;
@@ -71,17 +73,19 @@ public class WeeklyIssueResponse {
         private Long id;
         private String key;
         private String summary;
+        private String description;
         private String priority;
         private String status;
         private String issuetype;
         private LocalDateTime startAt;
         private LocalDateTime endAt;
 
-        public Subtask(Long id, String key, String summary, String priority, String status, String issuetype,
+        public Subtask(Long id, String key, String summary, String description, String priority, String status, String issuetype,
                        LocalDateTime startAt, LocalDateTime endAt) {
             this.id = id;
             this.key = key;
             this.summary = summary;
+            this.description = description;
             this.priority = priority;
             this.status = status;
             this.issuetype = issuetype;
