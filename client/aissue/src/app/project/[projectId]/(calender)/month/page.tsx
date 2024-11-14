@@ -400,6 +400,7 @@ const CalendarComponent = () => {
                 }
               },
             },
+
           }}
           views={{
             timeGridWeek: {
