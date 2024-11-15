@@ -22,6 +22,19 @@ export interface IssueData {
   manager: null | string
 }
 
+interface FetchedEpics {
+  summary: string,
+  description: string,
+  id: number,
+  key: string,
+  priority: null | string,
+  issuetype: string,
+  startAt: string,
+  endAt: string,
+  assignee: string,
+  status: null | string
+}
+
 interface SprintData {
   type: string
   message: string
@@ -47,6 +60,7 @@ export default function SprintPage({
   const [animate, setAnimate] = useState<boolean>(false);
   const [initialMessageSent, setInitialMessageSent] = useState<boolean>(false);
   const [inputList, setInputList] = useState<SprintData[]>([])
+  const [epics, setEpics] = useState<FetchedEpics[]>([])
 
   const questions = [
     '이번 주차의 에픽 목록은 다음과 같습니다. 추가로 작업할 기능이 있다면 알려 주세요.',
@@ -127,8 +141,10 @@ export default function SprintPage({
     .then((data) => {
       if (data?.length > 0) {
         setIsSprintPage(true)
+        setEpics(data)
       }
       setIsFindEpic(false)
+      console.log(data)
     })
     .catch((error) => {
       console.log(error)
@@ -223,7 +239,7 @@ export default function SprintPage({
     )
   }
 
-  return (
+  else return (
     <div className="flex h-screen overflow-hidden bg-gray-100">
       <div className="flex-1 p-6 overflow-hidden">
         <div className="flex justify-center mb-8">
@@ -252,12 +268,33 @@ export default function SprintPage({
                 </div>
               )}
               {msg.bot && (
-                <div className='flex items-start space-x-4 animate-fadeIn'>
-                  <Image src="/img/chatbot.png" alt="Chatbot" width={50} height={50} />
-                  <div className="self-start max-w-xs p-3 bg-[#B2E0D9] text-gray-700 rounded-[0px_20px_20px_20px]">
-                    {msg?.bot}
+                <>
+                  <div className='flex items-start space-x-4 animate-fadeIn'>
+                    <Image src="/img/chatbot.png" alt="Chatbot" width={50} height={50} />
+                    <div className="self-start max-w-xs p-3 bg-[#B2E0D9] text-gray-700 rounded-[0px_20px_20px_20px]">
+                      {msg?.bot}
+                    </div>
                   </div>
-                </div>
+                  {index === 0 && (
+                    <div className='w-2/3 ml-14 bg-white rounded-lg p-4 space-y-2'>
+                      {epics?.map((item) => (
+                        <div className='w-full h-20 border border-[#54B2A3] rounded p-2 relative'>
+                          <div className="flex items-center my-1">
+                            <img src={`/img/${item?.priority}.png`} alt="priority_img" className="w-5" />
+                            <p className="text-sm text-gray-500 ml-1">{item?.key}
+                              <span className="text-gray-500 text-xs font-normal ml-4">{item?.startAt?.substring(0,10)} - {item?.endAt?.substring(0,10)}</span>
+                            </p>
+                          </div>
+                          <h1 className='font-bold text-md text-[#54B2A3] ml-2'>{item?.summary}</h1>
+                          <div className={`absolute top-2 right-2 w-14 h-6 text-xs flex items-center justify-center rounded 
+                            ${item?.status === '해야 할 일' ? 'bg-gray-200 text-gray-700' : item?.status === '진행 중'? 'bg-blue-200 text-blue-700' : 'bg-green-200 text-green-700'}`}>
+                            {item?.status}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
               )}
             </div>
           ))}
