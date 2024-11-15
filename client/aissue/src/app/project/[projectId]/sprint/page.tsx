@@ -6,7 +6,9 @@ import Image from 'next/image'
 import Lottie from 'react-lottie-player'
 import NoEpic from '@public/lottie/Animation - 1730424329200.json'
 import LoadingImg from '@public/lottie/Animation - 1731310411267.json'
+import FindEpicImg from '@public/lottie/Animation - 1731658876737.json'
 import EpicModal from '@/components/(Modal)/EpicModal/page'
+import { getEpics } from '@/api/issue'
 
 export interface IssueData {
   pk: string,
@@ -20,6 +22,11 @@ export interface IssueData {
   manager: null | string
 }
 
+interface SprintData {
+  type: string
+  message: string
+}
+
 export default function SprintPage({
   params,
 }: {
@@ -28,20 +35,24 @@ export default function SprintPage({
   };
 }) {
   const { projectId } = params;
-  const [isSprintPage, setIsSprintPage] = useState(false)
+  const [isSprintPage, setIsSprintPage] = useState<boolean>(false)
+  const [isFindEpic, setIsFindEpic] = useState<boolean>(true)
   const [messages, setMessages] = useState<{ user: string; bot: string }[]>([])
-  const [input, setInput] = useState('')
+  const [input, setInput] = useState<string>('')
   const [loading, setLoading] = useState(false)
   const chatEndRef = useRef<HTMLDivElement | null>(null)
   const [parsedData, setParsedData] = useState<IssueData[]>([])
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0)
   const [showEpicModal, setShowEpicModal] = useState<boolean>(false)
-  const [animate, setAnimate] = useState(false);
+  const [animate, setAnimate] = useState<boolean>(false);
+  const [initialMessageSent, setInitialMessageSent] = useState<boolean>(false);
+  const [inputList, setInputList] = useState<SprintData[]>([])
 
   const questions = [
-    '이번 주차의 에픽 목록은 다음과 같습니다. 추가로 작업할 기능이 있다면 알려 주세요!',
+    '이번 주차의 에픽 목록은 다음과 같습니다. 추가로 작업할 기능이 있다면 알려 주세요.',
     '다음으로, 아직 끝내지 못한 작업이 있다면 알려 주세요.',
-    '마지막으로, 수정해야 할 버그 목록이 있다면 알려 주세요.'
+    '마지막으로, 수정해야 할 버그 목록이 있다면 알려 주세요.',
+    '감사합니다. 이번 주차의 스프린트와 스토리 목록을 생성하겠습니다!'
   ];
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -56,16 +67,18 @@ export default function SprintPage({
 
     const userMessage = input
     setMessages((prev) => [...prev, { user: userMessage, bot: '' }])
+    setInputList((prev) => [...prev, {type: 'user', message: userMessage}])
     setInput('')
 
-    if (currentQuestionIndex < questions.length) {
+    setTimeout(() => {
       const botMessage = questions[currentQuestionIndex];
-      setMessages((prev) => [...prev, { user: '', bot: botMessage }])
+      setMessages((prev) => [...prev, { user: '', bot: botMessage }]);
       setCurrentQuestionIndex(prev => prev + 1);
-      setAnimate(true)
-    } else {
-      handleCreateIssue();
-    }
+      setAnimate(true);
+      if (currentQuestionIndex === questions.length - 1) {
+        handleCreateIssue();
+      }
+    }, 1000)
   }
 
   const handleCreateIssue = async () => {
@@ -110,6 +123,20 @@ export default function SprintPage({
   }
 
   useEffect(() => {
+    getEpics(projectId)
+    .then((data) => {
+      if (data?.length > 0) {
+        setIsSprintPage(true)
+      }
+      setIsFindEpic(false)
+    })
+    .catch((error) => {
+      console.log(error)
+      setIsFindEpic(false)
+    })
+  }, [])
+
+  useEffect(() => {
     if (chatEndRef.current) {
       chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
@@ -120,13 +147,47 @@ export default function SprintPage({
   },[parsedData])
 
   useEffect(() => {
+    if (initialMessageSent) {
+      const timer = setTimeout(() => {
+      if (currentQuestionIndex < questions.length) {
+          const botMessage = questions[currentQuestionIndex];
+          setMessages((prev) => [...prev, { user: '', bot: botMessage }]);
+          setCurrentQuestionIndex(prev => prev + 1);
+          setAnimate(true);
+      }
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [initialMessageSent]);
+
+  useEffect(() => {
+    if (messages.length === 0) {
+        setInitialMessageSent(true);
+      }
+  }, [messages]);
+
+  useEffect(() => {
     if (animate) {
       const timer = setTimeout(() => setAnimate(false), 500); // 애니메이션이 끝난 후 상태 초기화
       return () => clearTimeout(timer);
     }
   }, [animate])
 
-  if (!isSprintPage) {
+  if (isFindEpic) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen h-screen overflow-hidden bg-gray-100 w-full">
+        <Lottie
+          loop
+          animationData={FindEpicImg}
+          play
+          className="w-2/3 h-2/3"
+        />
+        <p className='text-xl text-gray-600'>프로젝트 에픽 조회 중...</p>
+      </div>
+    )
+  }
+
+  else if (!isSprintPage) {
     return (
       <div className="flex min-h-screen h-screen overflow-hidden bg-gray-100 w-full">
         <div className="flex-1 p-6 flex flex-col items-center justify-center overflow-hidden">
@@ -181,39 +242,25 @@ export default function SprintPage({
               <p>프로젝트의 작업 내용 및 일정에 맞춰, 이번 주 스프린트를 제작하겠습니다.</p>
             </div>
           </div>
-          <div className="flex items-start space-x-4">
-            <Image src="/img/chatbot.png" alt="Chatbot" width={50} height={50} />
-            <div className="bg-[#B2E0D9] text-gray-700 p-4 rounded-[0px_20px_20px_20px]">
-              <p>먼저, 프로젝트의 이름(title)을 알려 주세요!</p>
-            </div>
-          </div>
 
           {/* User Messages and Bot Responses */}
           {messages?.map((msg, index) => (
             <div key={index} className="flex flex-col space-y-2 animate-fadeIn">
               {msg.user && (
                 <div className="self-end max-w-xs p-3 bg-blue-300 text-gray-700 rounded-[20px_0px_20px_20px]">
-                  {msg.user}
+                  {msg?.user}
                 </div>
               )}
               {msg.bot && (
                 <div className='flex items-start space-x-4 animate-fadeIn'>
                   <Image src="/img/chatbot.png" alt="Chatbot" width={50} height={50} />
                   <div className="self-start max-w-xs p-3 bg-[#B2E0D9] text-gray-700 rounded-[0px_20px_20px_20px]">
-                    {msg.bot}
+                    {msg?.bot}
                   </div>
                 </div>
               )}
             </div>
           ))}
-          {/* {currentQuestionIndex < questions.length && (
-            <div className={`flex items-start space-x-4 ${animate ? 'animate-fadeIn' : ''}`}>
-              <Image src="/img/chatbot.png" alt="Chatbot" width={50} height={50} />
-              <div className="self-start max-w-xs p-3 bg-[#B2E0D9] text-gray-700 rounded-[0px_20px_20px_20px]">
-                {questions[currentQuestionIndex]}
-              </div>
-            </div>
-          )} */}
           {loading && (
             <div className="flex items-start space-x-4">
               <Image src="/img/chatbot.png" alt="Chatbot" width={50} height={50} />
@@ -227,7 +274,7 @@ export default function SprintPage({
             </div>
           )}
           <div ref={chatEndRef} />
-          {parsedData.length > 0 && (
+          {parsedData?.length > 0 && (
             <div className="mt-4 p-4 bg-white rounded shadow">
               <h3 className="text-lg">생성된 이슈 목록:</h3>
               <ul className="list-disc pl-5">
