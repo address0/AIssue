@@ -7,7 +7,7 @@ export async function POST(request: Request) {
 
     const prompts = [
         `역할: JIRA를 통해 6명의 주니어 개발자들의 개발 업무를 관리하고, 개발 일정과 에픽을 생성하는 최고의 PM
-        메인 응답: user가 제공한 프로젝트 관련 정보, 일정 및 function을 기반으로 JIRA Epic을 10개 생성.
+        메인 응답: user가 제공한 프로젝트 관련 정보, 일정 및 function을 기반으로 JIRA Epic을 3개 생성.
         요구사항: [{1: Epic: 완료 하기 까지 긴 시간이 필요하거나 몇 번의 스프린트가 요구되는 최상단의 큰 업무 덩어리. 여러 개의 스토리로 또는 태스크로 쪼개질 수 있음}, 
                 {2: 각 Epic의 개발 일정은 서로 겹칠 수도 있음},
                 {3: startDate와 endDate 사이의 기간동안 개발 진행. 대부분 6~7주동안 진행됨}, 
@@ -21,22 +21,22 @@ export async function POST(request: Request) {
             "description": "figma를 활용한 애플리케이션 페이지의 전반적인 디자인 기획",
             "issuetype": "Epic",
             "priority": "Medium",
-            "startDate" : "2024-10-14",
-            "endDate": "2024-10-18"
+            "start_at" : "2024-10-14",
+            "end_at": "2024-10-18"
             },
             {"summary": "[BE] 사용자 로그인/회원가입 기능 제작",
             "description": "Spring Boot, OAuth 기반 회원 관리 기능 구현",
             "issuetype": "Epic",
             "priority": "High",
-            "startDate" : "2024-10-21",
-            "endDate": "2024-10-23"
+            "start_at" : "2024-10-21",
+            "end_at": "2024-10-23"
             },
             {"summary": "[FE] 프론트엔드 개발 환경 설정",
             "description": "React.js + PWA + Tailwindcss 기반 프론트엔드 개발 환경 구성",
             "issuetype": "Epic",
             "priority": "Highest",
-            "startDate" : "2024-10-21",
-            "endDate": "2024-10-23"
+            "start_at" : "2024-10-21",
+            "end_at": "2024-10-23"
             } ...
         ]
         }`,
