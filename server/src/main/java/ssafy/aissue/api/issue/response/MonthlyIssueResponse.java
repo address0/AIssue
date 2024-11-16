@@ -1,5 +1,6 @@
 package ssafy.aissue.api.issue.response;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -17,7 +18,10 @@ public class MonthlyIssueResponse {
     private String status;
     private String assignee;
     private String issuetype;
+
+    @JsonProperty("start_at")
     private LocalDateTime startAt;
+    @JsonProperty("end_at")
     private LocalDateTime endAt;
 
     public MonthlyIssueResponse(Long id, String key, String summary, String description, String priority, String status,

@@ -9,7 +9,10 @@ import org.springframework.web.bind.annotation.*;
 import ssafy.aissue.api.CommonResponse;
 import ssafy.aissue.api.issue.request.IssueBatchRequest;
 import ssafy.aissue.api.issue.request.IssueScheduleRequest;
+import ssafy.aissue.api.issue.request.IssueUpdateRequest;
+import ssafy.aissue.api.issue.response.EpicIssueResponse;
 import ssafy.aissue.api.issue.response.MonthlyIssueResponse;
+import ssafy.aissue.api.issue.response.SprintIssueResponse;
 import ssafy.aissue.api.issue.response.WeeklyIssueResponse;
 import ssafy.aissue.domain.issue.service.IssueService;
 
@@ -47,7 +50,7 @@ public class IssueController {
     }
 
     @Operation(summary = "이슈 일정 수정", description = "이슈 일정을 수정합니다.")
-    @PostMapping("/update/schedule")
+    @PutMapping("/update/schedule")
     public CommonResponse<?> updateSchedule(
             @RequestBody IssueScheduleRequest issueScheduleRequest
     ) {
@@ -57,9 +60,39 @@ public class IssueController {
     }
 
     @Operation(summary = "에픽 목록 불러오기", description = "스프린트 생성을 위한 에픽 정보를 불러옵니다.")
-    @GetMapping("/sprint")
-    public CommonResponse<List<MonthlyIssueResponse>> getEpicIssues(
+    @GetMapping("/epic")
+    public CommonResponse<List<EpicIssueResponse>> getEpicIssues(
             @RequestParam(name = "project") String projectKey) {
-        return CommonResponse.ok(issueService.getMonthlyIssues(projectKey));
+        return CommonResponse.ok(issueService.getEpicIssues(projectKey));
+    }
+
+    @Operation(summary = "이슈 삭제하기", description = "이슈를 삭제합니다.")
+    @DeleteMapping("/{issuetype}/{issueKey}")
+    public CommonResponse<?> deleteIssue(
+            @PathVariable String issueKey, @PathVariable String issuetype) {
+        return CommonResponse.ok(issueService.deleteIssue(issueKey, issuetype));
+    }
+
+    @Operation(summary = "이슈 수정하기", description = "이슈를 수정합니다.")
+    @PutMapping("/update")
+    public CommonResponse<?> updateIssue(
+            @RequestBody IssueUpdateRequest issueUpdateRequest) throws JsonProcessingException {
+        return CommonResponse.ok(issueService.updateIssue(issueUpdateRequest));
+    }
+
+    @Operation(summary = "스프린트 생성용 데이터 조회하기", description = "모든 이슈 데이터를 불러옵니다.")
+    @GetMapping("/sprint")
+    public CommonResponse<List<SprintIssueResponse>> getSprintIssues(
+            @RequestParam(name = "project") String projectKey
+    ) throws JsonProcessingException {
+        return CommonResponse.ok(issueService.getSprintIssues(projectKey));
+    }
+
+    @Operation(summary = "이슈 상세 조회하기", description = "이슈에 대한 상세데이터를 불러옵니다.")
+    @GetMapping("/story")
+    public CommonResponse<List<EpicIssueResponse>> getIssueDetails(
+            @RequestParam(name = "project") String projectKey
+    ) {
+        return CommonResponse.ok(issueService.getIssueDetail(projectKey));
     }
 }

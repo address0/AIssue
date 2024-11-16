@@ -5,20 +5,21 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.http.*;
 import org.springframework.web.util.UriComponentsBuilder;
+import ssafy.aissue.api.issue.request.IssueUpdateRequest;
 import ssafy.aissue.api.issue.request.JiraIssueCreateRequest;
+import ssafy.aissue.api.issue.request.JiraIssueUpdateRequest;
 import ssafy.aissue.api.issue.response.IssueResponse;
+import ssafy.aissue.api.issue.response.SprintIssueResponse;
 import ssafy.aissue.common.exception.member.InvalidJiraCredentialsException;
 import ssafy.aissue.domain.member.entity.Member;
 
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 
 @Component
 @Slf4j
@@ -346,6 +347,71 @@ public class JiraApiUtil {
         return issues;
     }
 
+    public List<IssueResponse> fetchEpicIssues(String email, String jiraKey, String projectKey) {
+        log.info("[JiraApiUtil] fetchUserIssues >>>> email: {}, jiraKey: {}", email, jiraKey);
+
+        String jqlQuery = "project = \"" + projectKey + "\" " + " AND issuetype = \"Epic\"";
+        String jiraFields = "id,key,summary,description,priority,subtasks,status,issuetype,assignee,";
+
+        // UriComponentsBuilder를 사용하여 URL을 생성하고 인코딩
+        URI jiraApiUri = UriComponentsBuilder.fromHttpUrl("https://ssafy.atlassian.net/rest/api/2/search")
+                .queryParam("jql", jqlQuery)
+                .queryParam("fields", jiraFields)
+                .build()
+                .encode()  // URI 인코딩 적용
+                .toUri();  // 완전한 URI 객체로 변환
+
+        log.info("jira 요청 주소: {}", jiraApiUri);
+
+        String auth = email + ":" + jiraKey;
+        String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes());
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "Basic " + encodedAuth);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+        ResponseEntity<String> response = restTemplate.exchange(jiraApiUri, HttpMethod.GET, entity, String.class);
+        log.info("[JiraApiUtil] 유저의 이슈 목록 조회 >>>> response: {}", response);
+
+        if (response.getStatusCode() == HttpStatus.OK) {
+            log.info("[JiraApiUtil] 유저의 이슈 목록 조회 성공: {}", response.getBody());
+            return parseEpicIssuesFromResponse((response.getBody()));
+        } else {
+            log.error("[JiraApiUtil] 유저의 이슈 목록 조회 실패. 상태 코드: {}, 응답 본문: {}", response.getStatusCode(), response.getBody());
+            throw new RuntimeException("Failed to fetch user projects from Jira. Response: " + response.getBody());
+        }
+    }
+
+    private List<IssueResponse> parseEpicIssuesFromResponse(String responseBody) {
+        List<IssueResponse> issues = new ArrayList<>();
+        try {
+            JsonNode root = objectMapper.readTree(responseBody);
+            JsonNode issuesNode = root.path("issues");
+
+            for (JsonNode issueNode : issuesNode) {
+                Long id = issueNode.path("id").asLong();
+                String key = issueNode.path("key").asText();
+                String summary = issueNode.path("fields").path("summary").asText();
+                String description = issueNode.path("fields").path("description").asText("");
+                String status = issueNode.path("fields").path("status").path("name").asText();
+                String priority = issueNode.path("fields").path("priority").path("name").asText();
+
+                issues.add(IssueResponse.builder()
+                        .id(id)
+                        .key(key)
+                        .summary(summary)
+                        .description(description)
+                        .status(status)
+                        .priority(priority)
+                        .build());
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to parse issues from response", e);
+        }
+        return issues;
+    }
+
     public List<String> createBulkIssues(List<JiraIssueCreateRequest.IssueUpdate> issueFieldsList, String email, String jiraKey) throws JsonProcessingException {
         String jiraApiUrl = "https://ssafy.atlassian.net/rest/api/2/issue/bulk";
 
@@ -485,5 +551,263 @@ public class JiraApiUtil {
             throw new RuntimeException("Failed to fetch issues from Jira. Response: " + response.getBody());
         }
     }
+
+    public void updateIssue(JiraIssueUpdateRequest jiraIssueUpdateRequest, String email, String jiraKey, String issueKey) throws JsonProcessingException {
+
+        String url = "https://ssafy.atlassian.net/rest/api/2/issue/" + issueKey;
+
+        String auth = email + ":" + jiraKey;
+        String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes());
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "Basic " + encodedAuth);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        // Jira API에 보내기 위한 HTTP 엔티티 생성
+        HttpEntity<JiraIssueUpdateRequest> entity = new HttpEntity<>(jiraIssueUpdateRequest, headers);
+
+        // PUT 요청을 보내어 이슈를 업데이트
+        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.PUT, entity, String.class);
+
+        // 응답 코드 확인
+        if (response.getStatusCode() == HttpStatus.NO_CONTENT) {
+            log.info("이슈가 성공적으로 수정되었습니다.");
+        } else {
+            log.error("이슈 수정 실패. 상태 코드: {}, 응답 본문: {}", response.getStatusCode(), response.getBody());
+            throw new RuntimeException("Failed to update issue in Jira. Status: " + response.getStatusCode());
+        }
+    }
+
+    public void deleteIssue(String issueKey, String email, String jiraKey) {
+        String url = "https://ssafy.atlassian.net/rest/api/2/issue/" + issueKey +"?deleteSubtasks=true";
+        String auth = email + ":" + jiraKey;
+        String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes());
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "Basic " + encodedAuth);
+
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.DELETE, entity, String.class);
+
+        if (response.getStatusCode() == HttpStatus.NO_CONTENT) {
+            log.info("Issue deleted successfully: " + issueKey);
+        } else {
+            log.error("Failed to delete issue: " + issueKey);
+            throw new RuntimeException("Failed to delete issue in Jira.");
+        }
+    }
+
+    public List<SprintIssueResponse> fetchSprintIssues(String projectKey, String email, String jiraKey) throws JsonProcessingException {
+        log.info("[JiraApiUtil] fetchSprintIssues >>>> projectKey: {}, email: {}", projectKey, email);
+
+        // JQL 쿼리 생성 (에픽, 스토리, 버그, 작업, 하위 작업)
+        String jqlQuery = "project = \"" + projectKey + "\" AND issuetype in (Epic, Story, Bug, Task, Sub-task)";
+
+        // 가져올 필드 설정
+        String fields = "id,key,summary,description,priority,subtasks,parent,status,issuetype,assignee";
+
+        // 수동으로 URL 인코딩하여 URL을 생성
+        String url = "https://ssafy.atlassian.net/rest/api/2/search?" +
+                "jql=" + URLEncoder.encode(jqlQuery, StandardCharsets.UTF_8) + "&" +
+                "fields=" + URLEncoder.encode(fields, StandardCharsets.UTF_8);
+
+        URI jiraApiUri = URI.create(url);
+
+        String auth = email + ":" + jiraKey;
+        String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes());
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "Basic " + encodedAuth);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+
+        // 페이지네이션 처리: 첫 번째 페이지부터 시작
+        int startAt = 0;
+        int maxResults = 50;  // 한 페이지당 50개의 이슈
+        List<JsonNode> allIssues = new ArrayList<>();
+
+        while (true) {
+            // 요청에 startAt과 maxResults 추가
+            String paginatedUrl = url + "&startAt=" + startAt + "&maxResults=" + maxResults;
+            URI paginatedUri = URI.create(paginatedUrl);
+            log.info(paginatedUri.toString());
+
+            ResponseEntity<String> response = restTemplate.exchange(paginatedUri, HttpMethod.GET, entity, String.class);
+            if (response.getStatusCode() == HttpStatus.OK) {
+                JsonNode rootNode = objectMapper.readTree(response.getBody());
+                int total = rootNode.path("total").asInt();  // 전체 이슈 수
+                JsonNode issuesNode = rootNode.path("issues");
+
+                // addAll()로 모든 이슈를 allIssues 리스트에 추가
+                issuesNode.forEach(allIssues::add);
+
+                // 로그 추가: 현재 페이지에서 반환된 이슈 개수
+                log.info("Issues returned on this page: {}", issuesNode.size());
+
+                // 반환된 이슈 수가 maxResults보다 적으면 마지막 페이지로 간주
+                if (issuesNode.size() < maxResults || allIssues.size() >= total) {
+                    break; // 더 이상 불러올 이슈가 없으면 종료
+                } else {
+                    // 다음 페이지로 이동
+                    startAt += maxResults;
+                }
+            } else {
+                throw new RuntimeException("Failed to fetch sprint issues from Jira. Response: " + response.getBody());
+            }
+        }
+
+        // 모든 이슈 데이터를 받은 후, 그 데이터로 매칭 작업 시작
+        return parseSprintIssuesFromResponse(allIssues);
+    }
+
+
+    // 이슈 파싱 및 매칭을 처리하는 메서드
+    private List<SprintIssueResponse> parseSprintIssuesFromResponse(List<JsonNode> allIssues) throws JsonProcessingException {
+        List<SprintIssueResponse> sprintIssues = new ArrayList<>();
+        Map<Long, SprintIssueResponse> epicMap = new HashMap<>();
+        Map<Long, SprintIssueResponse.MediumIssueResponse> mediumIssueMap = new HashMap<>();
+
+        // 에픽과 부모가 없는 스토리, 버그, 작업을 먼저 처리
+        for (JsonNode issueNode : allIssues) {
+            Long id = issueNode.path("id").asLong();
+            String key = issueNode.path("key").asText();
+            String summary = issueNode.path("fields").path("summary").asText();
+            String description = issueNode.path("fields").path("description").asText();
+            String status = issueNode.path("fields").path("status").path("name").asText();
+            String priority = issueNode.path("fields").path("priority").path("name").asText();
+            String issuetype = issueNode.path("fields").path("issuetype").path("name").asText();
+
+            log.info("Issue Type for issue {}: {}", key, issuetype);
+
+            // 에픽 처리
+            if ("EPIC".equalsIgnoreCase(issuetype) || "에픽".equalsIgnoreCase(issuetype)) {
+                SprintIssueResponse epic = SprintIssueResponse.builder()
+                        .id(id)
+                        .key(key)
+                        .summary(summary)
+                        .description(description)
+                        .status(status)
+                        .priority(priority)
+                        .issuetype(issuetype)
+                        .subIssues(new ArrayList<>())  // 에픽은 하위 이슈 목록이 있음
+                        .build();
+                epicMap.put(id, epic);
+                sprintIssues.add(epic);
+                log.info("Epic added: {}", key);
+            }
+
+            // 부모가 없는 STORY, BUG, TASK는 MediumIssueResponse 객체로 생성
+            if (("STORY".equalsIgnoreCase(issuetype) || "스토리".equalsIgnoreCase(issuetype) ||
+                    "BUG".equalsIgnoreCase(issuetype) || "버그".equalsIgnoreCase(issuetype) ||
+                    "TASK".equalsIgnoreCase(issuetype) || "작업".equalsIgnoreCase(issuetype)) &&
+                    issueNode.path("fields").path("parent").isMissingNode()) {
+
+                // 부모가 없는 STORY, BUG, TASK는 MediumIssueResponse로 생성
+                SprintIssueResponse mediumIssue = SprintIssueResponse.builder()
+                        .id(id)
+                        .key(key)
+                        .summary(summary)
+                        .description(description)
+                        .status(status)
+                        .priority(priority)
+                        .issuetype(issuetype)
+                        .subtasks(new ArrayList<>())  // 하위 작업이 들어갈 리스트
+                        .build();
+
+                // mediumIssueMap에 추가
+                epicMap.put(id, mediumIssue);
+
+                // sprintIssues 리스트에 SprintIssueResponse 추가
+                sprintIssues.add(mediumIssue);
+                log.info("Story/Bug/Task added (without parent): {}", key);
+            }
+        }
+
+        // 부모가 있는 스토리, 버그, 작업 처리
+        for (JsonNode issueNode : allIssues) {
+            Long id = issueNode.path("id").asLong();
+            String key = issueNode.path("key").asText();
+            String issuetype = issueNode.path("fields").path("issuetype").path("name").asText();
+            String summary = issueNode.path("fields").path("summary").asText();
+            String description = issueNode.path("fields").path("description").asText();
+            String status = issueNode.path("fields").path("status").path("name").asText();
+            String priority = issueNode.path("fields").path("priority").path("name").asText();
+
+            JsonNode parentNode = issueNode.path("fields").path("parent");
+            if (!parentNode.isMissingNode()) {
+                Long parentId = parentNode.path("id").asLong();
+
+                if ("STORY".equalsIgnoreCase(issuetype) || "스토리".equalsIgnoreCase(issuetype) ||
+                        "BUG".equalsIgnoreCase(issuetype) || "버그".equalsIgnoreCase(issuetype) ||
+                        "TASK".equalsIgnoreCase(issuetype) || "작업".equalsIgnoreCase(issuetype)) {
+
+                    SprintIssueResponse.MediumIssueResponse mediumIssue = SprintIssueResponse.MediumIssueResponse.builder()
+                            .id(id)
+                            .key(key)
+                            .summary(summary)
+                            .description(description)
+                            .status(status)
+                            .priority(priority)
+                            .issuetype(issuetype)
+                            .subtasks(new ArrayList<>())  // 하위 작업이 들어갈 리스트
+                            .build();
+
+                    mediumIssueMap.put(id, mediumIssue);
+                    // 부모가 에픽이면 그 하위 이슈로 추가
+                    SprintIssueResponse epic = epicMap.get(parentId);
+                    if (epic != null) {
+                        epic.getSubIssues().add(mediumIssue);  // SprintIssueResponse의 subIssues에 MediumIssueResponse 추가
+                        log.info("Story/Bug/Task added to Epic: {}", key);
+                    } else {
+                        log.warn("Epic not found for story/bug/task with parent: {}", key);
+                    }
+                }
+            }
+        }
+
+        log.info(epicMap.toString());
+        log.info(mediumIssueMap.toString());
+        // 하위 작업 처리
+        for (JsonNode issueNode : allIssues) {
+            Long id = issueNode.path("id").asLong();
+            String key = issueNode.path("key").asText();
+            String issuetype = issueNode.path("fields").path("issuetype").path("name").asText();
+
+            if ("SUB-TASK".equalsIgnoreCase(issuetype) || "하위 작업".equalsIgnoreCase(issuetype)) {
+                String subtaskSummary = issueNode.path("fields").path("summary").asText();
+                String subtaskDescription = issueNode.path("fields").path("description").asText();
+                String subtaskStatus = issueNode.path("fields").path("status").path("name").asText();
+
+                JsonNode parentNode = issueNode.path("fields").path("parent");
+                if (!parentNode.isMissingNode()) {
+                    Long parentId = parentNode.path("id").asLong();
+                    // 부모가 되는 스토리, 버그, 작업을 찾고 하위 작업 추가
+                    SprintIssueResponse.MediumIssueResponse parentIssue = mediumIssueMap.get(parentId);
+                    if (parentIssue != null) {
+                        SprintIssueResponse.Subtask subtask = new SprintIssueResponse.Subtask(subtaskSummary, subtaskDescription, subtaskStatus, issuetype);
+                        parentIssue.getSubtasks().add(subtask);  // 하위 작업 추가
+                        log.info("Subtask added: {}", subtaskSummary);
+                    }
+
+                    SprintIssueResponse epicIssue = epicMap.get(parentId);
+                    if (epicIssue != null) {
+                        SprintIssueResponse.Subtask subtask = new SprintIssueResponse.Subtask(subtaskSummary, subtaskDescription, subtaskStatus, issuetype);
+                        epicIssue.getSubtasks().add(subtask);  // 하위 작업 추가
+                        log.info("Subtask added: {}", subtaskSummary);
+                    }
+                }
+            }
+        }
+
+        log.info("Total Epic Issues: {}", sprintIssues.size());
+        return sprintIssues;
+    }
+
+
+
+
 }
+
+
 
