@@ -63,7 +63,9 @@ public class JiraIssueCreateRequest {
 
             public FieldsBuilder sprintId(Long sprintId) {
                 // SprintId 필드는 "Story"일 때만 추가
-                if ("Story".equalsIgnoreCase(issuetype != null ? issuetype.getName() : "")) {
+                if ("Story".equalsIgnoreCase(issuetype != null ? issuetype.getName() : "")
+                        || "Bug".equalsIgnoreCase(issuetype != null ? issuetype.getName() : "")
+                        || "Task".equalsIgnoreCase(issuetype != null ? issuetype.getName() : "")) {
                     this.sprintId = sprintId;
                 }
                 return this;

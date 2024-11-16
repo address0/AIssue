@@ -1,13 +1,12 @@
 package ssafy.aissue.domain.issue.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ssafy.aissue.api.issue.request.*;
-import ssafy.aissue.api.issue.response.IssueResponse;
-import ssafy.aissue.api.issue.response.MonthlyIssueResponse;
-import ssafy.aissue.api.issue.response.WeeklyIssueResponse;
+import ssafy.aissue.api.issue.response.*;
 import ssafy.aissue.api.member.response.MemberJiraIdResponse;
 import ssafy.aissue.common.exception.member.MemberNotFoundException;
 import ssafy.aissue.common.exception.security.NotAuthenticatedException;
@@ -132,26 +131,105 @@ public class IssueServiceImpl implements IssueService {
     }
 
     @Override
-    public String updateIssues(IssueUpdateRequest issueUpdateRequest) {
-        // 구현 내용 추가
-        return null;
+    public String updateIssue(IssueUpdateRequest issueUpdateRequest) throws JsonProcessingException {
+        Member currentMember = getCurrentLoggedInMember();
+        String jiraEmail = currentMember.getEmail();
+        String jiraKey = currentMember.getJiraKey();
+        String issueKey = issueUpdateRequest.getIssueKey();
+        Long issueId = issueUpdateRequest.getIssueId();
+        // IssueUpdateRequest를 JiraIssueUpdateRequest로 변환
+        JiraIssueUpdateRequest jiraIssueUpdateRequest = convertToJiraIssueUpdateRequest(issueUpdateRequest);
+
+        if (jiraIssueUpdateRequest.getFields() != null) {
+            JiraIssueUpdateRequest.Fields fields = jiraIssueUpdateRequest.getFields();
+
+            // Priority가 null일 경우 제외
+            if (fields.getPriority() == null || fields.getPriority().getName() == null) {
+                fields.setPriority(null);
+            }
+
+            // Story Points가 null일 경우 제외
+            if (fields.getStoryPoint() == null) {
+                fields.setStoryPoint(null);
+            }
+
+        }
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        String jiraIssueUpdateRequestJson = objectMapper.writeValueAsString(jiraIssueUpdateRequest);
+        log.info("jiraIssueUpdateRequest: {}", jiraIssueUpdateRequestJson);
+
+        // Jira에 이슈 수정 요청
+        jiraApiUtil.updateIssue(jiraIssueUpdateRequest, jiraEmail, jiraKey, issueKey);
+
+
+//        // DB 일정 업데이트
+//        updateIssueScheduleInDb(issuetype,issueKey,issueId,startAt,endAt);
+
+        return "이슈가 성공적으로 수정되었습니다.";
     }
 
-    @Override
-    public String deleteIssue(IssueDeleteRequest issueDeleteRequest) {
-        // 구현 내용 추가
-        return null;
+    private JiraIssueUpdateRequest convertToJiraIssueUpdateRequest(IssueUpdateRequest issueUpdateRequest) {
+        // IssueUpdateRequest의 데이터를 JiraIssueUpdateRequest 형식에 맞게 변환
+        JiraIssueUpdateRequest.Fields fields = JiraIssueUpdateRequest.Fields.builder()
+                .summary(issueUpdateRequest.getSummary())
+                .status(issueUpdateRequest.getStatus())
+                .description(issueUpdateRequest.getDescription())
+                .priority(new JiraIssueUpdateRequest.Priority(issueUpdateRequest.getPriority()))
+                .storyPoint(issueUpdateRequest.getStoryPoint())
+                .build();
+
+        return JiraIssueUpdateRequest.builder()
+                .fields(fields)
+                .build();
     }
 
-    @Override
-    public String linkIssues(IssueLinkRequest issueLinkRequest) {
-        // 구현 내용 추가
-        return null;
-    }
+//    private void updateIssueScheduleInDb(String issuetype, String issueKey, Long issueId, String startAt, String endAt) {
+//        LocalDateTime startAtDateTime = DateConverter.convertStartAtToLocalDateTime(startAt);
+//        LocalDateTime endAtDateTime = DateConverter.convertEndAtToLocalDateTime(endAt);
+//
+//        // 이슈 키에 해당하는 이슈 조회 후 일정 업데이트
+//        BaseIssueEntity issueEntity = findOrCreateDbIssueByKey(issuetype, issueId, issueKey);
+//        issueEntity.updateStartAt(startAtDateTime);
+//        issueEntity.updateEndAt(endAtDateTime);
+//
+//        // DB에 저장
+//        saveIssue(issueEntity);
+//    }
 
     @Override
-    public String getIssueDetail() {
-        return null;
+    public String deleteIssue(String issueKey, String issuetype) {
+        Member currentMember = getCurrentLoggedInMember();
+        String jiraEmail = currentMember.getEmail();
+        String jiraKey = currentMember.getJiraKey();
+
+        // Jira API로 이슈 삭제 요청
+        jiraApiUtil.deleteIssue(issueKey, jiraEmail, jiraKey);
+
+        // DB에서 해당 이슈 삭제
+        deleteIssueFromDb(issuetype,issueKey);
+
+        return "이슈가 성공적으로 삭제되었습니다.";
+    }
+
+    private void deleteIssueFromDb(String issueKey, String issuetype) {
+        // DB에서 해당 이슈를 찾아 삭제
+        BaseIssueEntity issueEntity = findDbIssueByKey(issueKey, issuetype);
+        if (issueEntity != null) {
+            if (issueEntity instanceof Bug) {
+                bugRepository.delete((Bug) issueEntity);
+            } else if (issueEntity instanceof Epic) {
+                epicRepository.delete((Epic) issueEntity);
+            } else if (issueEntity instanceof Story) {
+                storyRepository.delete((Story) issueEntity);
+            } else if (issueEntity instanceof Task) {
+                taskRepository.delete((Task) issueEntity);
+            } else if (issueEntity instanceof SubTask) {
+                subTaskRepository.delete((SubTask) issueEntity);
+            }
+        } else {
+            throw new RuntimeException("이슈가 존재하지 않습니다.");
+        }
     }
 
     @Override
@@ -207,6 +285,7 @@ public class IssueServiceImpl implements IssueService {
                 .collect(Collectors.toList());
     }
 
+
     @Override
     public List<WeeklyIssueResponse> getWeeklyIssues(String projectKey) {
         Member currentMember = getCurrentLoggedInMember();
@@ -217,6 +296,39 @@ public class IssueServiceImpl implements IssueService {
         return jiraIssues.stream()
                 .map(this::mapToWeeklyIssueResponse)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<EpicIssueResponse> getEpicIssues(String projectKey) {
+        Member currentMember = getCurrentLoggedInMember();
+        String email = currentMember.getEmail();
+        String jiraKey = currentMember.getJiraKey();
+        List<IssueResponse> jiraIssues = jiraApiUtil.fetchEpicIssues(email, jiraKey, projectKey);
+
+        return jiraIssues.stream()
+                .map(this::mapToEpicIssueResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<SprintIssueResponse> getSprintIssues(String projectKey) throws JsonProcessingException {
+        Member currentMember = getCurrentLoggedInMember();
+        String email = currentMember.getEmail();
+        String jiraKey = currentMember.getJiraKey();
+
+        return jiraApiUtil.fetchSprintIssues(projectKey, email, jiraKey);
+    }
+
+    @Override
+    public String linkIssues(IssueLinkRequest issueLinkRequest) {
+        // 구현 내용 추가
+        return null;
+    }
+
+    @Override
+    public List<EpicIssueResponse> getIssueDetail(String projectKey) {
+
+        return null;
     }
 
     private WeeklyIssueResponse mapToWeeklyIssueResponse(IssueResponse issueResponse) {
@@ -253,6 +365,18 @@ public class IssueServiceImpl implements IssueService {
                 .build();
     }
 
+    private EpicIssueResponse mapToEpicIssueResponse(IssueResponse issueResponse) {
+
+        return EpicIssueResponse.builder()
+                .id(issueResponse.getId())
+                .key(issueResponse.getKey())
+                .summary(issueResponse.getSummary())
+                .description(issueResponse.getDescription())
+                .priority(issueResponse.getPriority())
+                .status(issueResponse.getStatus())
+                .build();
+    }
+
     private BaseIssueEntity findOrCreateDbIssue(IssueResponse issueResponse) {
         return findOrCreateDbIssue(issueResponse.getIssuetype(), issueResponse.getId(), issueResponse.getKey());
     }
@@ -267,6 +391,14 @@ public class IssueServiceImpl implements IssueService {
 
     private BaseIssueEntity findOrCreateDbIssue(String issueType, Long jiraId, String jiraKey) {
         BaseIssueEntity dbIssue = findDbIssueById(issueType, jiraId);
+        if (dbIssue == null) {
+            dbIssue = createNewDbIssue(issueType, jiraId, jiraKey);
+        }
+        return dbIssue;
+    }
+
+    private BaseIssueEntity findOrCreateDbIssueByKey(String issueType, Long jiraId, String jiraKey) {
+        BaseIssueEntity dbIssue = findDbIssueByKey(issueType, jiraKey);
         if (dbIssue == null) {
             dbIssue = createNewDbIssue(issueType, jiraId, jiraKey);
         }
@@ -301,6 +433,17 @@ public class IssueServiceImpl implements IssueService {
             case "EPIC", "에픽" -> epicRepository.findByJiraId(jiraId).orElse(null);
             case "TASK", "작업" -> taskRepository.findByJiraId(jiraId).orElse(null);
             case "SUB-TASK", "하위 작업" -> subTaskRepository.findByJiraId(jiraId).orElse(null);
+            default -> throw new IllegalArgumentException("Unknown issue type: " + issueType);
+        };
+    }
+
+    private BaseIssueEntity findDbIssueByKey(String issueType, String jiraKey) {
+        return switch (issueType.toUpperCase()) {
+            case "BUG", "버그" -> bugRepository.findByJiraKey(jiraKey).orElse(null);
+            case "STORY", "스토리" -> storyRepository.findByJiraKey(jiraKey).orElse(null);
+            case "EPIC", "에픽" -> epicRepository.findByJiraKey(jiraKey).orElse(null);
+            case "TASK", "작업" -> taskRepository.findByJiraKey(jiraKey).orElse(null);
+            case "SUB-TASK", "하위 작업" -> subTaskRepository.findByJiraKey(jiraKey).orElse(null);
             default -> throw new IllegalArgumentException("Unknown issue type: " + issueType);
         };
     }

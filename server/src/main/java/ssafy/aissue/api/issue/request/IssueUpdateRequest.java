@@ -1,41 +1,36 @@
 package ssafy.aissue.api.issue.request;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
 
-import java.util.List;
+import java.util.Optional;
 
 @Getter
 @Builder
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class IssueUpdateRequest {
 
-    @NotNull
-    private final List<Issue> issues;
+    @NotBlank
+    @JsonProperty("issue_id")
+    private Long issueId;
 
-    @Getter
-    @Builder
-    public static class Issue {
+    @NotBlank
+    @JsonProperty("issue_key")
+    private String issueKey;
 
-        @NotNull
-        @NotBlank
-        @JsonProperty("issue_id")
-        private final Long issueId;
+    private String summary;
 
-        private final String summary;
+    private String status;
 
-        private final String description;
+    private String description;
 
-        private final String status;
+    private final String priority;
 
-        private final String priority;
+    @JsonProperty("story_points")
+    private final Double storyPoint;
 
-        @JsonProperty("story_points")
-        private final Double storyPoints;
 
-        @JsonProperty("parent_issue_id")
-        private final Long parentIssueId;
-    }
 }
