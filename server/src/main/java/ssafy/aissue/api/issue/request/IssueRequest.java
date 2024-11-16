@@ -42,13 +42,17 @@ public class IssueRequest {
                 .summary(this.summary)
                 .priority(JiraIssueCreateRequest.Priority.builder().name(this.priority).build())
                 .issuetype(JiraIssueCreateRequest.IssueType.builder().name(this.issuetype).build())
-                .assignee(JiraIssueCreateRequest.Assignee.builder().accountId(assigneeAccountId).build())
-                .storyPoint(this.storyPoint)
-                .parent(JiraIssueCreateRequest.Parent.builder().key(this.parent).build());
+                .storyPoint(this.storyPoint);
 
-        // issuetype이 '스토리'일 때만 sprintId 할당
-        if ("Story".equals(this.issuetype)) {
+        // issuetype이 '스토리', '버그', '작업'일 때만 sprintId 할당
+        if ("Story".equals(this.issuetype) || "Bug".equals(this.issuetype) || "Task".equals(this.issuetype)) {
             fieldsBuilder.sprintId(sprintId);
+        }
+
+        // 에픽은 담당자와 부모를 할당할 수 없음
+        if (!"Epic".equals(this.issuetype)) {
+            fieldsBuilder.assignee(JiraIssueCreateRequest.Assignee.builder().accountId(assigneeAccountId).build());
+            fieldsBuilder.parent(JiraIssueCreateRequest.Parent.builder().key(this.parent).build());
         }
 
         // fields 객체 반환

@@ -7,4 +7,5 @@ import java.util.Optional;
 
 public interface SubTaskRepository extends JpaRepository<SubTask, Long> {
     Optional<SubTask> findByJiraId(Long jiraId);
+    Optional<SubTask> findByJiraKey(String jiraKey);
 }

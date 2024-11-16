@@ -1,5 +1,6 @@
 package ssafy.aissue.api.issue.response;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Getter;
 import java.time.LocalDateTime;
@@ -17,7 +18,9 @@ public class WeeklyIssueResponse {
     private String status;
     private String assignee;
     private String issuetype;
+    @JsonProperty("start_at")
     private LocalDateTime startAt;
+    @JsonProperty("end_at")
     private LocalDateTime endAt;
 
     private ParentIssue parent;
@@ -50,7 +53,9 @@ public class WeeklyIssueResponse {
         private String priority;
         private String status;
         private String issuetype;
+        @JsonProperty("start_at")
         private LocalDateTime startAt;
+        @JsonProperty("end_at")
         private LocalDateTime endAt;
 
         public ParentIssue(Long id, String key, String summary, String description, String priority, String status, String issuetype,
@@ -77,7 +82,9 @@ public class WeeklyIssueResponse {
         private String priority;
         private String status;
         private String issuetype;
+        @JsonProperty("start_at")
         private LocalDateTime startAt;
+        @JsonProperty("end_at")
         private LocalDateTime endAt;
 
         public Subtask(Long id, String key, String summary, String description, String priority, String status, String issuetype,

@@ -7,4 +7,5 @@ import java.util.Optional;
 
 public interface EpicRepository extends JpaRepository<Epic, Long> {
     Optional<Epic> findByJiraId(Long jiraId);
+    Optional<Epic> findByJiraKey(String jiraKey);
 }
