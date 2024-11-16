@@ -7,4 +7,5 @@ import java.util.Optional;
 
 public interface StoryRepository extends JpaRepository<Story, Long> {
     Optional<Story> findByJiraId(Long jiraId);
+    Optional<Story> findByJiraKey(String jiraKey);
 }

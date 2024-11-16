@@ -7,4 +7,5 @@ import java.util.Optional;
 
 public interface BugRepository extends JpaRepository<Bug, Long> {
     Optional<Bug> findByJiraId(Long jiraId);
+    Optional<Bug> findByJiraKey(String jiraKey);
 }
