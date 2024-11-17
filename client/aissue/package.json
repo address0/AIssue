@@ -36,6 +36,7 @@
     "react-modal": "^3.16.1",
     "sockjs-client": "^1.6.1",
     "stomp": "^0.1.1",
+    "sweetalert2": "^11.14.5",
     "zustand": "^5.0.0"
   },
   "devDependencies": {
