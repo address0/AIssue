@@ -36,9 +36,9 @@ interface Issue {
 const WorkLogPage = () => {
   const pathname = usePathname()
   const projectId = pathname.split('/')[2]
-  const [userName, setUserName] = useState<string | null>(null)
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedIssue, setSelectedIssue] = useState<Story | null>(null);
+  // const [userName, setUserName] = useState<string | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [selectedIssue, setSelectedIssue] = useState<Story | null>(null)
   const [categorizedIssues, setCategorizedIssues] = useState<{
     ToDo: Issue[]
     InProgress: Issue[]
@@ -54,11 +54,11 @@ const WorkLogPage = () => {
     queryFn: () => getWeeklyStories(projectId),
   })
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setUserName(sessionStorage.getItem('memberName'))
-    }
-  }, [])
+  // useEffect(() => {
+  //   if (typeof window !== 'undefined') {
+  //     setUserName(sessionStorage.getItem('memberName'))
+  //   }
+  // }, [])
 
   useEffect(() => {
     if (data) {
@@ -91,20 +91,22 @@ const WorkLogPage = () => {
         return 'Done'
     }
   }
+
   const openModal = (issueId: string) => {
     if (data) {
-      const story = data.find((story: Story) => story.id === issueId);
+      const story = data.find((story: Story) => story.id === issueId)
       if (story) {
-        setSelectedIssue(story);
-        setIsModalOpen(true);
+        setSelectedIssue(story)
+        setIsModalOpen(true)
       }
     }
-  };
+  }
 
   const closeModal = () => {
-    setSelectedIssue(null);
-    setIsModalOpen(false);
-  };
+    setSelectedIssue(null)
+    setIsModalOpen(false)
+  }
+
   if (isLoading)
     return (
       <div className="flex justify-center items-center h-full w-full">
@@ -119,7 +121,6 @@ const WorkLogPage = () => {
     const { source, destination } = result
 
     if (!destination) {
-      // Optionally handle drops outside droppable areas
       return
     }
 
@@ -150,21 +151,20 @@ const WorkLogPage = () => {
 
     setCategorizedIssues(updatedIssues)
   }
-  console.log("이슈목록:", selectedIssue ? selectedIssue : null)
+
   return (
-    <div className="flex min-h-screen bg-gray-100">
-      <div className="w-4/5 p-8">
-        <div className="flex justify-between items-center mb-4">
-          <h1 className="text-2xl font-bold">
-            {projectId} 프로젝트 스프린트 일정
-          </h1>
-          <div className="flex items-center space-x-2">
-            <span className="text-gray-700">{userName}님</span>
-          </div>
-        </div>
+    <div className="flex min-h-screen bg-gray-100 flex-col lg:flex-row">
+      <div className="w-full lg:w-4/5 p-4 lg:p-8">
+      <div className="mb-6">
+        <h1 className="text-xl lg:text-2xl font-bold mb-2">
+          {projectId} 프로젝트 스프린트 일정
+        </h1>
+      
+      </div>
+
 
         <DragDropContext onDragEnd={onDragEnd}>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {(['ToDo', 'InProgress', 'Done'] as const).map((status) => {
               let headerStyle = ''
               let bgStyle = ''
@@ -187,13 +187,13 @@ const WorkLogPage = () => {
                       {...provided.droppableProps}
                       className={`p-4 rounded-lg shadow-md ${bgStyle} flex flex-col ${
                         snapshot.isDraggingOver
-                          ? 'border-2 solid border-blue-400'
+                          ? 'border-2 border-blue-400'
                           : ''
                       }`}
                       style={{ minHeight: '200px' }}
                     >
                       <h2
-                        className={`text-xl font-semibold mb-4 text-center ${headerStyle}`}
+                        className={`text-base lg:text-xl font-semibold mb-4 text-center ${headerStyle}`}
                       >
                         {status}
                       </h2>
@@ -216,17 +216,17 @@ const WorkLogPage = () => {
                                 onClick={() => openModal(issue.id)}
                               >
                                 <div>
-                                  <h3 className="font-semibold text-gray-800">
+                                  <h3 className="font-semibold text-sm lg:text-base text-gray-800">
                                     {issue.title}
                                   </h3>
-                                  <p className="text-sm text-gray-500">
+                                  <p className="text-xs lg:text-sm text-gray-500">
                                     {issue.id}
                                   </p>
                                 </div>
                                 <img
                                   src="/img/avatar.png"
                                   alt="Avatar"
-                                  className="w-6 h-6"
+                                  className="w-4 h-4 lg:w-6 lg:h-6"
                                 />
                               </div>
                             )}
@@ -242,17 +242,15 @@ const WorkLogPage = () => {
           </div>
         </DragDropContext>
 
-        {/* Issue Details Modal */}
         {selectedIssue && (
           <IssueModal
             isOpen={isModalOpen}
             onClose={closeModal}
             title={selectedIssue.title}
             parentSummary={selectedIssue.parent?.summary || ''}
-            tasks={selectedIssue.tasks} // 여기서 tasks 배열을 그대로 전달
+            tasks={selectedIssue.tasks}
           />
         )}
-     
       </div>
     </div>
   )
