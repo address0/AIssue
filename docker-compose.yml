@@ -19,6 +19,9 @@ services:
       JWT_SECRET_KEY: ${SECRET_KEY}
       JWT_ACCESS_TOKEN_EXP: ${ACCESS_TOKEN_EXP}
       JWT_REFRESH_TOKEN_EXP: ${REFRESH_TOKEN_EXP}
+      OPENAI_API_KEY : ${OPENAI_API_KEY}
+      OPENAI_API_URL : ${OPENAI_API_URL}
+      OPENAI_API_MODEL : ${OPENAI_API_MODEL}
     depends_on:
       - mysql
       - redis
@@ -31,8 +34,10 @@ services:
       dockerfile: Dockerfile
       args:
         NEXT_PUBLIC_SERVER_URL: ${NEXT_PUBLIC_SERVER_URL}
+        NEXT_PUBLIC_OPENAI_API_KEY: ${NEXT_PUBLIC_OPENAI_API_KEY}
     environment:
       NEXT_PUBLIC_SERVER_URL: ${NEXT_PUBLIC_SERVER_URL}
+      NEXT_PUBLIC_OPENAI_API_KEY: ${NEXT_PUBLIC_OPENAI_API_KEY}
     ports:
       - "3000:3000"
     depends_on:
@@ -61,17 +66,6 @@ services:
     restart: unless-stopped
 
 
-    # Dozzle 추가
-  dozzle:
-    image: amir20/dozzle:latest
-    ports:
-      - "9999:8080"  # Dozzle UI에 접속할 포트 설정
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock  # Docker 소켓 공유
-    restart: always
-    environment:
-      - DOZZLE_LEVEL=info  # 로그 수준 설정
-      - DOZZLE_TAILSIZE=300  # 각 컨테이너의 최근 로그 라인 수
 
 volumes:
   backend_logs:
