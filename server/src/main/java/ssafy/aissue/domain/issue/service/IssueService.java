@@ -21,7 +21,7 @@ public interface IssueService {
 
     String linkIssues(IssueLinkRequest issueLinkRequest);     // Issue 종속성 등록
 
-    List<EpicIssueResponse> getIssueDetail(String projectKey);
+    IssueDetailResponse getIssueDetail(String projectKey) throws Exception;
 
     String updateIssueSchedule(IssueScheduleRequest issueScheduleRequest);
 
@@ -32,4 +32,6 @@ public interface IssueService {
     List<EpicIssueResponse> getEpicIssues(String projectKey);
 
     List<SprintIssueResponse> getSprintIssues(String projectKey) throws JsonProcessingException;
+
+    String updateStatus(IssueStatusRequest statusRequest);
 }
