@@ -8,9 +8,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.http.*;
 import org.springframework.web.util.UriComponentsBuilder;
-import ssafy.aissue.api.issue.request.IssueUpdateRequest;
-import ssafy.aissue.api.issue.request.JiraIssueCreateRequest;
-import ssafy.aissue.api.issue.request.JiraIssueUpdateRequest;
+import ssafy.aissue.api.issue.request.*;
+import ssafy.aissue.api.issue.response.IssueDetailResponse;
 import ssafy.aissue.api.issue.response.IssueResponse;
 import ssafy.aissue.api.issue.response.SprintIssueResponse;
 import ssafy.aissue.common.exception.member.InvalidJiraCredentialsException;
@@ -804,6 +803,221 @@ public class JiraApiUtil {
         return sprintIssues;
     }
 
+    public IssueDetailResponse fetchIssueDetails(String issueKey, String email, String jiraKey) throws Exception {
+        // JIRA API URL 생성
+        String jiraApiUrl = "https://ssafy.atlassian.net/rest/api/2/issue/" + issueKey;
+
+        // Jira 인증을 위한 Base64 인코딩
+        String auth = email + ":" + jiraKey;
+        String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes());
+
+        // HTTP 헤더 설정
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "Basic " + encodedAuth);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        // 요청 엔티티 생성
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+
+        // REST 요청 보내기
+        ResponseEntity<String> response = restTemplate.exchange(jiraApiUrl, HttpMethod.GET, entity, String.class);
+
+        // 응답 상태 확인
+        if (response.getStatusCode() == HttpStatus.OK) {
+            return parseIssueDetailFromResponse(response.getBody());
+        } else {
+            // 실패하면 예외를 던짐
+            throw new RuntimeException("Failed to fetch issue details from Jira. Response: " + response.getBody());
+        }
+    }
+
+    private IssueDetailResponse parseIssueDetailFromResponse(String responseBody) {
+        try {
+            JsonNode root = objectMapper.readTree(responseBody);
+            JsonNode fields = root.path("fields");
+
+            // 기본 정보들
+            Long id = root.path("id").asLong(); // id는 fields 밖에 존재할 수 있습니다.
+            String key = root.path("key").asText();
+            String summary = fields.path("summary").asText();
+            String description = !Objects.equals(fields.path("description").asText(), "null") ? fields.path("description").asText() : "";
+
+            // status와 priority는 객체이므로, 해당 객체의 값을 가져와야 함
+            String status = fields.path("status").path("name").asText(); // status.name
+            String priority = fields.path("priority").path("name").asText(); // priority.name
+
+            // assignee와 storyPoints도 가져오기
+            String assignee = fields.path("assignee").path("displayName").asText();
+            Double storyPoints = fields.path("customfield_10031").asDouble(); // 스토리 포인트 필드 ID는 프로젝트에 따라 다를 수 있음
+
+            // parent 정보 (있을 경우)
+            String parent = fields.path("parent").path("key").asText();
+
+            // issuetype 정보
+            String issuetype = fields.path("issuetype").path("name").asText();
+
+            // issueLink 처리 (Blocks type만 필터링하여 처리)
+            IssueDetailResponse.IssueLink issuelink = parseIssueLinks(fields.path("issuelinks"));
+
+            // 로그 출력
+            log.info("Issue details - ID: {}, Key: {}, Summary: {}, Description: {}, Status: {}, Priority: {}, Assignee: {}",
+                    id, key, summary, description, status, priority, assignee);
+
+            // IssueDetailResponse 객체 반환
+            return IssueDetailResponse.builder()
+                    .id(id)
+                    .key(key)
+                    .summary(summary)
+                    .description(description)
+                    .priority(priority)
+                    .status(status)
+                    .assignee(assignee)
+                    .storyPoints(storyPoints)
+                    .parent(parent)
+                    .issuetype(issuetype) // 이슈 타입
+                    .issuelink(issuelink)
+                    .build();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to parse issue details from response", e);
+        }
+    }
+
+    private IssueDetailResponse.IssueLink parseIssueLinks(JsonNode issueLinks) {
+        List<IssueDetailResponse.IssueLink> links = new ArrayList<>();
+
+        if (issueLinks.isArray()) {
+            // InwardIssue와 OutwardIssue 처리
+            IssueDetailResponse.IssueLink.IssueLinkIssue inwardIssue = null;
+            IssueDetailResponse.IssueLink.IssueLinkIssue outwardIssue = null;
+            String linkType = "";
+            for (JsonNode linkNode : issueLinks) {
+                // 링크 타입이 "Blocks"일 경우에만 처리
+                linkType = linkNode.path("type").path("name").asText();
+                if ("Blocks".equalsIgnoreCase(linkType)) {
+
+
+                    // inwardIssue가 존재하면 해당 데이터 가져오기
+                    JsonNode inwardIssueNode = linkNode.path("inwardIssue");
+                    if (!inwardIssueNode.isMissingNode()) {
+                        inwardIssue = parseIssue(inwardIssueNode);
+                    }
+
+                    // outwardIssue가 존재하면 해당 데이터 가져오기
+                    JsonNode outwardIssueNode = linkNode.path("outwardIssue");
+                    if (!outwardIssueNode.isMissingNode()) {
+                        outwardIssue = parseIssue(outwardIssueNode);
+                    }
+
+                }
+            }
+            // inwardIssue와 outwardIssue 둘 중 하나만 있을 수 있음
+            if (inwardIssue != null || outwardIssue != null) {
+                IssueDetailResponse.IssueLink issueLink = IssueDetailResponse.IssueLink.builder()
+                        .type(linkType)
+                        .inwardIssue(inwardIssue)
+                        .outwardIssue(outwardIssue)
+                        .build();
+                links.add(issueLink);
+            }
+        }
+
+        // "Blocks" 링크가 없다면 null 반환, 하나라도 있다면 첫 번째 링크 반환
+        return links.isEmpty() ? null : links.get(0);
+    }
+
+    private IssueDetailResponse.IssueLink.IssueLinkIssue parseIssue(JsonNode issueNode) {
+        if (issueNode.isMissingNode()) {
+            return null;
+        }
+        return IssueDetailResponse.IssueLink.IssueLinkIssue.builder()
+                .id(issueNode.path("id").asLong())
+                .key(issueNode.path("key").asText())
+                .summary(issueNode.path("fields").path("summary").asText())
+                .priority(issueNode.path("fields").path("priority").path("name").asText())
+                .status(issueNode.path("fields").path("status").path("name").asText())
+                .issuetype(issueNode.path("fields").path("issuetype").path("name").asText())
+                .build();
+    }
+
+
+    public String fetchUpdateStatus(IssueStatusRequest statusRequest, String email, String jiraKey) {
+        String issueKey = statusRequest.getIssueKey();
+        String newStatus = statusRequest.getStatus();  // 변경할 상태 이름
+
+        // Jira API URL 생성 (이슈 상태 업데이트를 위한 전환 요청)
+        String url = "https://ssafy.atlassian.net/rest/api/2/issue/" + issueKey + "/transitions";
+
+        // Jira 인증을 위한 Base64 인코딩
+        String auth = email + ":" + jiraKey;
+        String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes());
+
+        // HTTP 헤더 설정
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "Basic " + encodedAuth);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        // 이슈 상태 전환을 위한 transitionId를 조회 (새로운 상태에 해당하는 transitionId 필요)
+        String transitionId = getTransitionIdForStatus(newStatus, issueKey, email, jiraKey);
+
+        // Jira API에 보내기 위한 데이터 형식으로 전환
+        JiraStatusUpdateRequest jiraTransitionRequest = JiraStatusUpdateRequest.builder()
+                .transition(JiraStatusUpdateRequest.Transition.builder()
+                        .id(transitionId)
+                        .build())
+                .build();
+
+        // HTTP 엔티티 생성
+        HttpEntity<JiraStatusUpdateRequest> entity = new HttpEntity<>(jiraTransitionRequest, headers);
+
+        try {
+            // PUT 요청을 보내어 이슈 상태를 전환
+            ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
+
+            // 응답 코드 확인
+            if (response.getStatusCode() == HttpStatus.NO_CONTENT) {
+                return "이슈 상태가 성공적으로 변경되었습니다.";
+            } else {
+                log.error("이슈 상태 변경 실패. 상태 코드: {}, 응답 본문: {}", response.getStatusCode(), response.getBody());
+                throw new RuntimeException("Failed to transition issue in Jira. Status: " + response.getStatusCode());
+            }
+        } catch (Exception e) {
+            log.error("이슈 상태 전환 중 오류 발생", e);
+            throw new RuntimeException("이슈 상태 전환 중 오류 발생", e);
+        }
+    }
+
+    private String getTransitionIdForStatus(String status, String issueKey, String email, String jiraKey) {
+        // Jira에서 해당 상태에 대한 transitionId를 조회하는 로직을 구현해야 함.
+        // 기본적으로 상태에 맞는 transitionId를 찾아서 반환하는 메서드
+        String transitionsUrl = "https://ssafy.atlassian.net/rest/api/2/issue/" + issueKey + "/transitions";
+
+        String auth = email + ":" + jiraKey;
+        String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes());
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "Basic " + encodedAuth);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+
+        ResponseEntity<String> response = restTemplate.exchange(transitionsUrl, HttpMethod.GET, entity, String.class);
+
+        if (response.getStatusCode() == HttpStatus.OK) {
+            try {
+                JsonNode rootNode = objectMapper.readTree(response.getBody());
+                for (JsonNode transitionNode : rootNode.path("transitions")) {
+                    if (transitionNode.path("name").asText().equalsIgnoreCase(status)) {
+                        return transitionNode.path("id").asText(); // status에 해당하는 transition id 반환
+                    }
+                }
+                throw new RuntimeException("Transition ID for status " + status + " not found.");
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to fetch transitions for issue: " + issueKey, e);
+            }
+        } else {
+            throw new RuntimeException("Failed to fetch transitions for issue: " + issueKey + " Response: " + response.getBody());
+        }
+    }
 
 
 
