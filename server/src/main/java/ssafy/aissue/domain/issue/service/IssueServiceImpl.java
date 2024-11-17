@@ -326,9 +326,21 @@ public class IssueServiceImpl implements IssueService {
     }
 
     @Override
-    public List<EpicIssueResponse> getIssueDetail(String projectKey) {
+    public IssueDetailResponse getIssueDetail(String projectKey) throws Exception {
+        Member currentMember = getCurrentLoggedInMember();
+        String email = currentMember.getEmail();
+        String jiraKey = currentMember.getJiraKey();
 
-        return null;
+        return jiraApiUtil.fetchIssueDetails(projectKey, email, jiraKey);
+    }
+
+    @Override
+    public String updateStatus(IssueStatusRequest statusRequest) {
+        Member currentMember = getCurrentLoggedInMember();
+        String email = currentMember.getEmail();
+        String jiraKey = currentMember.getJiraKey();
+
+        return jiraApiUtil.fetchUpdateStatus(statusRequest, email, jiraKey);
     }
 
     private WeeklyIssueResponse mapToWeeklyIssueResponse(IssueResponse issueResponse) {

@@ -9,11 +9,9 @@ import org.springframework.web.bind.annotation.*;
 import ssafy.aissue.api.CommonResponse;
 import ssafy.aissue.api.issue.request.IssueBatchRequest;
 import ssafy.aissue.api.issue.request.IssueScheduleRequest;
+import ssafy.aissue.api.issue.request.IssueStatusRequest;
 import ssafy.aissue.api.issue.request.IssueUpdateRequest;
-import ssafy.aissue.api.issue.response.EpicIssueResponse;
-import ssafy.aissue.api.issue.response.MonthlyIssueResponse;
-import ssafy.aissue.api.issue.response.SprintIssueResponse;
-import ssafy.aissue.api.issue.response.WeeklyIssueResponse;
+import ssafy.aissue.api.issue.response.*;
 import ssafy.aissue.domain.issue.service.IssueService;
 
 import java.util.List;
@@ -73,6 +71,13 @@ public class IssueController {
         return CommonResponse.ok(issueService.deleteIssue(issueKey, issuetype));
     }
 
+    @Operation(summary = "이슈 상세 조회하기", description = "이슈 상세 정보를 조회합니다.")
+    @GetMapping("/{issueKey}")
+    public CommonResponse<IssueDetailResponse> getDetailIssue(
+            @PathVariable String issueKey) throws Exception {
+        return CommonResponse.ok(issueService.getIssueDetail(issueKey));
+    }
+
     @Operation(summary = "이슈 수정하기", description = "이슈를 수정합니다.")
     @PutMapping("/update")
     public CommonResponse<?> updateIssue(
@@ -88,11 +93,11 @@ public class IssueController {
         return CommonResponse.ok(issueService.getSprintIssues(projectKey));
     }
 
-    @Operation(summary = "이슈 상세 조회하기", description = "이슈에 대한 상세데이터를 불러옵니다.")
-    @GetMapping("/story")
-    public CommonResponse<List<EpicIssueResponse>> getIssueDetails(
-            @RequestParam(name = "project") String projectKey
+    @Operation(summary = "상태 변경하기", description = "이슈 상태를 변경합니다.")
+    @PutMapping("/status")
+    public CommonResponse<?> updateStatus(
+            @RequestBody IssueStatusRequest statusRequest
     ) {
-        return CommonResponse.ok(issueService.getIssueDetail(projectKey));
+        return CommonResponse.ok(issueService.updateStatus(statusRequest));
     }
 }

@@ -40,6 +40,7 @@ public class IssueRequest {
         JiraIssueCreateRequest.Fields.FieldsBuilder fieldsBuilder = JiraIssueCreateRequest.Fields.builder()
                 .project(JiraIssueCreateRequest.Project.builder().key(projectKey).build())
                 .summary(this.summary)
+                .description(this.description)
                 .priority(JiraIssueCreateRequest.Priority.builder().name(this.priority).build())
                 .issuetype(JiraIssueCreateRequest.IssueType.builder().name(this.issuetype).build())
                 .storyPoint(this.storyPoint);
