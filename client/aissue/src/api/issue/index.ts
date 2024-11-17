@@ -1,9 +1,9 @@
 import { privateAPI } from '@/api/axios'
-import { EpicData } from '@/components/(Modal)/EpicModal/page'
+import { IssueData } from '@/components/(Modal)/EpicModal/page'
 
 interface IssueRequest {
   project: string,
-  issues: EpicData[]
+  issues: IssueData[]
 }
 
 const postIssues = async (issueRequest: IssueRequest) => {

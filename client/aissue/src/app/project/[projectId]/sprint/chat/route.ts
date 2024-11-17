@@ -48,17 +48,17 @@ export async function POST(request: Request) {
         요구사항: [{1: 기존 등록된 Epic 일정과 추가 필요 구현 사항을 기준으로 담당자의 기능 개발 스토리 제작}, 
                 {2: 담당자의 역할은 [FE]-frontend, [BE]-backend, [UX/UI], [DB]-database, [INFRA], [EM]-embedded, [MOBILE]로 분류됨. 담당자의 역할에 맞는 업무만 배정하라},
                 {3: 세부 업무에는 story point(<=4)와 담당자 할당. story point는 담당자가 업무 처리에 소요되는 hours}, 
-                {4: 사용자가 제공하는 Epic 정보 기반으로, 생성한 스토리의 부모가 되는 Epic 업무의 key를 반드시 제공하라.}, 
+                {4: parents 컬럼 - 사용자가 제공하는 Epic 정보 기반으로, 생성한 스토리의 부모가 되는 Epic 업무의 key로 반드시 제공하라.}, 
                 {5: 각 Story 별 중요도는 Highest/High/Medium/Low/Lowest 중 하나로 설정},
                 {6: 각 업무의 summary에는 [FE], [BE], [Infra], [UX/UI] 와 같은 업무 별 태그를 앞에 명시},
                 {7: function의 상세 내용을 고려하여, 일반적으로 구현이 어려운 기능은 story-points를 높게 생성},
                 {8: start_at / end_at 컬럼은 항상 null값을 가짐},
-                {9: issuetype은 항상 한국어로 "스토리" 값을 가짐}]
+                {9: issuetype은 항상 영어로 "Story" 값을 가짐}]
         응답 형식: json, 기타 세부 설명 필요 없음 - {
         result: [
             {"summary": "[FE] 사용자 회원가입 페이지 제작",
             "description": "1 thing / 1 page UX 로직 기반 회원가입 페이지 및 기능 구현",
-            "issuetype": "스토리",
+            "issuetype": "Story",
             "priority": "High",
             "parent": "S11P10A647-1",
             "story_points": 4,
@@ -67,7 +67,7 @@ export async function POST(request: Request) {
             },
             {"summary": "[BE] 사용자 회원가입 기능 구현",
             "description": "회원 DB 테이블 제작 및 회원가입 기능 API 구현",
-            "issuetype": "스토리",
+            "issuetype": "Story",
             "priority": "Medium",
             "parent": "S11P10A647-42",
             "story_points": 4,
@@ -75,7 +75,7 @@ export async function POST(request: Request) {
             "end_at": null
             },
             {"summary": "[FE] 회원 정보 입력 input 컴포넌트 작성",
-            "issuetype": "스토리",
+            "issuetype": "Story",
             "priority": "Low",
             "parent": "S11P10A647-2",
             "story_points": 4,

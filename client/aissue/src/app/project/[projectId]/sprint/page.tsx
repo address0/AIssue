@@ -9,18 +9,10 @@ import LoadingImg from '@public/lottie/Animation - 1731310411267.json'
 import FindEpicImg from '@public/lottie/Animation - 1731658876737.json'
 import EpicModal from '@/components/(Modal)/EpicModal/page'
 import { getEpics } from '@/api/issue'
-
-export interface IssueData {
-  pk: string,
-  summary: string,
-  description: string,
-  issuetype: string,
-  priority: null | string,
-  parent: null | string,
-  issuelink: null | string,
-  storyPoint: null | string,
-  manager: null | string
-}
+import { getProjectInfo } from "@/api/project";
+import { postIssues } from "@/api/issue";
+import Swal from 'sweetalert2';
+import { IssueData } from '@/components/(Modal)/EpicModal/page'
 
 interface FetchedEpics {
   summary: string,
@@ -29,8 +21,8 @@ interface FetchedEpics {
   key: string,
   priority: null | string,
   issuetype: string,
-  startAt: string,
-  endAt: string,
+  start_at?: string,
+  end_at?: string,
   assignee: string,
   status: null | string
 }
@@ -61,6 +53,8 @@ export default function SprintPage({
   const [initialMessageSent, setInitialMessageSent] = useState<boolean>(false);
   const [inputList, setInputList] = useState<SprintData[]>([])
   const [epics, setEpics] = useState<FetchedEpics[]>([])
+  const [isInputDisabled, setIsInputDisabled] = useState<boolean>(false)
+  const [isCreating, setIsCreating] = useState<boolean>(false)
 
   const questions = [
     '이번 주차의 에픽 목록은 다음과 같습니다. 추가로 작업할 기능이 있다면 알려 주세요.',
@@ -68,6 +62,37 @@ export default function SprintPage({
     '마지막으로, 수정해야 할 버그 목록이 있다면 알려 주세요.',
     '감사합니다. 이번 주차의 스프린트와 스토리 목록을 생성하겠습니다!'
   ];
+
+  const showSuccessModal = () => {
+    Swal.fire({
+      title: '스토리 등록 완료',
+      text: 'JIRA sprint 스토리 생성이 완료되었습니다. 이제 하위 이슈를 생성하겠습니다.',
+      icon: 'success',
+      confirmButtonText: '확인'
+    });
+  };
+
+  const fetchIssues = async (issueData: IssueData[]) => {
+    setIsCreating(true)
+    try {
+      const response = await postIssues({
+        project: projectId,
+        issues: issueData
+      });
+      console.log(response);
+      if (response?.code === '200') {
+        showSuccessModal()
+      }
+      
+    } catch (error) {
+      console.error(error);
+      console.log({
+        project: projectId,
+        issues: parsedData
+      })
+    }
+    setIsCreating(false)
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInput(e.target.value)
@@ -82,6 +107,7 @@ export default function SprintPage({
     const userMessage = input
     setMessages((prev) => [...prev, { user: userMessage, bot: '' }])
     setInputList((prev) => [...prev, {type: 'user', message: userMessage}])
+    console.log(inputList)
     setInput('')
 
     setTimeout(() => {
@@ -90,21 +116,30 @@ export default function SprintPage({
       setCurrentQuestionIndex(prev => prev + 1);
       setAnimate(true);
       if (currentQuestionIndex === questions.length - 1) {
-        handleCreateIssue();
+        getProjectInfo(projectId)
+        .then((data) => {
+          handleCreateIssue(epics, data, 'story');
+        })
       }
     }, 1000)
   }
 
-  const handleCreateIssue = async () => {
+  const handleCreateIssue = async (epicData:FetchedEpics[], projectData:string, type: string) => {
     setLoading(true)
 
     const response = await fetch('/project/[projectId]/sprint/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: "AIssue라는 이름의 JIRA 이슈 및 스프린트 자동 생성 애플리케이션을 만들 거야. 적절한 에픽을 8개 생성해 줘." }),
+      body: JSON.stringify({ message: `적절한 이슈 스토리를 3개 생성해 줘. 프로젝트 기술과 기능에 대한 정보는 다음과 같아. \n
+        ${JSON.stringify(projectData, null, 2)} \n
+        그리고, 현재 프로젝트의 에픽 정보는 다음과 같아. 해당 에픽의 하위 스토리들을 생성해 줘. \n
+        ${JSON.stringify(epicData, null, 2)}`,
+        type: type
+       }),
     })
 
     const data = await response.json()
+    console.log(data)
     
     if (response.ok) {
       const resultMatch = data?.response?.match(/result:\s*(\[[\s\S]*?\])\s*}/);
@@ -119,7 +154,8 @@ export default function SprintPage({
         }
       } else {
         try {
-          const jsonData = JSON.parse(data?.response)
+          const cleanedResponse = data?.response.replace(/```json|```/g, '').trim();
+          const jsonData = JSON.parse(cleanedResponse)
           setParsedData(jsonData?.result);
         } catch (error) {
           console.log("JSON 부분을 찾을 수 없습니다.");
@@ -156,7 +192,7 @@ export default function SprintPage({
     if (chatEndRef.current) {
       chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [messages])
+  }, [messages, parsedData, loading])
 
   useEffect(() => {
     console.log(parsedData)
@@ -170,9 +206,14 @@ export default function SprintPage({
           setMessages((prev) => [...prev, { user: '', bot: botMessage }]);
           setCurrentQuestionIndex(prev => prev + 1);
           setAnimate(true);
+          setIsInputDisabled(false)
       }
       }, 3000);
-      return () => clearTimeout(timer);
+      setIsInputDisabled(true)
+      return () => {
+        clearTimeout(timer);
+        setIsInputDisabled(false)
+      };
     }
   }, [initialMessageSent]);
 
@@ -184,7 +225,7 @@ export default function SprintPage({
 
   useEffect(() => {
     if (animate) {
-      const timer = setTimeout(() => setAnimate(false), 500); // 애니메이션이 끝난 후 상태 초기화
+      const timer = setTimeout(() => setAnimate(false), 500)
       return () => clearTimeout(timer);
     }
   }, [animate])
@@ -277,12 +318,12 @@ export default function SprintPage({
                   </div>
                   {index === 0 && (
                     <div className='w-2/3 ml-14 bg-white rounded-lg p-4 space-y-2'>
-                      {epics?.map((item) => (
-                        <div className='w-full h-20 border border-[#54B2A3] rounded p-2 relative'>
+                      {epics?.map((item, index) => (
+                        <div className='w-full h-20 border border-[#54B2A3] rounded p-2 relative' key={index}>
                           <div className="flex items-center my-1">
                             <img src={`/img/${item?.priority}.png`} alt="priority_img" className="w-5" />
                             <p className="text-sm text-gray-500 ml-1">{item?.key}
-                              <span className="text-gray-500 text-xs font-normal ml-4">{item?.startAt?.substring(0,10)} - {item?.endAt?.substring(0,10)}</span>
+                              <span className="text-gray-500 text-xs font-normal ml-4">{item?.start_at?.substring(0,10)} - {item?.end_at?.substring(0,10)}</span>
                             </p>
                           </div>
                           <h1 className='font-bold text-md text-[#54B2A3] ml-2'>{item?.summary}</h1>
@@ -310,19 +351,32 @@ export default function SprintPage({
               <p className='text-gray-700'>Loading ...</p>
             </div>
           )}
-          <div ref={chatEndRef} />
           {parsedData?.length > 0 && (
-            <div className="mt-4 p-4 bg-white rounded shadow">
-              <h3 className="text-lg">생성된 이슈 목록:</h3>
-              <ul className="list-disc pl-5">
-                {parsedData.map((issue) => (
-                  <li key={issue.pk}>
-                    <strong>{issue.summary}</strong>
-                  </li>
+            <div className="mt-4 w-2/3 ml-14 bg-white rounded-lg p-4 space-y-2">
+              <h3 className="text-lg font-bold text-gray-600">생성된 이슈 목록</h3>
+              <div className="space-y-2">
+                {parsedData.map((issue, index) => (
+                  <div className='w-full h-20 border border-[#54B2A3] rounded p-2 relative' key={index}>
+                    <div className="flex items-center my-1">
+                      <img src={`/img/${issue?.priority}.png`} alt="priority_img" className="w-5" />
+                      <h1 className='font-bold text-md text-[#54B2A3] ml-2'>{issue?.summary}</h1>
+                    </div>
+                    <p className="text-sm ml-2">{issue?.description}</p>
+                    <p className="text-sm text-gray-500 absolute right-2 top-2">Epic: {issue?.parent}</p>
+                  </div>
                 ))}
-              </ul>
+              </div>
+              {isCreating?
+              <button className="w-[180px] h-[40px] my-4 bg-[#54B2A3] duration-200 text-base font-bold text-white rounded hover:bg-[#B2E0D9] cursor-not-allowed flex items-center justify-center" disabled>
+                <img src="/svg/loading.svg" alt="Loading" className="animate-spin h-5 w-5 mr-3" />
+                저장하는 중...
+              </button> :
+              <button className='w-[180px] h-[40px] my-4 bg-[#54B2A3] duration-200 text-base font-bold text-white rounded hover:bg-[#B2E0D9]'
+              onClick={() =>fetchIssues(parsedData)}>스토리 JIRA에 등록하기</button>
+              }
             </div>
           )}
+          <div ref={chatEndRef} />
         </div>
 
 
@@ -339,6 +393,7 @@ export default function SprintPage({
             }}
             placeholder="AI에게 질문 입력하기 ..."
             className="flex-1 border-none focus:outline-none"
+            disabled={isInputDisabled}
           />
           <button
             onClick={handleSubmit}

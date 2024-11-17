@@ -14,14 +14,15 @@ interface EpicModalProps {
   projectId: string
 }
 
-export interface EpicData {
+export interface IssueData {
   summary: string,
   description: string,
   issuetype: string,
   priority: string,
-  start_at: string,
-  end_at: string,
+  start_at?: string,
+  end_at?: string,
   story_points?: number
+  parent?: null | string,
 }
 
 export default function EpicModal({
@@ -34,7 +35,7 @@ export default function EpicModal({
   const [isCreating, setIsCreating] = useState<boolean>(false)
   // const [editIndex, setEditIndex] = useState<number | null>(null);
   // const [editItem, setEditItem] = useState<EpicData | null>(null);
-  const [parsedData, setParsedData] = useState<EpicData[]>([
+  const [parsedData, setParsedData] = useState<IssueData[]>([
     {
         "summary": "[BE] OAuth 기반 회원탈퇴 구현",
         "description": "Spring Boot를 사용하여 OAuth 인증 및 회원탈퇴 기능 구현",
@@ -105,7 +106,7 @@ export default function EpicModal({
   const showSuccessModal = () => {
     Swal.fire({
       title: '에픽 등록 완료',
-      text: 'JIRA에 에픽 생성이 완료되었습니다.\n JIRA 프로젝트 > 목록에서 에픽을 확인해보세요!',
+      text: 'JIRA에 에픽 생성이 완료되었습니다.<br> JIRA 프로젝트 > 목록에서 에픽을 확인해보세요!',
       icon: 'success',
       confirmButtonText: '확인'
     });
@@ -228,7 +229,7 @@ export default function EpicModal({
   }, [parsedData])
 
   const addItem = () => {
-    const newItem: EpicData = {
+    const newItem: IssueData = {
       priority: 'Medium', // 새로운 항목의 우선순위, 필요에 따라 변경
       summary: `새로운 항목 ${parsedData.length + 1}`,
       issuetype: "Epic",
@@ -291,8 +292,8 @@ export default function EpicModal({
               <button className="w-28 h-10 rounded bg-[#54B2A3] text-2xl text-white font-bold" onClick={addItem}>+</button>
             </div>
             {isCreating? (
-              <button className="w-[180px] h-[44px] my-4 bg-[#4D86FF] text-base font-bold text-white rounded hover:bg-[#9EBDFF] cursor-not-allowed" disabled>
-                <svg className="animate-spin h-5 w-5 mr-3 ..." viewBox="0 0 24 24"></svg>
+              <button className="w-[180px] h-[44px] my-4 bg-[#4D86FF] text-base font-bold text-white rounded hover:bg-[#9EBDFF] cursor-not-allowed flex items-center justify-center" disabled>
+                <img src="/svg/loading.svg" alt="Loading" className="animate-spin h-5 w-5 mr-3" />
                 저장하는 중...
               </button>
             ): (
