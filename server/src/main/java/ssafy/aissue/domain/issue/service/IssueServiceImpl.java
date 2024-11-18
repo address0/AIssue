@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import ssafy.aissue.api.issue.request.*;
 import ssafy.aissue.api.issue.response.*;
 import ssafy.aissue.api.member.response.MemberJiraIdResponse;
+import ssafy.aissue.common.exception.chatting.ProjectNotFoundException;
 import ssafy.aissue.common.exception.member.MemberNotFoundException;
 import ssafy.aissue.common.exception.security.NotAuthenticatedException;
 import ssafy.aissue.common.util.DateConverter;
@@ -18,6 +19,9 @@ import ssafy.aissue.domain.issue.entity.*;
 import ssafy.aissue.domain.issue.repository.*;
 import ssafy.aissue.domain.member.entity.Member;
 import ssafy.aissue.domain.member.repository.MemberRepository;
+import ssafy.aissue.domain.project.entity.Project;
+import ssafy.aissue.domain.project.repository.ProjectRepository;
+import ssafy.aissue.domain.project.service.ProjectService;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -35,10 +39,11 @@ public class IssueServiceImpl implements IssueService {
     private final StoryRepository storyRepository;
     private final TaskRepository taskRepository;
     private final SubTaskRepository subTaskRepository;
+    private final ProjectRepository projectRepository;
 
     public IssueServiceImpl(BugRepository bugRepository, EpicRepository epicRepository,
                             StoryRepository storyRepository, TaskRepository taskRepository,
-                            SubTaskRepository subTaskRepository, MemberRepository memberRepository, JiraApiUtil jiraApiUtil) {
+                            SubTaskRepository subTaskRepository, MemberRepository memberRepository, JiraApiUtil jiraApiUtil, ProjectRepository projectRepository) {
         this.memberRepository = memberRepository;
         this.jiraApiUtil = jiraApiUtil;
         this.bugRepository = bugRepository;
@@ -46,6 +51,7 @@ public class IssueServiceImpl implements IssueService {
         this.storyRepository = storyRepository;
         this.taskRepository = taskRepository;
         this.subTaskRepository = subTaskRepository;
+        this.projectRepository = projectRepository;
     }
 
     private Member getCurrentLoggedInMember() {
@@ -71,7 +77,9 @@ public class IssueServiceImpl implements IssueService {
         String jiraKey = currentMember.getJiraKey();
         String jiraId = currentMember.getJiraId();
         String projectKey = issueBatchRequest.getProjectKey();  // 요청 본문에서 projectKey 가져오기
-        Long sprintId = jiraApiUtil.fetchActiveSprintId(projectKey, jiraEmail, jiraKey);
+        Project project = projectRepository.findByJiraProjectKey(projectKey).orElseThrow(ProjectNotFoundException::new);
+        Long projectId = project.getId();
+        Long sprintId = jiraApiUtil.fetchActiveSprintId(projectId, projectKey, jiraEmail, jiraKey);
 
         // 각 이슈 요청을 JIRA 형식의 Fields 객체로 변환
         List<JiraIssueCreateRequest.IssueUpdate> issueUpdates = issueBatchRequest.toIssueUpdates(jiraId, sprintId);
@@ -136,7 +144,7 @@ public class IssueServiceImpl implements IssueService {
         String jiraEmail = currentMember.getEmail();
         String jiraKey = currentMember.getJiraKey();
         String issueKey = issueUpdateRequest.getIssueKey();
-        Long issueId = issueUpdateRequest.getIssueId();
+//        Long issueId = issueUpdateRequest.getIssueId();
         // IssueUpdateRequest를 JiraIssueUpdateRequest로 변환
         JiraIssueUpdateRequest jiraIssueUpdateRequest = convertToJiraIssueUpdateRequest(issueUpdateRequest);
 
@@ -173,7 +181,7 @@ public class IssueServiceImpl implements IssueService {
         // IssueUpdateRequest의 데이터를 JiraIssueUpdateRequest 형식에 맞게 변환
         JiraIssueUpdateRequest.Fields fields = JiraIssueUpdateRequest.Fields.builder()
                 .summary(issueUpdateRequest.getSummary())
-                .status(issueUpdateRequest.getStatus())
+//                .status(issueUpdateRequest.getStatus())
                 .description(issueUpdateRequest.getDescription())
                 .priority(new JiraIssueUpdateRequest.Priority(issueUpdateRequest.getPriority()))
                 .storyPoint(issueUpdateRequest.getStoryPoint())
@@ -315,6 +323,8 @@ public class IssueServiceImpl implements IssueService {
         Member currentMember = getCurrentLoggedInMember();
         String email = currentMember.getEmail();
         String jiraKey = currentMember.getJiraKey();
+        Project project = projectRepository.findByJiraProjectKey(projectKey).orElseThrow(ProjectNotFoundException::new);
+        Long projectId = project.getId();
 
         return jiraApiUtil.fetchSprintIssues(projectKey, email, jiraKey);
     }
@@ -323,6 +333,35 @@ public class IssueServiceImpl implements IssueService {
     public String linkIssues(IssueLinkRequest issueLinkRequest) {
         // 구현 내용 추가
         return null;
+    }
+
+    @Override
+    public SprintStatusResponse getSprintStatus(String projectKey) {
+        Member currentMember = getCurrentLoggedInMember();
+        String email = currentMember.getEmail();
+        String jiraKey = currentMember.getJiraKey();
+        Project project = projectRepository.findByJiraProjectKey(projectKey).orElseThrow(ProjectNotFoundException::new);
+        Long projectId = project.getId();
+        try {
+            return jiraApiUtil.fetchInSprint(projectId, projectKey, email, jiraKey);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public String updateSprint(ManageSprintRequest manageSprintRequest) {
+        Member currentMember = getCurrentLoggedInMember();
+        String email = currentMember.getEmail();
+        String jiraKey = currentMember.getJiraKey();
+        Long sprintId = manageSprintRequest.getSprintId();
+        boolean isStart = manageSprintRequest.isStart();
+
+        try {
+            return jiraApiUtil.manageSprint(sprintId, email, jiraKey, isStart);
+        } catch (RuntimeException | JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override

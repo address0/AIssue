@@ -12,12 +12,19 @@ import ssafy.aissue.api.issue.request.*;
 import ssafy.aissue.api.issue.response.IssueDetailResponse;
 import ssafy.aissue.api.issue.response.IssueResponse;
 import ssafy.aissue.api.issue.response.SprintIssueResponse;
+import ssafy.aissue.api.issue.response.SprintStatusResponse;
 import ssafy.aissue.common.exception.member.InvalidJiraCredentialsException;
 import ssafy.aissue.domain.member.entity.Member;
 
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 @Component
@@ -472,7 +479,7 @@ public class JiraApiUtil {
     }
 
 
-    public Long fetchActiveSprintId(String projectKey, String email, String jiraKey) throws JsonProcessingException {
+    public Long fetchActiveSprintId(Long projectId, String projectKey, String email, String jiraKey) throws JsonProcessingException {
         // 1. 보드 ID 조회
         String boardApiUrl = "https://ssafy.atlassian.net/rest/agile/1.0/board";
         String auth = email + ":" + jiraKey;
@@ -498,7 +505,8 @@ public class JiraApiUtil {
                 }
             }
             if (boardId == null) {
-                throw new RuntimeException("Board ID not found for project key: " + projectKey);
+//                throw new RuntimeException("Board ID not found for project key: " + projectKey);
+                boardId = createBoardForProject(projectId, projectKey, email, jiraKey);
             }
 
             // 2. 보드 ID를 통해 스프린트 조회
@@ -515,6 +523,8 @@ public class JiraApiUtil {
                         return sprint.path("id").asLong();
                     }
                 }
+
+                return createSprint(boardId,"새로운 스프린트", "AIssue로 생성된 스프린트입니다.", email, jiraKey);
             }
         }
 
@@ -1067,6 +1077,303 @@ public class JiraApiUtil {
         return status;  // 그 외에는 변경하지 않음
     }
 
+    public SprintStatusResponse fetchInSprint(Long projectId, String projectKey, String email, String jiraKey) throws JsonProcessingException {
+        // 1. 보드 ID 조회
+        String boardApiUrl = "https://ssafy.atlassian.net/rest/agile/1.0/board";
+        String auth = email + ":" + jiraKey;
+        String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes());
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "Basic " + encodedAuth);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+        ResponseEntity<String> boardResponse = restTemplate.exchange(boardApiUrl, HttpMethod.GET, entity, String.class);
+        log.info("[JiraApiUtil] fetchBoardId >>>> response: {}", boardResponse);
+
+        if (boardResponse.getStatusCode() == HttpStatus.OK) {
+            JsonNode boards = objectMapper.readTree(boardResponse.getBody()).get("values");
+
+            // 프로젝트 키와 동일한 객체의 보드 ID 찾기
+            Long boardId = null;
+            for (JsonNode board : boards) {
+                if (board.path("location").path("projectKey").asText().equals(projectKey)) {
+                    boardId = board.path("id").asLong();
+                    break;
+                }
+            }
+            if (boardId == null) {
+                boardId = createBoardForProject(projectId, projectKey, email, jiraKey);
+            }
+
+            // 2. 보드 ID를 통해 스프린트 조회
+            String sprintApiUrl = "https://ssafy.atlassian.net/rest/agile/1.0/board/" + boardId + "/sprint";
+            ResponseEntity<String> sprintResponse = restTemplate.exchange(sprintApiUrl, HttpMethod.GET, entity, String.class);
+            log.info("[JiraApiUtil] fetchSprintId >>>> response: {}", sprintResponse);
+
+            if (sprintResponse.getStatusCode() == HttpStatus.OK) {
+                boolean isSprint = false;
+                Long sprintId = null;
+                JsonNode sprints = objectMapper.readTree(sprintResponse.getBody()).get("values");
+
+                // 상태가 active인 스프린트 찾기
+                for (JsonNode sprint : sprints) {
+                    if ("active".equals(sprint.path("state").asText())) {
+                        isSprint = true;
+                        sprintId = sprint.path("id").asLong();
+                    }
+
+                    if ("future".equals(sprint.path("state").asText())) {
+                        isSprint = false;
+                        sprintId = sprint.path("id").asLong();
+                    }
+                }
+
+                sprintId = createSprint(boardId,"1주차 스프린트", "AIssue로 생성된 스프린트입니다.", email, jiraKey);
+
+                return SprintStatusResponse.builder()
+                        .isSprint(isSprint)
+                        .sprintId(sprintId)
+                        .build();
+            }
+        }
+
+        throw new RuntimeException("Active sprint not found for project key: " + projectKey);
+    }
+
+//    public String createSprintWithBoardIfNeeded(Long projectId, String projectKey, String email, String jiraKey, String sprintName) throws JsonProcessingException {
+//        // 1. 보드 ID 생성
+//        Long boardId = createBoardForProject(projectId, projectKey, email, jiraKey);
+//
+//        // 2. 보드 ID를 통해 스프린트 생성
+//        return createSprint(boardId, sprintName, email, jiraKey);
+//    }
+
+    private Long fetchBoardId(String projectKey, String email, String jiraKey) throws JsonProcessingException {
+        // 1. 보드 조회 API 호출
+        String boardApiUrl = "https://ssafy.atlassian.net/rest/agile/1.0/board";
+        String auth = email + ":" + jiraKey;
+        String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes());
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "Basic " + encodedAuth);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+        ResponseEntity<String> boardResponse = restTemplate.exchange(boardApiUrl, HttpMethod.GET, entity, String.class);
+
+        if (boardResponse.getStatusCode() == HttpStatus.OK) {
+            JsonNode boards = objectMapper.readTree(boardResponse.getBody()).get("values");
+            // 프로젝트 키와 동일한 객체의 보드 ID 찾기
+            for (JsonNode board : boards) {
+                if (board.path("location").path("projectKey").asText().equals(projectKey)) {
+                    return board.path("id").asLong();
+                }
+            }
+        }
+
+        return null;  // 보드가 없으면 null 반환
+    }
+
+    public Long createBoardForProject(Long projectId, String projectKey, String email, String jiraKey) throws JsonProcessingException {
+        // 1. 기본 필터 생성
+        Long filterId = null;
+        try {
+            filterId = createDefaultFilter(projectId, projectKey, email, jiraKey);
+            log.info("필터 등록 성공");
+        } catch (RuntimeException e) {
+            throw new RuntimeException(e);
+        }
+
+        // 2. Board 생성 요청 객체 준비
+        BoardRequest.Location location = BoardRequest.Location.builder()
+                .projectKey(projectKey)
+                .type("project")
+                .build();
+
+
+        BoardRequest boardRequest = BoardRequest.builder()
+                .filterId(filterId)
+                .location(location)
+                .name(projectKey + " 보드")
+                .type("scrum")
+                .build();
+
+        // 3. 요청 바디를 JSON으로 변환
+        String boardApiUrl = "https://ssafy.atlassian.net/rest/agile/1.0/board";
+        String auth = email + ":" + jiraKey;
+        String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes());
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "Basic " + encodedAuth);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        // BoardRequest 객체를 JSON 문자열로 직렬화
+        String boardRequestJson = objectMapper.writeValueAsString(boardRequest);
+
+        // JSON 출력 로깅
+        log.info("Generated JSON for board creation: {}", boardRequestJson);
+
+        HttpEntity<String> entity = new HttpEntity<>(boardRequestJson, headers);
+        ResponseEntity<String> response = restTemplate.exchange(boardApiUrl, HttpMethod.POST, entity, String.class);
+
+        if (response.getStatusCode() == HttpStatus.CREATED) {
+            JsonNode responseNode = objectMapper.readTree(response.getBody());
+            return responseNode.path("id").asLong();
+        } else {
+            log.error("Failed to create board for project key: {}. Response: {}", projectKey, response.getBody());
+            throw new RuntimeException("Failed to create board for project key: " + projectKey + ". Response: " + response.getBody());
+        }
+    }
+
+    private Long createDefaultFilter(Long projectId, String projectKey, String email, String jiraKey) throws JsonProcessingException {
+        String createFilterUrl = "https://ssafy.atlassian.net/rest/api/3/filter";
+        String auth = email + ":" + jiraKey;
+        String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes());
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "Basic " + encodedAuth);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        String jqlQuery = "project = \"" + projectKey + "\"";
+        String filterName = projectKey + " 보드의 필터";
+        String filterDescription = "Default filter created for project " + projectKey;
+
+        // FilterRequest 객체 생성
+        FilterRequest filterRequest = FilterRequest.builder()
+                .name(filterName)
+                .description(filterDescription)
+                .jql(jqlQuery)
+//                .sharePermissions(FilterRequest.SharePermissions.builder().type("project").project(FilterRequest.SharePermissions.Project.builder().id(projectId).build()).build())
+                .build();
+
+        HttpEntity<FilterRequest> entity = new HttpEntity<>(filterRequest, headers);
+        ResponseEntity<String> response = restTemplate.exchange(createFilterUrl, HttpMethod.POST, entity, String.class);
+
+        if (response.getStatusCode() == HttpStatus.OK) {
+            JsonNode responseNode = objectMapper.readTree(response.getBody());
+            log.info("Filter created successfully");
+            return responseNode.path("id").asLong();
+        }
+
+        throw new RuntimeException("Failed to create filter for project key: " + projectKey);
+    }
+
+
+    public Long createSprint(Long boardId, String sprintName, String goal, String email, String jiraKey) throws JsonProcessingException {
+        // 스프린트 생성 URL
+        String sprintApiUrl = "https://ssafy.atlassian.net/rest/agile/1.0/sprint";
+        String auth = email + ":" + jiraKey;
+        String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes());
+
+        // SprintDateUtil 사용하여 스프린트 날짜 계산
+        SprintDateUtil sprintDateUtil = new SprintDateUtil();
+        SprintDateUtil.SprintDates sprintDates = sprintDateUtil.calculateSprintDates();
+
+        // ZonedDateTime을 초 단위까지 포함하여 ISO 8601 형식으로 변환 (밀리초 이후 제거)
+        String startDate = sprintDates.getStartDate().truncatedTo(ChronoUnit.SECONDS).format(DateTimeFormatter.ISO_INSTANT);  // "yyyy-MM-dd'T'HH:mm:ss'Z'"
+        String endDate = sprintDates.getEndDate().truncatedTo(ChronoUnit.SECONDS).format(DateTimeFormatter.ISO_INSTANT);      // "yyyy-MM-dd'T'HH:mm:ss'Z'"
+
+        // 스프린트 생성 요청 바디
+        SprintRequest sprintRequest = SprintRequest.builder()
+                .name(sprintName)
+                .goal(goal)
+                .startDate(startDate)
+                .endDate(endDate)
+                .originBoardId(boardId)
+                .build();
+
+        // ObjectMapper를 사용하여 Java 객체를 JSON 문자열로 변환
+        String sprintBody = objectMapper.writeValueAsString(sprintRequest);
+
+        log.info("Sending request to create sprint with body: {}", sprintBody);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "Basic " + encodedAuth);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<String> entity = new HttpEntity<>(sprintBody, headers);
+        ResponseEntity<String> response = restTemplate.exchange(sprintApiUrl, HttpMethod.POST, entity, String.class);
+
+        if (response.getStatusCode() == HttpStatus.CREATED) {
+            JsonNode responseNode = objectMapper.readTree(response.getBody());
+            return responseNode.path("id").asLong();
+        } else {
+            log.error("Failed to create sprint. Response: {}", response.getBody());
+            throw new RuntimeException("Failed to create sprint. Response: " + response.getBody());
+        }
+    }
+
+    public String startSprint(Long sprintId, String email, String jiraKey) throws JsonProcessingException {
+        // 스프린트 시작 URL
+        String sprintApiUrl = "https://ssafy.atlassian.net/rest/agile/1.0/sprint/" + sprintId;
+
+        // 인증 헤더 생성
+        String auth = email + ":" + jiraKey;
+        String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes());
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "Basic " + encodedAuth);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        JiraSprintUpdateRequest jiraSprintUpdateRequest = JiraSprintUpdateRequest.builder()
+                .state("active")
+                .build();
+
+        HttpEntity<JiraSprintUpdateRequest> entity = new HttpEntity<>(jiraSprintUpdateRequest, headers);
+
+        // API 호출
+        ResponseEntity<String> response = restTemplate.exchange(sprintApiUrl, HttpMethod.POST, entity, String.class);
+
+        if (response.getStatusCode() == HttpStatus.OK) {
+            log.info("Sprint started successfully");
+            return "스프린트가 정상적으로 시작되었습니다.";
+        } else {
+            log.error("Failed to start sprint. Response: {}", response.getBody());
+            throw new RuntimeException("Failed to start sprint. Response: " + response.getBody());
+        }
+    }
+
+    public String completeSprint(Long sprintId, String email, String jiraKey) throws JsonProcessingException {
+        // 스프린트 시작 URL
+        String sprintApiUrl = "https://ssafy.atlassian.net/rest/agile/1.0/sprint/" + sprintId;
+
+        // 인증 헤더 생성
+        String auth = email + ":" + jiraKey;
+        String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes());
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "Basic " + encodedAuth);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        JiraSprintUpdateRequest jiraSprintUpdateRequest = JiraSprintUpdateRequest.builder()
+                .state("closed")
+                .build();
+
+        HttpEntity<JiraSprintUpdateRequest> entity = new HttpEntity<>(jiraSprintUpdateRequest, headers);
+
+        // API 호출
+        ResponseEntity<String> response = restTemplate.exchange(sprintApiUrl, HttpMethod.POST, entity, String.class);
+
+        if (response.getStatusCode() == HttpStatus.OK) {
+            log.info("Sprint completed successfully");
+            return "스프린트가 정상적으로 종료되었습니다.";
+        } else {
+            log.error("Failed to complete sprint. Response: {}", response.getBody());
+            throw new RuntimeException("Failed to complete sprint. Response: " + response.getBody());
+        }
+    }
+
+    public String manageSprint(Long sprintId, String email, String jiraKey, boolean start) throws JsonProcessingException {
+
+        if (start) {
+            // 스프린트 시작
+            return startSprint(sprintId, email, jiraKey);
+        } else {
+            // 스프린트 완료
+            return completeSprint(sprintId, email, jiraKey);
+        }
+    }
 
 }
 
