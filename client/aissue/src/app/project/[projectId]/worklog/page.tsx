@@ -12,23 +12,26 @@ import { getWeeklyStories } from '@/api/project'
 import { useQuery } from '@tanstack/react-query'
 import LoadingSpinner from '@/static/svg/blue-spinner.svg'
 import IssueModal from '@/components/(Modal)/IssueModal/IssueModal'
+import { updateIssueStatus } from '@/api/project'
 
 interface Task {
-  title: string;
-  start: Date;
-  end: Date;
+  title: string
+  start: Date
+  end: Date
 }
 
 interface Story {
-  id: string
+  id: number
+  key: string
   title: string
   status: 'To Do' | 'In Progress' | 'Done'
-  parent?: { summary: string };
-  tasks: Task[];
+  parent?: { id: string; summary: string }
+  tasks: Task[]
 }
 
 interface Issue {
-  id: string
+  id: number
+  key: string
   title: string
   status: 'ToDo' | 'InProgress' | 'Done'
 }
@@ -36,7 +39,6 @@ interface Issue {
 const WorkLogPage = () => {
   const pathname = usePathname()
   const projectId = pathname.split('/')[2]
-  // const [userName, setUserName] = useState<string | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedIssue, setSelectedIssue] = useState<Story | null>(null)
   const [categorizedIssues, setCategorizedIssues] = useState<{
@@ -54,17 +56,12 @@ const WorkLogPage = () => {
     queryFn: () => getWeeklyStories(projectId),
   })
 
-  // useEffect(() => {
-  //   if (typeof window !== 'undefined') {
-  //     setUserName(sessionStorage.getItem('memberName'))
-  //   }
-  // }, [])
-
   useEffect(() => {
     if (data) {
       const stories: Story[] = data
       const issues: Issue[] = stories.map((story) => ({
         id: story.id,
+        key: story.key,
         title: story.title,
         status: mapStatus(story.status),
       }))
@@ -92,7 +89,7 @@ const WorkLogPage = () => {
     }
   }
 
-  const openModal = (issueId: string) => {
+  const openModal = (issueId: number) => {
     if (data) {
       const story = data.find((story: Story) => story.id === issueId)
       if (story) {
@@ -107,22 +104,10 @@ const WorkLogPage = () => {
     setIsModalOpen(false)
   }
 
-  if (isLoading)
-    return (
-      <div className="flex justify-center items-center h-full w-full">
-        <div className="flex flex-col justify-center items-center gap-y-3">
-          <LoadingSpinner className="animate-spin" />
-          <p className="font-bold">전체 업무 로그를 불러오는 중입니다.</p>
-        </div>
-      </div>
-    )
-
   const onDragEnd = (result: DropResult) => {
     const { source, destination } = result
 
-    if (!destination) {
-      return
-    }
+    if (!destination) return
 
     const sourceDroppableId = source.droppableId as
       | 'ToDo'
@@ -150,18 +135,63 @@ const WorkLogPage = () => {
     }
 
     setCategorizedIssues(updatedIssues)
+
+    updateIssueStatus(
+      movedItem.key,
+      mapStatusToApiFormat(destinationDroppableId),
+    )
+      .then(() => {
+        console.log(`이슈 ${movedItem.key} 업데이트 ${destinationDroppableId}`)
+      })
+      .catch((error) => {
+        console.error('이슈 업데이트 실패:', error)
+        // 지라 api를 이용한 이슈 업데이트 실패시 UI를 원래대로 복구
+        setCategorizedIssues((prevIssues) => {
+          const revertedIssues = { ...prevIssues }
+          if (sourceDroppableId === destinationDroppableId) {
+            sourceItems.splice(source.index, 0, movedItem)
+          } else {
+            revertedIssues[destinationDroppableId] = revertedIssues[
+              destinationDroppableId
+            ].filter((issue) => issue.key !== movedItem.key)
+            revertedIssues[sourceDroppableId].splice(source.index, 0, movedItem)
+          }
+          return revertedIssues
+        })
+      })
   }
+
+  function mapStatusToApiFormat(
+    status: 'ToDo' | 'InProgress' | 'Done',
+  ): 'To Do' | 'In Progress' | 'Done' {
+    switch (status) {
+      case 'ToDo':
+        return 'To Do'
+      case 'InProgress':
+        return 'In Progress'
+      case 'Done':
+        return 'Done'
+    }
+  }
+
+  if (isLoading)
+    return (
+      <div className="flex justify-center items-center h-full w-full">
+        <div className="flex flex-col justify-center items-center gap-y-3">
+          <LoadingSpinner className="animate-spin" />
+          <p className="font-bold">전체 업무 로그를 불러오는 중입니다.</p>
+        </div>
+      </div>
+    )
 
   return (
     <div className="flex min-h-screen bg-gray-100 flex-col lg:flex-row">
       <div className="w-full lg:w-4/5 p-4 lg:p-8">
-      <div className="mb-6">
-        <h1 className="text-xl lg:text-2xl font-bold mb-2">
-          {projectId} 프로젝트 스프린트 일정
-        </h1>
-      
-      </div>
-
+        <div className="mb-6">
+          <h1 className="text-xl lg:text-2xl font-bold mb-2">
+            {projectId} 프로젝트 스프린트 일정
+          </h1>
+        </div>
 
         <DragDropContext onDragEnd={onDragEnd}>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -200,8 +230,8 @@ const WorkLogPage = () => {
                       <div className="space-y-4 flex-1 px-2 pb-2">
                         {categorizedIssues[status].map((issue, index) => (
                           <Draggable
-                            key={issue.id}
-                            draggableId={issue.id}
+                            key={issue.key}
+                            draggableId={issue.key}
                             index={index}
                           >
                             {(provided) => (
@@ -220,7 +250,7 @@ const WorkLogPage = () => {
                                     {issue.title}
                                   </h3>
                                   <p className="text-xs lg:text-sm text-gray-500">
-                                    {issue.id}
+                                    {issue.key}
                                   </p>
                                 </div>
                                 <img
@@ -246,9 +276,12 @@ const WorkLogPage = () => {
           <IssueModal
             isOpen={isModalOpen}
             onClose={closeModal}
-            title={selectedIssue.title}
-            parentSummary={selectedIssue.parent?.summary || ''}
-            tasks={selectedIssue.tasks}
+            tasks={selectedIssue?.tasks || []}
+            title={selectedIssue?.title || ''}
+            parentSummary={selectedIssue?.parent?.summary || ''}
+            issueId={selectedIssue?.id || null}
+            issueKey={selectedIssue?.key || null}
+            parentIssueId={selectedIssue?.parent?.id || ''}
           />
         )}
       </div>

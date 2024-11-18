@@ -1,0 +1,35 @@
+{
+  "name": "Aissue",
+  "short_name": "aissue",
+  "icons": [
+    {
+      "src": "/icons/icon-60x60.png",
+      "sizes": "60x60",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-120x120.png",
+      "sizes": "120x120",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-152x152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-310x310.png",
+      "sizes": "310x310",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "theme_color": "#5fa5fa",
+  "background_color": "#84e5d7",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait"
+}
