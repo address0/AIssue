@@ -205,43 +205,40 @@ export default function InfoPage({
   JSON 형식으로 반환하되, 코드 블록(\`\`\`json)은 포함하지 말고 순수 JSON만 반환하세요.
         `;
   
-    try {
-          const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        try {
+          const response = await fetch('/project/[projectId]/info/generatePortfolio', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              Authorization: `Bearer ${process.env.NEXT_PUBLIC_OPENAI_API_KEY}`,
             },
-            body: JSON.stringify({
-              model: 'gpt-4o',
-              messages: [{ role: 'user', content: prompt }],
-              max_tokens: 2000,
-            }),
+            body: JSON.stringify({ prompt }),
           });
-    
+      
+          if (!response.ok) {
+            const errorDetails = await response.json();
+            console.error('Error fetching GPT portfolio data:', errorDetails);
+            return [];
+          }
+      
           const data = await response.json();
-          // console.log(data)
-          const rawContent = data.choices[0].message.content;
+          const rawContent = data.choices[0]?.message?.content || '[]';
       
-          // JSON 코드 블록 제거 (```json ... ```)
+          // JSON 코드 블록 제거 및 파싱
           const sanitizedContent = rawContent.replace(/```json|```/g, '');
-      
-          // JSON 파싱
-          const blocks = JSON.parse(sanitizedContent);
-    
-          /* eslint-disable @typescript-eslint/no-explicit-any */
-          return blocks.map((block: any, index: number) => ({
+           /* eslint-disable @typescript-eslint/no-explicit-any */
+          const blocks: PortfolioBlock[] = JSON.parse(sanitizedContent).map((block: any, index: number) => ({
             id: `block-${Date.now()}-${index}`,
             type: block.type,
             content: block.content,
             scale: block.type === 'image' ? 100 : undefined,
           }));
+      
+          return blocks;
         } catch (error) {
           console.error('Error fetching GPT portfolio data:', error);
           return [];
         }
       };
-    
   
   // const fetchGptPortfolioData = async (): Promise<PortfolioBlock[]> => {
   //   if (!projectInfo) return [];
