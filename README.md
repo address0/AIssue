@@ -214,7 +214,7 @@
 
 ### 1. 로그인
 
-<img src="docs/images/login.png" alt="login" height="400" width="300" />
+<img src="docs/images/login.PNG" alt="login" height="400" width="300" />
 
 ### 2. 프로젝트
 
