@@ -13,7 +13,8 @@ interface Task {
 }
 
 interface Story {
-  id: string;
+  id: number;
+  key: string;
   title: string;
   tasks: Task[];
   status: 'To Do' | 'In Progress' | 'Done'; // 특정 값만 허용하도록 제한
@@ -48,6 +49,7 @@ interface Parent {
 }
 
 interface Issue {
+  id: number;
   key: string;
   summary: string;
   subtasks: Subtask[];
@@ -129,18 +131,23 @@ const getWeeklyStories = async (projectKey: string): Promise<Story[]> => {
   const issues: Issue[] = res.data.result; // Issue 타입 명시
   issues.map((issue: Issue) => console.log(issue.parent?.summary))
   return issues.map((issue: Issue) => ({
-    id: issue.key,
+    id: issue.id,
+    key: issue.key,
     title: issue.summary,
     status: convertStatus(issue.status),
-    parent: {
-      summary: issue.parent?.summary,
-    },
+    parent: issue.parent
+      ? {
+          id: issue.parent.id, // 'id' 추가
+          summary: issue.parent.summary,
+        }
+      : undefined,
     tasks: issue.subtasks.map((subtask) => ({
       title: subtask.summary,
       start: subtask.startAt ? new Date(subtask.startAt) : new Date(),
       end: subtask.endAt ? new Date(subtask.endAt) : new Date(),
     })),
   }));
+  
 };
 
 // 상태 값을 "To Do" | "In Progress" | "Done"으로 변환하는 헬퍼 함수
@@ -216,4 +223,82 @@ const getProjectFunctions = async (jiraProjectKey: string): Promise<FunctionDeta
   }
 };
 
-export { getProjectList, getWeeklyStories, getProjectInfo, createProject, updateProjectFunctions, getProjectFunctions, getMonthlyEpics, updateIssue };
+// src/api/project.ts
+
+const updateIssueStatus = async (
+  issueKey: string,
+  status: 'To Do' | 'In Progress' | 'Done'
+): Promise<string> => {
+  try {
+    const requestData = {
+      issue_key: issueKey,
+      status,
+    };
+
+    const res = await privateAPI.put('/issues/status', requestData);
+    console.log('상태 업데이트 요청:', requestData);
+    console.log('상태 업데이트 응답:', res.data);
+
+    return res.data.result; // "이슈 상태가 성공적으로 변경되었습니다."
+  } catch (error) {
+    console.error('Failed to update issue status:', error);
+    throw new Error('이슈 상태 업데이트에 실패했습니다.');
+  }
+};
+
+const updateIssueDetails = async (issueData: {
+  issue_id: number | null;
+  issue_key: string | null;
+  summary: string;
+  description: string;
+  priority: string;
+  story_points: number;
+  // parent_issue_id: number;
+}): Promise<string> => {
+  try {
+    console.log('Request Data:', issueData); // 요청 전 데이터 확인
+
+    const res = await privateAPI.put('/issues/update', issueData); // API 호출
+    console.log('Response Data:', res.data); // 응답 데이터 확인
+
+    return res.data.result; // 성공 메시지 반환
+  } catch (error) {
+    console.error('이슈 수정 실패:', error);
+    throw new Error('이슈 수정 요청 중 오류가 발생했습니다.');
+  }
+};
+
+
+const getIssueDetails = async (issueKey: string): Promise<{
+  summary: string;
+  status: string;
+  description: string;
+  priority: string;
+  issue_id: number;
+  issue_key: string;
+  story_points: number;
+}> => {
+  try {
+    const res = await privateAPI.get(`/issues/${issueKey}`);
+    const { result } = res.data;
+    console.log('이슈 상세 정보:', result);
+
+    return {
+      summary: result.summary,
+      status: result.status,
+      description: result.description,
+      priority: result.priority,
+      issue_id: result.id,
+      issue_key: result.key,
+      story_points: result.story_points,
+    };
+  } catch (error) {
+    console.error('이슈 상세 정보 요청 실패:', error);
+    throw new Error('이슈 상세 정보 요청 중 오류가 발생했습니다.');
+  }
+};
+
+
+
+
+export { getIssueDetails, updateIssueDetails, updateIssueStatus, getProjectList, getWeeklyStories, getProjectInfo, createProject, updateProjectFunctions, getProjectFunctions, getMonthlyEpics, updateIssue };
