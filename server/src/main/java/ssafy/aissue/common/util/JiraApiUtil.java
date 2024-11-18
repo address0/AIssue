@@ -942,7 +942,7 @@ public class JiraApiUtil {
 
     public String fetchUpdateStatus(IssueStatusRequest statusRequest, String email, String jiraKey) {
         String issueKey = statusRequest.getIssueKey();
-        String newStatus = statusRequest.getStatus();  // 변경할 상태 이름
+        String newStatus = validationStatus(statusRequest.getStatus());  // 변경할 상태 이름
 
         // Jira API URL 생성 (이슈 상태 업데이트를 위한 전환 요청)
         String url = "https://ssafy.atlassian.net/rest/api/2/issue/" + issueKey + "/transitions";
@@ -1019,6 +1019,53 @@ public class JiraApiUtil {
         }
     }
 
+    private String validationStatus(String status) {
+        if (status == null || status.isEmpty()) {
+            throw new IllegalArgumentException("상태는 null이거나 빈 값일 수 없습니다.");
+        }
+
+        // 공백 제거 및 대문자 처리
+        status = status.trim().replaceAll("\\s+", "");
+
+        // 상태값이 영어일 경우 (영어 -> 한글)
+        if (status.matches("[a-zA-Z]+")) {
+            // 영어 상태값을 한글로 변환
+            switch (status.toUpperCase()) {
+                case "TODO":
+                    return "해야 할 일";
+                case "INPROGRESS":
+                    return "진행 중";
+                case "DONE":
+                    return "완료";
+//                case "BLOCKED":
+//                    return "차단됨";
+//                case "OPEN":
+//                    return "열림";
+//                case "CLOSED":
+//                    return "닫힘";
+                default:
+                    throw new IllegalArgumentException("지원하지 않는 영어 상태입니다.");
+            }
+        }
+
+        // 상태값이 한글일 경우 (한글 상태값에 띄어쓰기가 잘못되어 있으면 교정)
+        return correctKoreanSpacing(status);
+    }
+
+    private String correctKoreanSpacing(String status) {
+        // 예시로 '진행중'을 '진행 중'으로 교정하는 작업
+        // 띄어쓰기를 잘못한 경우에만 교정하도록 변경
+        if (status.equals("진행중")) {
+            return "진행 중";
+        }
+        if (status.equals("해야할일")) {
+            return "해야 할 일";
+        }
+        if (status.equals("완료")) {
+            return "완료";
+        }
+        return status;  // 그 외에는 변경하지 않음
+    }
 
 
 }
