@@ -14,6 +14,7 @@ export default function LoginPage() {
   const [isInstallable, setIsInstallable] = useState(false) // 설치 가능 여부
   const router = useRouter()
 
+
   useEffect(() => {
     const handleBeforeInstallPrompt = (event: Event) => {
       event.preventDefault()
