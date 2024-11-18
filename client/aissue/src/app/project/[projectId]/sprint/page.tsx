@@ -32,6 +32,18 @@ interface SprintData {
   message: string
 }
 
+interface RoleData {
+  title: string,
+  name: string,
+  color: string
+}
+
+interface MessageData {
+  type: string,
+  detail: string[]
+}
+
+
 export default function SprintPage({
   params,
 }: {
@@ -55,15 +67,59 @@ export default function SprintPage({
   const [epics, setEpics] = useState<FetchedEpics[]>([])
   const [isInputDisabled, setIsInputDisabled] = useState<boolean>(false)
   const [isCreating, setIsCreating] = useState<boolean>(false)
+  const [projectInfo, setProjectInfo] = useState('')
+  const userName =  typeof window !== 'undefined' ? sessionStorage.getItem('memberName') : null
 
-  const questions = [
+  const questions:string[] = [
+    `${userName}님이 이번 주 담당한 역할을 선택해 주세요.`,
     '이번 주차의 에픽 목록은 다음과 같습니다. 추가로 작업할 기능이 있다면 알려 주세요.',
     '다음으로, 아직 끝내지 못한 작업이 있다면 알려 주세요.',
     '마지막으로, 수정해야 할 버그 목록이 있다면 알려 주세요.',
-    '감사합니다. 이번 주차의 스프린트와 스토리 목록을 생성하겠습니다!'
+    '감사합니다. 이번 주차의 스프린트와 스토리 목록을 생성하겠습니다!',
+    '제공해 드린 스토리 목록을 바탕으로, 추가적인 구현 사항을 말씀해 주세요.',
+    '버그 수정 사항에 대해 자세히 설명해 주세요.',
+    '감사합니다. 해당 정보를 바탕으로 하위 이슈를 생성하겠습니다!'
   ];
 
-  const showSuccessModal = () => {
+  const role:RoleData[] = [
+    {
+      title: '[FE]',
+      name: 'Frontend',
+      color: 'B95DE0'
+    },
+    {
+      title: '[BE]',
+      name: 'Backend',
+      color: 'EE5858'
+    },
+    {
+      title: '[UX/UI]',
+      name: 'UX/UI Design',
+      color: '54B2A3'
+    },
+    {
+      title: '[DB]',
+      name: 'Database',
+      color: '7498E5'
+    },
+    {
+      title: '[INFRA]',
+      name: 'Infra',
+      color: '929292'
+    },
+    {
+      title: '[EM]',
+      name: 'Embedded',
+      color: 'F5ABC0'
+    },
+    {
+      title: '[MOBILE]',
+      name: 'Mobile',
+      color: '498A80'
+    },
+  ]
+
+  const showStorySuccessModal = () => {
     Swal.fire({
       title: '스토리 등록 완료',
       text: 'JIRA sprint 스토리 생성이 완료되었습니다. 이제 하위 이슈를 생성하겠습니다.',
@@ -72,7 +128,16 @@ export default function SprintPage({
     });
   };
 
-  const fetchIssues = async (issueData: IssueData[]) => {
+  const showSubtaskSuccessModal = () => {
+    Swal.fire({
+      title: '서브 태스크 등록 완료',
+      text: 'JIRA sprint Sub-task 생성이 완료되었습니다. 지금 sprint를 보러 갈까요?',
+      icon: 'success',
+      confirmButtonText: '확인'
+    });
+  };
+
+  const fetchIssues = async (issueData: IssueData[], type:string) => {
     setIsCreating(true)
     try {
       const response = await postIssues({
@@ -81,7 +146,11 @@ export default function SprintPage({
       });
       console.log(response);
       if (response?.code === '200') {
-        showSuccessModal()
+        if (type === 'Story') {
+          showStorySuccessModal()
+        } else {
+          showSubtaskSuccessModal()
+        }
       }
       
     } catch (error) {
@@ -115,13 +184,17 @@ export default function SprintPage({
       setMessages((prev) => [...prev, { user: '', bot: botMessage }]);
       setCurrentQuestionIndex(prev => prev + 1);
       setAnimate(true);
-      if (currentQuestionIndex === questions.length - 1) {
+      if (currentQuestionIndex === 3) {
         getProjectInfo(projectId)
         .then((data) => {
           handleCreateIssue(epics, data, 'story');
         })
       }
     }, 1000)
+  }
+
+  const addUserMessage = (message:string) => {
+
   }
 
   const handleCreateIssue = async (epicData:FetchedEpics[], projectData:string, type: string) => {
@@ -186,6 +259,7 @@ export default function SprintPage({
       console.log(error)
       setIsFindEpic(false)
     })
+    console.log(role)
   }, [])
 
   useEffect(() => {
@@ -283,11 +357,12 @@ export default function SprintPage({
   else return (
     <div className="flex h-screen overflow-hidden bg-gray-100">
       <div className="flex-1 p-6 overflow-hidden">
-        <div className="flex justify-center mb-8">
-          <h2 className="text-2xl text-gray-500 font-light text-center">
+        <div className="w-full mb-8 relative">
+          <button className='w-[120px] h-[40px] absolute left-6 bg-gray-400 rounded text-white text-lg' onClick={() => setShowEpicModal(true)}>Epic 추가하기</button>
+          <p className="text-xl text-gray-500 font-light text-center">
             AI와의 채팅을 통해 금주의 스프린트를 제작해 보세요{' '}
             <span role="img" aria-label="search">🔍</span>
-          </h2>
+          </p>
         </div>
 
         {/* Chat Area */}
@@ -304,7 +379,7 @@ export default function SprintPage({
           {messages?.map((msg, index) => (
             <div key={index} className="flex flex-col space-y-2 animate-fadeIn">
               {msg.user && (
-                <div className="self-end max-w-xs p-3 bg-blue-300 text-gray-700 rounded-[20px_0px_20px_20px]">
+                <div className="self-end max-w-sm p-3 bg-blue-300 text-gray-700 rounded-[20px_0px_20px_20px]">
                   {msg?.user}
                 </div>
               )}
@@ -312,11 +387,20 @@ export default function SprintPage({
                 <>
                   <div className='flex items-start space-x-4 animate-fadeIn'>
                     <Image src="/img/chatbot.png" alt="Chatbot" width={50} height={50} />
-                    <div className="self-start max-w-xs p-3 bg-[#B2E0D9] text-gray-700 rounded-[0px_20px_20px_20px]">
+                    <div className="self-start max-w-2xl p-3 bg-[#B2E0D9] text-gray-700 rounded-[0px_20px_20px_20px]">
                       {msg?.bot}
                     </div>
                   </div>
                   {index === 0 && (
+                    <div className='w-2/3 ml-14 bg-white rounded-lg p-4 space-x-2 flex'>
+                      {role.map((item, index) => (
+                        <button key={index} className={`bg-[#${item?.color}] px-[12px] p-[8px] text-white rounded`}>
+                          {item?.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {index === 2 && (
                     <div className='w-2/3 ml-14 bg-white rounded-lg p-4 space-y-2'>
                       {epics?.map((item, index) => (
                         <div className='w-full h-20 border border-[#54B2A3] rounded p-2 relative' key={index}>
@@ -335,6 +419,31 @@ export default function SprintPage({
                       ))}
                     </div>
                   )}
+                  {index === 4 && parsedData?.length > 0 && (
+                    <div className="mt-4 w-2/3 bg-white rounded-lg p-4 space-y-2">
+                      <h3 className="text-lg font-bold text-gray-600">생성된 이슈 목록</h3>
+                      <div className="space-y-2">
+                        {parsedData.map((issue, index) => (
+                          <div className='w-full h-20 border border-[#54B2A3] rounded p-2 relative' key={index}>
+                            <div className="flex items-center my-1">
+                              <img src={`/img/${issue?.priority}.png`} alt="priority_img" className="w-5" />
+                              <h1 className='font-bold text-md text-[#54B2A3] ml-2'>{issue?.summary}</h1>
+                            </div>
+                            <p className="text-sm ml-2">{issue?.description}</p>
+                            <p className="text-sm text-gray-500 absolute right-2 top-2">Epic: {issue?.parent}</p>
+                          </div>
+                        ))}
+                      </div>
+                      {isCreating?
+                      <button className="w-[180px] h-[40px] my-4 bg-[#54B2A3] duration-200 text-base font-bold text-white rounded hover:bg-[#B2E0D9] cursor-not-allowed flex items-center justify-center" disabled>
+                        <img src="/svg/loading.svg" alt="Loading" className="animate-spin h-5 w-5 mr-3" />
+                        저장하는 중...
+                      </button> :
+                      <button className='w-[180px] h-[40px] my-4 bg-[#54B2A3] duration-200 text-base font-bold text-white rounded hover:bg-[#B2E0D9]'
+                      onClick={() =>fetchIssues(parsedData, 'Story')}>스토리 JIRA에 등록하기</button>
+                      }
+                    </div>
+                  )}
                 </>
               )}
             </div>
@@ -349,31 +458,6 @@ export default function SprintPage({
                 className="w-32"
               />
               <p className='text-gray-700'>Loading ...</p>
-            </div>
-          )}
-          {parsedData?.length > 0 && (
-            <div className="mt-4 w-2/3 ml-14 bg-white rounded-lg p-4 space-y-2">
-              <h3 className="text-lg font-bold text-gray-600">생성된 이슈 목록</h3>
-              <div className="space-y-2">
-                {parsedData.map((issue, index) => (
-                  <div className='w-full h-20 border border-[#54B2A3] rounded p-2 relative' key={index}>
-                    <div className="flex items-center my-1">
-                      <img src={`/img/${issue?.priority}.png`} alt="priority_img" className="w-5" />
-                      <h1 className='font-bold text-md text-[#54B2A3] ml-2'>{issue?.summary}</h1>
-                    </div>
-                    <p className="text-sm ml-2">{issue?.description}</p>
-                    <p className="text-sm text-gray-500 absolute right-2 top-2">Epic: {issue?.parent}</p>
-                  </div>
-                ))}
-              </div>
-              {isCreating?
-              <button className="w-[180px] h-[40px] my-4 bg-[#54B2A3] duration-200 text-base font-bold text-white rounded hover:bg-[#B2E0D9] cursor-not-allowed flex items-center justify-center" disabled>
-                <img src="/svg/loading.svg" alt="Loading" className="animate-spin h-5 w-5 mr-3" />
-                저장하는 중...
-              </button> :
-              <button className='w-[180px] h-[40px] my-4 bg-[#54B2A3] duration-200 text-base font-bold text-white rounded hover:bg-[#B2E0D9]'
-              onClick={() =>fetchIssues(parsedData)}>스토리 JIRA에 등록하기</button>
-              }
             </div>
           )}
           <div ref={chatEndRef} />
@@ -409,6 +493,9 @@ export default function SprintPage({
             </svg>
           </button>
         </div>
+        {showEpicModal && (
+          <EpicModal isOpen={showEpicModal} onClose={handleEpicModal} projectId={projectId} />
+        )}
       </div>
     </div>
   )

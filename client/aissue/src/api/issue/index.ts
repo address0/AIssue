@@ -12,7 +12,7 @@ const postIssues = async (issueRequest: IssueRequest) => {
 }
 
 const getEpics = async (jiraProjectKey: string) => {
-  const res = await privateAPI.get(`/issues/sprint`, {
+  const res = await privateAPI.get('/issues/epic', {
     params: {
       project: jiraProjectKey
     }
