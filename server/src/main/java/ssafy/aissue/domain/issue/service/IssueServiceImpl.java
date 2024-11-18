@@ -136,7 +136,7 @@ public class IssueServiceImpl implements IssueService {
         String jiraEmail = currentMember.getEmail();
         String jiraKey = currentMember.getJiraKey();
         String issueKey = issueUpdateRequest.getIssueKey();
-        Long issueId = issueUpdateRequest.getIssueId();
+//        Long issueId = issueUpdateRequest.getIssueId();
         // IssueUpdateRequest를 JiraIssueUpdateRequest로 변환
         JiraIssueUpdateRequest jiraIssueUpdateRequest = convertToJiraIssueUpdateRequest(issueUpdateRequest);
 
@@ -173,7 +173,7 @@ public class IssueServiceImpl implements IssueService {
         // IssueUpdateRequest의 데이터를 JiraIssueUpdateRequest 형식에 맞게 변환
         JiraIssueUpdateRequest.Fields fields = JiraIssueUpdateRequest.Fields.builder()
                 .summary(issueUpdateRequest.getSummary())
-                .status(issueUpdateRequest.getStatus())
+//                .status(issueUpdateRequest.getStatus())
                 .description(issueUpdateRequest.getDescription())
                 .priority(new JiraIssueUpdateRequest.Priority(issueUpdateRequest.getPriority()))
                 .storyPoint(issueUpdateRequest.getStoryPoint())
