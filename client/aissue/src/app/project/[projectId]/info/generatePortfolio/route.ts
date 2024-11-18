@@ -19,7 +19,7 @@ export async function POST(req: Request) {
       body: JSON.stringify({
         model: 'gpt-4o',
         messages: [{ role: 'user', content: prompt }],
-        max_tokens: 2000,
+        max_tokens: 4000,
       }),
     });
 
@@ -27,9 +27,9 @@ export async function POST(req: Request) {
       const errorDetails = await response.json();
       return NextResponse.json({ error: errorDetails }, { status: response.status });
     }
-
+    
     const data = await response.json();
-
+    console.log(data)
     return NextResponse.json(data, { status: 200 });
   } catch (error) {
     console.error('Error in GPT API:', error);
