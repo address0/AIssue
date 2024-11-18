@@ -10,16 +10,15 @@ export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [passwordError, setPasswordError] = useState<string>('')
-  const [installPrompt, setInstallPrompt] = useState<Event | null>(null) // 앱 설치 프롬프트 저장
-  const [isInstallable, setIsInstallable] = useState(false) // 설치 가능 여부
+  const [installPrompt, setInstallPrompt] = useState<Event | null>(null)
+  const [isInstallable, setIsInstallable] = useState(false)
   const router = useRouter()
-
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (event: Event) => {
       event.preventDefault()
-      setInstallPrompt(event) // 프롬프트 저장
-      setIsInstallable(true) // 설치 가능 상태 업데이트
+      setInstallPrompt(event)
+      setIsInstallable(true)
     }
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
@@ -35,10 +34,10 @@ export default function LoginPage() {
   const handleInstallClick = async () => {
     if (installPrompt) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ;(installPrompt as any).prompt() // 프롬프트 실행
+      ;(installPrompt as any).prompt()
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const result = await (installPrompt as any).userChoice
-      console.log(`사용자 선택: ${result.outcome}`) // accepted 또는 dismissed
+      console.log(`사용자 선택: ${result.outcome}`)
       setInstallPrompt(null)
       setIsInstallable(false)
     }
@@ -62,11 +61,13 @@ export default function LoginPage() {
       router.push('/project')
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        console.log(error.response?.data.message)
         if (error.response?.data.message === '비밀번호가 일치하지 않습니다.') {
           setPasswordError(error.response?.data.message)
+        } else if (
+          error.response?.data.message === '존재하지 않는 이메일입니다.'
+        ) {
+          setPasswordError(error.response?.data.message)
         }
-        console.error('로그인 실패', error)
       }
     }
   }
