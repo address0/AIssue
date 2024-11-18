@@ -84,11 +84,11 @@ export default function ChatBotModal({
 
   return (
     <div
-      className="fixed inset-0 flex items-center justify-end z-50"
+      className="fixed inset-0 flex items-center justify-center sm:justify-end z-50"
       onClick={handleOverlayClick}
     >
       <div
-        className="bg-white rounded-lg shadow-lg w-[35vw] h-[60vh] p-4 m-4 flex flex-col"
+        className="bg-white rounded-lg shadow-lg w-[90vw] h-[85vh] sm:w-[70vw] sm:h-[75vh] md:w-[50vw] md:h-[70vh] lg:w-[35vw] lg:h-[60vh] p-4 m-4 flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-center mb-4">
