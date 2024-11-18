@@ -132,7 +132,7 @@ export async function POST(request: Request) {
 
     ]
 
-    const selectedPrompt = type === 'epic' ? prompts[0] : prompts[1];
+    const selectedPrompt = type === 'epic' ? prompts[0] : type === 'story' ? prompts[1] : prompts[2];
 
     try {
         const response = await axios.post(

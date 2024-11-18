@@ -20,4 +20,13 @@ const getEpics = async (jiraProjectKey: string) => {
   return res.data?.result;
 }
 
-export { postIssues, getEpics }
+const getSprint = async (jiraProjectKey: string) => {
+  const res = await privateAPI.get('/issues/sprint', {
+    params: {
+      project: jiraProjectKey
+    }
+  });
+  return res.data?.result;
+}
+
+export { postIssues, getEpics, getSprint }

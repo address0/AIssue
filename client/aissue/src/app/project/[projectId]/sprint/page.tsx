@@ -8,7 +8,7 @@ import NoEpic from '@public/lottie/Animation - 1730424329200.json'
 import LoadingImg from '@public/lottie/Animation - 1731310411267.json'
 import FindEpicImg from '@public/lottie/Animation - 1731658876737.json'
 import EpicModal from '@/components/(Modal)/EpicModal/page'
-import { getEpics } from '@/api/issue'
+import { getEpics, getSprint } from '@/api/issue'
 import { getProjectInfo } from "@/api/project";
 import { postIssues } from "@/api/issue";
 import Swal from 'sweetalert2';
@@ -23,8 +23,8 @@ interface FetchedEpics {
   issuetype: string,
   start_at?: string,
   end_at?: string,
-  assignee: string,
-  status: null | string
+  assignee?: string,
+  status?: null | string
 }
 
 interface SprintData {
@@ -57,30 +57,47 @@ export default function SprintPage({
   const [input, setInput] = useState<string>('')
   const [loading, setLoading] = useState(false)
   const chatEndRef = useRef<HTMLDivElement | null>(null)
-  const [parsedData, setParsedData] = useState<IssueData[]>([])
+  const [parsedStory, setParsedStory] = useState<IssueData[]>([])
+  const [parsedSubTask, setParsedSubTask] = useState<IssueData[]>([])
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0)
   const [showEpicModal, setShowEpicModal] = useState<boolean>(false)
   const [animate, setAnimate] = useState<boolean>(false);
   const [initialMessageSent, setInitialMessageSent] = useState<boolean>(false);
-  const [inputList, setInputList] = useState<SprintData[]>([])
+  const [inputList, setInputList] = useState<string[]>([])
   const [epics, setEpics] = useState<FetchedEpics[]>([])
   const [isInputDisabled, setIsInputDisabled] = useState<boolean>(false)
-  const [isCreating, setIsCreating] = useState<boolean>(false)
+  const [isCreatingStory, setIsCreatingStory] = useState<boolean>(false)
+  const [isCreatingSubTask, setIsCreatingSubTask] = useState<boolean>(false)
   const [projectInfo, setProjectInfo] = useState('')
   const userName =  typeof window !== 'undefined' ? sessionStorage.getItem('memberName') : null
-  const [usermessage, setUserMessage] = useState<MessageData>()
   const [prompt, setPrompt] = useState<MessageData[]>([])
   const [userRole, setUserRole] = useState<string>('')
 
-  const questions:string[] = [
-    `${userName}님이 이번 주 담당한 역할을 선택해 주세요.`,
-    '이번 주차의 에픽 목록은 다음과 같습니다. 추가로 작업할 기능이 있다면 알려 주세요.',
-    '다음으로, 아직 끝내지 못한 작업이 있다면 알려 주세요.',
-    '마지막으로, 수정해야 할 버그 목록이 있다면 알려 주세요.',
-    '감사합니다. 이번 주차의 스프린트와 스토리 목록을 생성하겠습니다!',
-    '제공해 드린 스토리 목록을 바탕으로, 추가적인 구현 사항을 말씀해 주세요.',
-    '버그 수정 사항에 대해 자세히 설명해 주세요.',
-    '감사합니다. 해당 정보를 바탕으로 하위 이슈를 생성하겠습니다!'
+  const questions:SprintData[] = [
+    { type: '담당',
+      message: `${userName}님이 이번 주 담당한 역할을 선택해 주세요.`
+    },
+    { type: '추가 기능',
+      message: '이번 주차의 에픽 목록은 다음과 같습니다. 추가로 작업할 기능이 있다면 알려 주세요.'
+    },
+    { type: '추가 작업 내용',
+      message: '다음으로, 아직 끝내지 못한 작업이 있다면 알려 주세요.'
+    },
+    { type: '버그 수정',
+      message: '마지막으로, 수정해야 할 버그 목록이 있다면 알려 주세요.'
+    },
+    { type: '',
+      message: '감사합니다. 이번 주차의 스프린트와 스토리 목록을 생성하겠습니다!'
+    },
+    { type: '세부 구현 사항',
+      message: '제공해 드린 스토리 목록을 바탕으로, 세부 구현 사항을 자유롭게 말씀해 주세요.'
+    },
+    { type: '버그 세부 수정',
+      message: '버그 수정 사항에 대해 자세히 설명해 주세요.'
+    },
+    { type: '',
+      message: '감사합니다. 해당 정보를 바탕으로 하위 이슈를 생성하겠습니다!'
+    },
   ];
 
   const role:RoleData[] = [
@@ -120,6 +137,10 @@ export default function SprintPage({
       text: 'JIRA sprint 스토리 생성이 완료되었습니다. 이제 하위 이슈를 생성하겠습니다.',
       icon: 'success',
       confirmButtonText: '확인'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        nextQuestion()
+      }
     });
   };
 
@@ -133,7 +154,12 @@ export default function SprintPage({
   };
 
   const fetchIssues = async (issueData: IssueData[], type:string) => {
-    setIsCreating(true)
+    if (type === 'Story') {
+      setIsCreatingStory(true)
+    } else {
+      setIsCreatingSubTask(true)
+    }
+    setIsCreatingStory(true)
     try {
       const response = await postIssues({
         project: projectId,
@@ -152,10 +178,14 @@ export default function SprintPage({
       console.error(error);
       console.log({
         project: projectId,
-        issues: parsedData
+        issues: parsedStory
       })
     }
-    setIsCreating(false)
+    if (type === 'Story') {
+      setIsCreatingStory(false)
+    } else {
+      setIsCreatingSubTask(false)
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -167,33 +197,33 @@ export default function SprintPage({
       window.alert('정확한 값을 입력해 주세요!')
       return
     }
-
+    setInputList((prev) => [...prev, userMessage])
     const userMessage = input
     setMessages((prev) => [...prev, { user: userMessage, bot: '' }])
-    setInputList((prev) => [...prev, {type: 'user', message: userMessage}])
-    console.log(inputList)
     setInput('')
-
-    
   }
 
   const nextQuestion = () => {
+    setInputList([])
     setTimeout(() => {
-      const botMessage = questions[currentQuestionIndex];
+      const botMessage = questions[currentQuestionIndex]?.message;
       setMessages((prev) => [...prev, { user: '', bot: botMessage }]);
       setCurrentQuestionIndex(prev => prev + 1);
       setAnimate(true);
       if (currentQuestionIndex === 4) {
-        getProjectInfo(projectId)
-        .then((data) => {
-          handleCreateIssue(epics, data, 'story');
-        })
+        handleCreateStory(epics, projectInfo);
+      } else if (currentQuestionIndex === 7) {
+        handleCreateSubtask(epics, parsedStory, projectInfo)
       }
     }, 500)
   }
 
-  const addPrompt = (message:MessageData) => {
-    setPrompt((prev) => [...prev, message])
+  const addPrompt = (type: string, role?:string) => {
+    if (type === '담당' && role) {
+      setPrompt((prev) => [...prev, {type: questions[currentQuestionIndex - 1]?.type, detail: [role]}])
+    } else {
+      setPrompt((prev) => [...prev, {type: type, detail:inputList}])
+    }
     nextQuestion()
   }
 
@@ -202,7 +232,7 @@ export default function SprintPage({
   }, [prompt])
 
 
-  const handleCreateIssue = async (epicData:FetchedEpics[], projectData:string, type: string) => {
+  const handleCreateStory = async (epicData:FetchedEpics[], projectData:string) => {
     setLoading(true)
 
     const response = await fetch('/project/[projectId]/sprint/chat', {
@@ -210,9 +240,13 @@ export default function SprintPage({
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ message: `적절한 이슈 스토리를 3개 생성해 줘. 프로젝트 기술과 기능에 대한 정보는 다음과 같아. \n
         ${JSON.stringify(projectData, null, 2)} \n
-        그리고, 현재 프로젝트의 에픽 정보는 다음과 같아. 해당 에픽의 하위 스토리들을 생성해 줘. \n
-        ${JSON.stringify(epicData, null, 2)}`,
-        type: type
+        그리고, 현재 프로젝트의 에픽 정보는 다음과 같아. \n
+        ${JSON.stringify(epicData, null, 2)} \n
+        이번 주차에 구현해야 할 추가 기능: ${prompt[1]?.detail} \n
+        아직 끝내지 못한 작업 내용: ${prompt[2]?.detail} \n
+        수정해야 하는 버그 목록: ${prompt[3]?.detail} \n
+        마지막으로, 이번 주 내가 담당한 부분은 ${prompt[0]?.detail}야. 이슈 summary에 항상 ${prompt[0]?.detail}를 붙이고 내가 진행할 업무에 대해서 스토리를 생성해 줘.`,
+        type: 'story'
        }),
     })
 
@@ -226,7 +260,7 @@ export default function SprintPage({
         let jsonString = resultMatch[1];
         jsonString = jsonString.replace(/(\w+):/g, '"$1":')
         try {
-          setParsedData(JSON.parse(jsonString))
+          setParsedStory(JSON.parse(jsonString))
         } catch (error) {
           console.error("JSON parsing failed:", error);
         }
@@ -234,7 +268,56 @@ export default function SprintPage({
         try {
           const cleanedResponse = data?.response.replace(/```json|```/g, '').trim();
           const jsonData = JSON.parse(cleanedResponse)
-          setParsedData(jsonData?.result);
+          setParsedStory(jsonData?.result);
+        } catch (error) {
+          console.log("JSON 부분을 찾을 수 없습니다.");
+          console.log(error)
+        }
+      }
+    } else {
+      console.error(data.error)
+    }
+    setLoading(false)
+  }
+
+  const handleCreateSubtask = async (epicData:FetchedEpics[], storyData:IssueData[], projectData:string) => {
+    setLoading(true)
+
+    const response = await fetch('/project/[projectId]/sprint/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: `스토리와 프로젝트 정보에 기반한 sub-task를 5개 생성해 줘. 프로젝트 기술과 기능에 대한 정보는 다음과 같아. \n
+        ${JSON.stringify(projectData, null, 2)} \n
+        그리고, 현재 프로젝트의 에픽 정보는 다음과 같아. \n
+        ${JSON.stringify(epicData, null, 2)} \n
+        그리고, 이를 기반으로 현재 생성된 스토리 정보는 다음과 같아. \n
+        ${JSON.stringify(storyData, null, 2)} \n
+        세부 구현 사항: ${prompt[5]?.detail} \n
+        버그 스토리 관련 세부 정보: ${prompt[5]?.detail} \n
+        마지막으로, 이번 주 내가 담당한 부분은 ${prompt[0]?.detail}야. 하위 이슈 summary에 항상 ${prompt[0]?.detail}를 붙이고 내가 담당한 스토리를 기반으로 하위 이슈를 생성해 줘.`,
+        type: 'sub-task'
+       }),
+    })
+
+    const data = await response.json()
+    console.log(data)
+    
+    if (response.ok) {
+      const resultMatch = data?.response?.match(/result:\s*(\[[\s\S]*?\])\s*}/);
+
+      if (resultMatch) {
+        let jsonString = resultMatch[1];
+        jsonString = jsonString.replace(/(\w+):/g, '"$1":')
+        try {
+          setParsedSubTask(JSON.parse(jsonString))
+        } catch (error) {
+          console.error("JSON parsing failed:", error);
+        }
+      } else {
+        try {
+          const cleanedResponse = data?.response.replace(/```json|```/g, '').trim();
+          const jsonData = JSON.parse(cleanedResponse)
+          setParsedSubTask(jsonData?.result);
         } catch (error) {
           console.log("JSON 부분을 찾을 수 없습니다.");
           console.log(error)
@@ -249,6 +332,16 @@ export default function SprintPage({
   const handleEpicModal = () => {
     setShowEpicModal(!showEpicModal)
   }
+
+  useEffect(() => {
+    getProjectInfo(projectId)
+    .then((data) => {
+      setProjectInfo(data)
+    })
+    .catch((error) => {
+      console.log(error)
+    })
+  }, [])
 
   useEffect(() => {
     getEpics(projectId)
@@ -271,17 +364,17 @@ export default function SprintPage({
     if (chatEndRef.current) {
       chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [messages, parsedData, loading])
+  }, [messages, parsedStory, parsedSubTask, loading])
 
   useEffect(() => {
-    console.log(parsedData)
-  },[parsedData])
+    console.log(parsedStory)
+  },[parsedStory, parsedSubTask])
 
   useEffect(() => {
     if (initialMessageSent) {
       const timer = setTimeout(() => {
       if (currentQuestionIndex < questions.length) {
-          const botMessage = questions[currentQuestionIndex];
+          const botMessage = questions[currentQuestionIndex]?.message;
           setMessages((prev) => [...prev, { user: '', bot: botMessage }]);
           setCurrentQuestionIndex(prev => prev + 1);
           setAnimate(true);
@@ -386,7 +479,7 @@ export default function SprintPage({
               {msg.user && (
                 <div className="self-end max-w-sm p-3 bg-blue-300 text-gray-700 rounded-[20px_0px_20px_20px]">
                   {msg?.user}
-                  <button onClick={nextQuestion}>Next</button>
+                  <button onClick={() => addPrompt(questions[currentQuestionIndex - 1]?.type)}>Next</button>
                 </div>
               )}
               {msg.bot && (
@@ -394,19 +487,21 @@ export default function SprintPage({
                   {msg.bot === '이번 주차의 에픽 목록은 다음과 같습니다. 추가로 작업할 기능이 있다면 알려 주세요.' && (
                     <div className='w-2/3 ml-14 bg-white rounded-lg p-4 space-y-2'>
                       {epics?.map((item, index) => (
-                        <div className='w-full h-20 border border-[#54B2A3] rounded p-2 relative' key={index}>
-                          <div className="flex items-center my-1">
-                            <img src={`/img/${item?.priority}.png`} alt="priority_img" className="w-5" />
-                            <p className="text-sm text-gray-500 ml-1">{item?.key}
-                              <span className="text-gray-500 text-xs font-normal ml-4">{item?.start_at?.substring(0,10)} - {item?.end_at?.substring(0,10)}</span>
-                            </p>
+                        item?.status !== '완료' && (
+                          <div className='w-full h-20 border border-[#54B2A3] rounded p-2 relative' key={index}>
+                            <div className="flex items-center my-1">
+                              <img src={`/img/${item?.priority}.png`} alt="priority_img" className="w-5" />
+                              <p className="text-sm text-gray-500 ml-1">{item?.key}
+                                <span className="text-gray-500 text-xs font-normal ml-4">{item?.start_at?.substring(0,10)} - {item?.end_at?.substring(0,10)}</span>
+                              </p>
+                            </div>
+                            <h1 className='font-bold text-md text-[#54B2A3] ml-2'>{item?.summary}</h1>
+                            <div className={`absolute top-2 right-2 w-14 h-6 text-xs flex items-center justify-center rounded 
+                              ${item?.status === '해야 할 일' ? 'bg-gray-200 text-gray-700' : 'bg-blue-200 text-blue-700'}`}>
+                              {item?.status}
+                            </div>
                           </div>
-                          <h1 className='font-bold text-md text-[#54B2A3] ml-2'>{item?.summary}</h1>
-                          <div className={`absolute top-2 right-2 w-14 h-6 text-xs flex items-center justify-center rounded 
-                            ${item?.status === '해야 할 일' ? 'bg-gray-200 text-gray-700' : item?.status === '진행 중'? 'bg-blue-200 text-blue-700' : 'bg-green-200 text-green-700'}`}>
-                            {item?.status}
-                          </div>
-                        </div>
+                        )
                       ))}
                     </div>
                   )}
@@ -427,16 +522,16 @@ export default function SprintPage({
                           {item?.name}
                         </button>
                       ))}
-                      <button onClick={() => {addPrompt({type: '담당', detail: [userRole]})}} disabled={!userRole || currentQuestionIndex !== 1}
+                      <button onClick={() => {addPrompt('담당', userRole)}} disabled={!userRole || currentQuestionIndex !== 1}
                       className={`w-[80px] h-[40px] text-white text-md rounded ${userRole ? 'bg-blue-400' : 'cursor-not-allowed bg-gray-300'}`}
                       >다음</button>
                     </div>
                   )}
-                  {msg.bot === '감사합니다. 이번 주차의 스프린트와 스토리 목록을 생성하겠습니다!' && parsedData?.length > 0 && (
+                  {msg.bot === '감사합니다. 이번 주차의 스프린트와 스토리 목록을 생성하겠습니다!' && parsedStory?.length > 0 && (
                     <div className="ml-14 mt-4 w-2/3 bg-white rounded-lg p-4 space-y-2">
                       <h3 className="text-lg font-bold text-gray-600">생성된 이슈 목록</h3>
                       <div className="space-y-2">
-                        {parsedData.map((issue, index) => (
+                        {parsedStory.map((issue, index) => (
                           <div className='w-full h-20 border border-[#54B2A3] rounded p-2 relative' key={index}>
                             <div className="flex items-center my-1">
                               <img src={`/img/${issue?.priority}.png`} alt="priority_img" className="w-5" />
@@ -447,13 +542,38 @@ export default function SprintPage({
                           </div>
                         ))}
                       </div>
-                      {isCreating?
+                      {isCreatingStory?
                       <button className="w-[180px] h-[40px] my-4 bg-[#54B2A3] duration-200 text-base font-bold text-white rounded hover:bg-[#B2E0D9] cursor-not-allowed flex items-center justify-center" disabled>
                         <img src="/svg/loading.svg" alt="Loading" className="animate-spin h-5 w-5 mr-3" />
                         저장하는 중...
                       </button> :
                       <button className='w-[180px] h-[40px] my-4 bg-[#54B2A3] duration-200 text-base font-bold text-white rounded hover:bg-[#B2E0D9]'
-                      onClick={() =>fetchIssues(parsedData, 'Story')}>스토리 JIRA에 등록하기</button>
+                      onClick={() =>fetchIssues(parsedStory, 'Story')}>스토리 JIRA에 등록하기</button>
+                      }
+                    </div>
+                  )}
+                  {msg.bot === '감사합니다. 해당 정보를 바탕으로 하위 이슈를 생성하겠습니다!' && parsedSubTask?.length > 0 && (
+                    <div className="ml-14 mt-4 w-2/3 bg-white rounded-lg p-4 space-y-2">
+                      <h3 className="text-lg font-bold text-gray-600">생성된 하위 이슈 목록</h3>
+                      <div className="space-y-2">
+                        {parsedSubTask.map((issue, index) => (
+                          <div className='w-full h-20 border border-[#54B2A3] rounded p-2 relative' key={index}>
+                            <div className="flex items-center my-1">
+                              <img src={`/img/${issue?.priority}.png`} alt="priority_img" className="w-5" />
+                              <h1 className='font-bold text-md text-[#54B2A3] ml-2'>{issue?.summary}</h1>
+                            </div>
+                            <p className="text-sm ml-2">{issue?.description}</p>
+                            <p className="text-sm text-gray-500 absolute right-2 top-2">Story: {issue?.parent}</p>
+                          </div>
+                        ))}
+                      </div>
+                      {isCreatingSubTask?
+                      <button className="w-[180px] h-[40px] my-4 bg-[#54B2A3] duration-200 text-base font-bold text-white rounded hover:bg-[#B2E0D9] cursor-not-allowed flex items-center justify-center" disabled>
+                        <img src="/svg/loading.svg" alt="Loading" className="animate-spin h-5 w-5 mr-3" />
+                        저장하는 중...
+                      </button> :
+                      <button className='w-[180px] h-[40px] my-4 bg-[#54B2A3] duration-200 text-base font-bold text-white rounded hover:bg-[#B2E0D9]'
+                      onClick={() =>fetchIssues(parsedSubTask, 'Sub-Task')}>하위 이슈 등록하기</button>
                       }
                     </div>
                   )}
@@ -478,7 +598,7 @@ export default function SprintPage({
 
 
         {/* Input Area Fixed to Bottom */}
-        <div className="fixed bottom-5 left-[20rem] w-[70%] bg-white p-4 shadow-md flex items-center border-2 border-[#4D86FF] rounded-[10px]">
+        <div className="fixed bottom-5 w-[70%] bg-white p-4 shadow-md flex items-center border-2 border-[#4D86FF] rounded-[10px]">
           <input
             type="text"
             value={input}
