@@ -150,7 +150,10 @@ export default function ProjectLayout({
                 <button
                   key={item.path}
                   type="button"
-                  onClick={() => router.push(`/project/${projectId}/${item.path}`)}
+                  onClick={() => {
+                    router.push(`/project/${projectId}/${item.path}`);
+                    setIsSidebarOpen(false); // 메뉴 클릭 시 사이드바 닫기
+                  }}
                   className={`p-6 rounded-xl text-left ${
                     currentPath === item.path
                       ? 'bg-[#7498e5] text-white'
