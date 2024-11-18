@@ -35,7 +35,6 @@ interface SprintData {
 interface RoleData {
   title: string,
   name: string,
-  color: string
 }
 
 interface MessageData {
@@ -69,6 +68,9 @@ export default function SprintPage({
   const [isCreating, setIsCreating] = useState<boolean>(false)
   const [projectInfo, setProjectInfo] = useState('')
   const userName =  typeof window !== 'undefined' ? sessionStorage.getItem('memberName') : null
+  const [usermessage, setUserMessage] = useState<MessageData>()
+  const [prompt, setPrompt] = useState<MessageData[]>([])
+  const [userRole, setUserRole] = useState<string>('')
 
   const questions:string[] = [
     `${userName}님이 이번 주 담당한 역할을 선택해 주세요.`,
@@ -85,37 +87,30 @@ export default function SprintPage({
     {
       title: '[FE]',
       name: 'Frontend',
-      color: 'B95DE0'
     },
     {
       title: '[BE]',
       name: 'Backend',
-      color: 'EE5858'
     },
     {
       title: '[UX/UI]',
       name: 'UX/UI Design',
-      color: '54B2A3'
     },
     {
       title: '[DB]',
       name: 'Database',
-      color: '7498E5'
     },
     {
       title: '[INFRA]',
       name: 'Infra',
-      color: '929292'
     },
     {
       title: '[EM]',
       name: 'Embedded',
-      color: 'F5ABC0'
     },
     {
       title: '[MOBILE]',
       name: 'Mobile',
-      color: '498A80'
     },
   ]
 
@@ -179,23 +174,33 @@ export default function SprintPage({
     console.log(inputList)
     setInput('')
 
+    
+  }
+
+  const nextQuestion = () => {
     setTimeout(() => {
       const botMessage = questions[currentQuestionIndex];
       setMessages((prev) => [...prev, { user: '', bot: botMessage }]);
       setCurrentQuestionIndex(prev => prev + 1);
       setAnimate(true);
-      if (currentQuestionIndex === 3) {
+      if (currentQuestionIndex === 4) {
         getProjectInfo(projectId)
         .then((data) => {
           handleCreateIssue(epics, data, 'story');
         })
       }
-    }, 1000)
+    }, 500)
   }
 
-  const addUserMessage = (message:string) => {
-
+  const addPrompt = (message:MessageData) => {
+    setPrompt((prev) => [...prev, message])
+    nextQuestion()
   }
+
+  useEffect(() => {
+    console.log(prompt)
+  }, [prompt])
+
 
   const handleCreateIssue = async (epicData:FetchedEpics[], projectData:string, type: string) => {
     setLoading(true)
@@ -381,26 +386,12 @@ export default function SprintPage({
               {msg.user && (
                 <div className="self-end max-w-sm p-3 bg-blue-300 text-gray-700 rounded-[20px_0px_20px_20px]">
                   {msg?.user}
+                  <button onClick={nextQuestion}>Next</button>
                 </div>
               )}
               {msg.bot && (
                 <>
-                  <div className='flex items-start space-x-4 animate-fadeIn'>
-                    <Image src="/img/chatbot.png" alt="Chatbot" width={50} height={50} />
-                    <div className="self-start max-w-2xl p-3 bg-[#B2E0D9] text-gray-700 rounded-[0px_20px_20px_20px]">
-                      {msg?.bot}
-                    </div>
-                  </div>
-                  {index === 0 && (
-                    <div className='w-2/3 ml-14 bg-white rounded-lg p-4 space-x-2 flex'>
-                      {role.map((item, index) => (
-                        <button key={index} className={`bg-[#${item?.color}] px-[12px] p-[8px] text-white rounded`}>
-                          {item?.name}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  {index === 2 && (
+                  {msg.bot === '이번 주차의 에픽 목록은 다음과 같습니다. 추가로 작업할 기능이 있다면 알려 주세요.' && (
                     <div className='w-2/3 ml-14 bg-white rounded-lg p-4 space-y-2'>
                       {epics?.map((item, index) => (
                         <div className='w-full h-20 border border-[#54B2A3] rounded p-2 relative' key={index}>
@@ -419,8 +410,30 @@ export default function SprintPage({
                       ))}
                     </div>
                   )}
-                  {index === 4 && parsedData?.length > 0 && (
-                    <div className="mt-4 w-2/3 bg-white rounded-lg p-4 space-y-2">
+                  <div className='flex items-start space-x-4 animate-fadeIn'>
+                    <Image src="/img/chatbot.png" alt="Chatbot" width={50} height={50} />
+                    <div className="self-start max-w-2xl p-3 bg-[#B2E0D9] text-gray-700 rounded-[0px_20px_20px_20px]">
+                      {msg?.bot}
+                    </div>
+                  </div>
+                  {index === 0 && (
+                    <div className='w-2/3 ml-14 bg-white rounded-lg p-4 space-x-2 flex'>
+                      {role.map((item, index) => (
+                        <button key={index} className={`px-[8px] p-[8px] text-sm rounded border border-[#54B2A3] transition ease-in-out
+                          ${userRole === item?.title ? 'bg-[#54B2A3] text-white font-bold scale-110' : 'text-[#54B2A3] bg-white'}
+                          ${currentQuestionIndex !== 1 && 'cursor-not-allowed'}`}
+                        onClick={() => setUserRole(item?.title)}
+                        disabled={currentQuestionIndex !== 1}>
+                          {item?.name}
+                        </button>
+                      ))}
+                      <button onClick={() => {addPrompt({type: '담당', detail: [userRole]})}} disabled={!userRole || currentQuestionIndex !== 1}
+                      className={`w-[80px] h-[40px] text-white text-md rounded ${userRole ? 'bg-blue-400' : 'cursor-not-allowed bg-gray-300'}`}
+                      >다음</button>
+                    </div>
+                  )}
+                  {msg.bot === '감사합니다. 이번 주차의 스프린트와 스토리 목록을 생성하겠습니다!' && parsedData?.length > 0 && (
+                    <div className="ml-14 mt-4 w-2/3 bg-white rounded-lg p-4 space-y-2">
                       <h3 className="text-lg font-bold text-gray-600">생성된 이슈 목록</h3>
                       <div className="space-y-2">
                         {parsedData.map((issue, index) => (
