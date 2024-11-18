@@ -4,12 +4,13 @@ import { useQuery } from '@tanstack/react-query'
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { getProjectList, getProjectInfo } from '@/api/project'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import ChatBotModal from '@/components/(Modal)/ChatBotModal/page'
 import ChatModal from '@/components/(Modal)/ChatModal/page'
 import { logOut } from '@/api/user'
 import LottieAnimation from '@/components/LottieAnimation/LottieAnimation'
 import animationData from '@public/lottie/Animation - 1731821799004.json'
+import LoadingSpinner from '@/static/svg/blue-spinner.svg'
 
 interface Message {
   text: string
@@ -46,6 +47,21 @@ export default function ProjectLayout({
 
   const toggleDropdown = () => setDropdownOpen(!dropdownOpen)
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen)
+
+  useEffect(() => {
+    if (!accessToken || !memberId) {
+      router.push('/login')
+      return
+    }
+
+    if (!isLoading && data) {
+      const isAuthorized = data.includes(projectId)
+
+      if (!isAuthorized) {
+        router.push('/project')
+      }
+    }
+  }, [accessToken, memberId, isLoading, data, projectId, router])
 
   const toggleChat = () => {
     setIsChatOpen(!isChatOpen)
@@ -88,7 +104,15 @@ export default function ProjectLayout({
   }
 
   if (isLoading) {
-    return <div>프로젝트 목록을 불러오는 중입니다.</div>
+    return (
+      <div className="flex justify-center items-center h-full">
+        <div className="flex flex-col justify-center items-center gap-y-3 font-bold text-lg">
+          <p>프로젝트 목록을 불러오는 중입니다.</p>
+          <p>권한을 확인중입니다.</p>
+          <LoadingSpinner className="animate-spin" />
+        </div>
+      </div>
+    )
   }
 
   const navigationItems = [

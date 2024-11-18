@@ -33,7 +33,9 @@ export default function SummaryPage() {
       /핵심 내용 요약:\s([\s\S]*?)(사용자별 내용 요약:|사용자별 요약은 제공된 정보가 없기 때문에 진행할 수 없습니다)/,
     )
     const userSummariesMatch = summary.match(/사용자별 내용 요약:\s([\s\S]*)/)
-    const overallSummary = overallSummaryMatch ? overallSummaryMatch[1].trim() : ''
+    const overallSummary = overallSummaryMatch
+      ? overallSummaryMatch[1].trim()
+      : ''
     const coreSummary = coreSummaryMatch ? coreSummaryMatch[1].trim() : ''
     const userSummaries: Record<string, string> = {}
     if (userSummariesMatch) {
@@ -72,7 +74,10 @@ export default function SummaryPage() {
 
   return (
     <div className="flex min-h-screen bg-gray-100">
-      <div className="flex-1 p-6 overflow-hidden">
+      <div
+        className="flex-1 p-6 overflow-y-auto"
+        style={{ maxHeight: '100vh' }} // 스크롤이 가능하도록 설정
+      >
         <div className="flex flex-col gap-4 mb-6">
           <h2 className="text-2xl font-semibold text-[#5B586E]">
             팀원 채팅 기반 회고록
