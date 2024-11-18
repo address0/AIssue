@@ -5,7 +5,7 @@ import { getProjectInfo, getProjectFunctions, createProject, updateProjectFuncti
 import { jsPDF } from 'jspdf';
 import { useDropzone } from 'react-dropzone';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-import 'highlight.js/styles/github.css';
+// import 'highlight.js/styles/github.css';
 // import 'jspdf-autotable';
 import pretendardFontBase64 from './PretendardBase64'; // Base64 파일 import
 
@@ -205,7 +205,7 @@ export default function InfoPage({
     `;
   
     try {
-      const response = await fetch('/api/generatePortfolio', {
+      const response = await fetch('/project/[projectId]/info/generatePortfolio', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
