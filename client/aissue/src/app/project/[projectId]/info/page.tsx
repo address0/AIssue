@@ -239,7 +239,7 @@ export default function InfoPage({
           return [];
         }
       };
-  
+  //
   // const fetchGptPortfolioData = async (): Promise<PortfolioBlock[]> => {
   //   if (!projectInfo) return [];
   //   const prompt = `
