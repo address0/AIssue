@@ -578,13 +578,14 @@ export default function InfoPage({
       {/* 포트폴리오 제작 */}
       <br />
       <div className="bg-gray-100">
-        <div className="flex justify-between">
+        <div className="flex justify-between items-center">
           <h1 className="mt-4 text-xl md:text-2xl font-bold mb-4 md:mb-6 text-[#5B586E]">
             포트폴리오 제작
           </h1>
           <button
             onClick={generatePortfolio}
             className="text-white bg-[#FF6347] px-4 py-2 rounded-lg"
+            style={{ height: '50px' }}
           >
             AI로 생성
           </button>
