@@ -12,9 +12,9 @@
 
 <div align="center">
   
-| [최희현](https://github.com/coolfin) | [전태호](https://github.com/Taehororo) | [김성현](https://github.com/k-redstone) | [서승호](https://github.com/shocoding) | [주소영](https://github.com/CSchoice) |[장승연](https://github.com/yoonkyungseo) |
+| [최희현](https://github.com/choiheehyun) | [전태호](https://github.com/Taehororo) | [김성현](https://github.com/k-redstone) | [서승호](https://github.com/shocoding) | [주소영](https://github.com/CSchoice) |[장승연](https://github.com/yoonkyungseo) |
 | :----------------------------------: | :-----------------------------------: | :-----------------------------------: | :-----------------------------------: | :-----------------------------------: | :-----------------------------------: | 
-|<img src="https://avatars.githubusercontent.com/u/56531884?v=4" width="100">|<img src="https://avatars.githubusercontent.com/u/145996139?v=4" width="100">|<img src="https://avatars.githubusercontent.com/u/79430840?v=4" width="100">|<img src="https://avatars.githubusercontent.com/u/67960134?v=4" width="100">|<img src="docs/images/profile/choi.png" width="100">|<img src="docs/images/profile/yoon.png" width="100">|
+|<img src="https://avatars.githubusercontent.com/u/156387194?v=4" width="100">|<img src="https://avatars.githubusercontent.com/u/145996139?v=4" width="100">|<img src="https://avatars.githubusercontent.com/u/79430840?v=4" width="100">|<img src="https://avatars.githubusercontent.com/u/67960134?v=4" width="100">|<img src="docs/images/profile/choi.png" width="100">|<img src="docs/images/profile/yoon.png" width="100">|
 |          FE, DESIGN          |                  FE, BE                  |              BE            |               INFRA, FE              |              FE, AI,DESIGN           |              FE              |
 
 </div>
@@ -139,6 +139,7 @@
   - 프론트 엔드 전반적 담당
   - 기본적인 디자인 담당
   - 프로젝트 정보, 전체 업무 로그, 프로젝트 일정
+  - 모바일 반응형 디자인 추가
 
 <br>
     
@@ -192,7 +193,7 @@
 ### 🎯장승연
 
 - **FE**
-  - 달력
+  - 달력 에픽 설정, 스프린트 설정 기능
 
 <br>
 
@@ -211,11 +212,38 @@
 
 ## 📖 **페이지별 기능**
 
+### 1. 로그인
+
+<img src="docs/images/login.png" alt="login" height="400" width="300" />
+
+### 2. 프로젝트
+
+<img src="docs/images/project_list.PNG" alt="project_list" height="300" width="300" />
+
+### 2-1 프로젝트 정보
+
+<img src="docs/images/project_info.PNG" alt="project_list" height="400" width="600" />
+
+### 2-2 프로젝트 채팅 회고록
+
+<img src="docs/images/chatting_summary.PNG" alt="chatting_summary" height="400" width="500" />
+매일 자정마다 그날의 채팅을 요약및 정리해주는 회고록
+
+### 2-3 프로젝트 채팅
+
+<img src="docs/images/chatting.PNG" alt="chatting" height="300" width="300" />
+프로젝트 별 채팅
+
+### 2-3 챗봇
+
+<img src="docs/images/chatbot.PNG" alt="chatting" height="300" width="300" />
+jira에 대해 물어볼 수 있는 챗봇
+
 ## ⚒️ **프로젝트 후기**
 
 ### 🍊최희현
 
-느낀점
+JIRA를 활용한 프로젝트 관리를 보다 효과적으로 할 수 있는 방안을 구상하는 기회가 되었으며, 팀원들과의 원활한 소통과 실시간 협업의 중요성을 경험.
 
 <br>
     
