@@ -7,7 +7,7 @@ import { useDropzone } from 'react-dropzone';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import 'highlight.js/styles/github.css';
 // import 'jspdf-autotable';
-import pretendardFontBase64 from './PretendardBase64'; // Base64 파일 import
+// import pretendardFontBase64 from './PretendardBase64'; // Base64 파일 import
 
 
 interface FunctionDetail {
@@ -225,7 +225,7 @@ export default function InfoPage({
   
       // JSON 파싱
       const blocks = JSON.parse(sanitizedContent);
-      
+
       /* eslint-disable @typescript-eslint/no-explicit-any */
       return blocks.map((block: any, index: number) => ({
         id: `block-${Date.now()}-${index}`,
@@ -298,7 +298,7 @@ export default function InfoPage({
     let currentY = 15; // Y축 시작 위치
 
     // 폰트 추가
-    doc.addFileToVFS('Pretendard-Black.ttf', pretendardFontBase64);
+    // doc.addFileToVFS('Pretendard-Black.ttf', pretendardFontBase64);
     doc.addFont('Pretendard-Black.ttf', 'Pretendard', 'normal');
     doc.setFont('Pretendard', 'normal');
 
