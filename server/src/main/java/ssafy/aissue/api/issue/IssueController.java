@@ -7,10 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import ssafy.aissue.api.CommonResponse;
-import ssafy.aissue.api.issue.request.IssueBatchRequest;
-import ssafy.aissue.api.issue.request.IssueScheduleRequest;
-import ssafy.aissue.api.issue.request.IssueStatusRequest;
-import ssafy.aissue.api.issue.request.IssueUpdateRequest;
+import ssafy.aissue.api.issue.request.*;
 import ssafy.aissue.api.issue.response.*;
 import ssafy.aissue.domain.issue.service.IssueService;
 
@@ -99,5 +96,21 @@ public class IssueController {
             @RequestBody IssueStatusRequest statusRequest
     ) {
         return CommonResponse.ok(issueService.updateStatus(statusRequest));
+    }
+
+    @Operation(summary = "스프린트 상태 조회하기", description = "스프린트가 진행 중인지, 완료된 상태인지 조회합니다.")
+    @GetMapping("/sprint/status")
+    public CommonResponse<SprintStatusResponse> getSprintStatus(
+            @RequestParam(name = "project") String projectKey
+    ) {
+        return CommonResponse.ok(issueService.getSprintStatus(projectKey));
+    }
+
+    @Operation(summary = "스프린트 시작/완료하기", description = "스프린트를 시작하거나 종료합니다.")
+    @PostMapping("/sprint/start")
+    public CommonResponse<?> startSprint(
+            @RequestBody ManageSprintRequest manageSprintRequest
+    ) {
+        return CommonResponse.ok(issueService.updateSprint(manageSprintRequest));
     }
 }

@@ -19,7 +19,11 @@ public interface IssueService {
 
     String deleteIssue(String issueKey, String issuetype);
 
-    String linkIssues(IssueLinkRequest issueLinkRequest);     // Issue 종속성 등록
+    String linkIssues(IssueLinkRequest issueLinkRequest);     // Issue 종속성 등록;
+
+    SprintStatusResponse getSprintStatus(String projectKey);
+
+    String updateSprint(ManageSprintRequest manageSprintRequest);
 
     IssueDetailResponse getIssueDetail(String projectKey) throws Exception;
 

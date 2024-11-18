@@ -21,7 +21,7 @@ public class JiraIssueUpdateRequest {
 
         private String summary;
 
-        private String status;
+//        private String status;
 
         private String description;
 
