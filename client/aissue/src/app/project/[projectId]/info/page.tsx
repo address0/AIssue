@@ -5,10 +5,10 @@ import { getProjectInfo, getProjectFunctions, createProject, updateProjectFuncti
 import { jsPDF } from 'jspdf';
 import { useDropzone } from 'react-dropzone';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-import hljs from 'highlight.js';
 import 'highlight.js/styles/github.css';
 // import 'jspdf-autotable';
 import pretendardFontBase64 from './PretendardBase64'; // Base64 파일 import
+
 
 interface FunctionDetail {
   title: string;
@@ -53,7 +53,7 @@ export default function InfoPage({
     accept: {
       'image/*': [],
     },
-    onDrop: (acceptedFiles) => {
+    onDrop: (acceptedFiles: File[]) => {
       acceptedFiles.forEach((file) => {
         const reader = new FileReader();
         reader.onload = (event) => {
@@ -225,7 +225,8 @@ export default function InfoPage({
   
       // JSON 파싱
       const blocks = JSON.parse(sanitizedContent);
-  
+      
+      /* eslint-disable @typescript-eslint/no-explicit-any */
       return blocks.map((block: any, index: number) => ({
         id: `block-${Date.now()}-${index}`,
         type: block.type,
@@ -276,6 +277,7 @@ export default function InfoPage({
   };
 
   // 블록 순서 변경 (드래그 앤 드롭)
+  /* eslint-disable @typescript-eslint/no-explicit-any */
   const handleDragEnd = (result: any) => {
     if (!result.destination) return;
 
@@ -285,6 +287,7 @@ export default function InfoPage({
 
     setPortfolioBlocks(items);
   };
+  /* eslint-enable @typescript-eslint/no-explicit-any */
 
 
   // PDF 생성
