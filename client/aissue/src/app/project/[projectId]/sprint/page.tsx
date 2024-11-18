@@ -72,6 +72,8 @@ export default function SprintPage({
   const userName =  typeof window !== 'undefined' ? sessionStorage.getItem('memberName') : null
   const [prompt, setPrompt] = useState<MessageData[]>([])
   const [userRole, setUserRole] = useState<string>('')
+  const [editIndex, setEditIndex] = useState<number | null>(null);
+  const [editItem, setEditItem] = useState<IssueData | null>(null);
 
   const questions:SprintData[] = [
     { type: '담당',
@@ -226,6 +228,39 @@ export default function SprintPage({
     }
     nextQuestion()
   }
+
+  const handleEdit = (index: number, type:string) => {
+    setEditIndex(index);
+    if (type === 'story') {
+      setEditItem(parsedStory[index]);
+    } else {
+      setEditItem(parsedSubTask[index]);
+    }
+  };
+
+  const handleUpdate = (index: number, type:string) => {
+    if (editItem) {
+      if (type === 'story') {
+        const updatedItems = parsedStory.map((item, i) => (i === index ? editItem : item));
+        setParsedStory(updatedItems);
+      } else {
+        const updatedItems = parsedSubTask.map((item, i) => (i === index ? editItem : item));
+        setParsedSubTask(updatedItems);
+      }
+    }
+    setEditIndex(null);
+    setEditItem(null);
+  };
+
+  const handleDelete = (index: number, type:string) => {
+    if (type === 'story') {
+      const updatedItems = parsedStory.filter((_, i) => i !== index);
+      setParsedStory(updatedItems);
+    } else {
+      const updatedItems = parsedSubTask.filter((_, i) => i !== index);
+      setParsedSubTask(updatedItems);
+    }
+  };
 
   useEffect(() => {
     console.log(prompt)
@@ -428,7 +463,7 @@ export default function SprintPage({
               className="w-full h-full"
             />
           </div>
-          <div className="text-center text-gray-500 space-y-2">
+          <div className="text-center text-gray-500 space-y-2 my-4">
             <p>아직 생성된 에픽이 없어요.</p>
             <p>AI 컨설턴트와 함께 전체 에픽 목록을 생성해 볼까요?</p>
           </div>
@@ -437,12 +472,6 @@ export default function SprintPage({
             className="bg-blue-500 text-white px-6 py-3 rounded-lg"
           >
             에픽 생성하기
-          </button>
-          <button
-            onClick={() => setIsSprintPage(true)}
-            className="bg-purple-500 text-white px-6 py-3 rounded-lg"
-          >
-            스프린트 생성하기
           </button>
           {showEpicModal && (
             <EpicModal isOpen={showEpicModal} onClose={handleEpicModal} projectId={projectId} />
@@ -539,6 +568,10 @@ export default function SprintPage({
                             </div>
                             <p className="text-sm ml-2">{issue?.description}</p>
                             <p className="text-sm text-gray-500 absolute right-2 top-2">Epic: {issue?.parent}</p>
+                            <div className="absolute bottom-2 right-2 flex space-x-2">
+                              <button onClick={() => handleEdit(index, 'story')} className="bg-blue-400 text-xs w-12 h-6 rounded text-white">수정</button>
+                              <button onClick={() => handleDelete(index, 'story')} className="bg-red-400 text-xs w-12 h-6 rounded text-white">삭제</button>
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -564,6 +597,10 @@ export default function SprintPage({
                             </div>
                             <p className="text-sm ml-2">{issue?.description}</p>
                             <p className="text-sm text-gray-500 absolute right-2 top-2">Story: {issue?.parent}</p>
+                            <div className="absolute bottom-2 right-2 flex space-x-2">
+                              <button onClick={() => handleEdit(index, 'sub-task')} className="bg-blue-400 text-xs w-12 h-6 rounded text-white">수정</button>
+                              <button onClick={() => handleDelete(index, 'sub-task')} className="bg-red-400 text-xs w-12 h-6 rounded text-white">삭제</button>
+                            </div>
                           </div>
                         ))}
                       </div>
