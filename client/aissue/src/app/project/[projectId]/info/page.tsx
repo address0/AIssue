@@ -221,6 +221,7 @@ export default function InfoPage({
   
       const data = await response.json();
       const blocks = data.choices[0]?.message?.content || '[]'; // 데이터 검증
+      /* eslint-disable @typescript-eslint/no-explicit-any */
       return JSON.parse(blocks).map((block: any, index: number) => ({
         id: `block-${Date.now()}-${index}`,
         type: block.type,
@@ -231,6 +232,7 @@ export default function InfoPage({
       console.error('Error fetching GPT portfolio data:', error);
       return [];
     }
+    /* eslint-disable @typescript-eslint/no-explicit-any */
   };
   
   // const fetchGptPortfolioData = async (): Promise<PortfolioBlock[]> => {
