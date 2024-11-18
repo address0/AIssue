@@ -5,7 +5,7 @@ import { getProjectInfo, getProjectFunctions, createProject, updateProjectFuncti
 import { jsPDF } from 'jspdf';
 import { useDropzone } from 'react-dropzone';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-import 'highlight.js/styles/github.css';
+// import 'highlight.js/styles/github.css';
 // import 'jspdf-autotable';
 import pretendardFontBase64 from './PretendardBase64'; // Base64 파일 import
 
@@ -169,72 +169,77 @@ export default function InfoPage({
 
   // ai 포트폴리오
   // GPT API 요청 함수
-  const fetchGptPortfolioData = async (): Promise<PortfolioBlock[]> => {
+   const fetchGptPortfolioData = async (): Promise<PortfolioBlock[]> => {
     if (!projectInfo) return [];
-  
     const prompt = `
-      아래 프로젝트 정보를 바탕으로, 포트폴리오 내용을 문장 형식으로 작성하세요. 다음 내용을 포함해야 합니다:
+          아래 프로젝트 정보를 바탕으로, 포트폴리오 내용을 문장 형식으로 작성하세요. 다음 내용을 포함해야 합니다:
+
+  1. **프로젝트 소개**: 프로젝트명, 설명, 목적, 주요 기능에 대한 요약.
+  2. **기술 스택**: 프로젝트에서 사용된 기술 스택과 해당 기술의 역할.
+  3. **주요 기능**: 각 기능의 목적과 세부 설명.
+  4. **프로젝트 성과 및 결론**: 프로젝트에서 얻은 성과와 느낀 점.
+
+  반환 형식은 다음 JSON 예시와 같아야 합니다:
+  [
+    { "type": "text", "content": "프로젝트 소개: 이 프로젝트는 ..." },
+    { "type": "text", "content": "기술 스택: 프론트엔드에서는 React..." },
+    { "type": "text", "content": "주요 기능: 사용자 관리 - 회원 가입 및 로그인 ..." },
+    { "type": "text", "content": "성과 및 결론: 이 프로젝트를 통해 ..." }
+  ]
+
+  ### 프로젝트 정보 ###
+  - 프로젝트명: ${projectInfo.title}
+  - 프로젝트 설명: ${projectInfo.description}
+  - 기술 스택:
+    - 프론트엔드: ${projectInfo.feSkill}
+    - 백엔드: ${projectInfo.beSkill}
+    - 인프라: ${projectInfo.infraSkill}
+  - 기능 상세:
+    ${editedFunctions
+        .map(
+          (func, idx) =>
+            `${idx + 1}. ${func.title || 'N/A'} - ${func.description || 'N/A'}`
+        )
+        .join('\n')}
+
+  JSON 형식으로 반환하되, 코드 블록(\`\`\`json)은 포함하지 말고 순수 JSON만 반환하세요.
+        `;
   
-      1. **프로젝트 소개**: 프로젝트명, 설명, 목적, 주요 기능에 대한 요약.
-      2. **기술 스택**: 프로젝트에서 사용된 기술 스택과 해당 기술의 역할.
-      3. **주요 기능**: 각 기능의 목적과 세부 설명.
-      4. **프로젝트 성과 및 결론**: 프로젝트에서 얻은 성과와 느낀 점.
-  
-      반환 형식은 다음 JSON 예시와 같아야 합니다:
-      [
-        { "type": "text", "content": "프로젝트 소개: 이 프로젝트는 ..." },
-        { "type": "text", "content": "기술 스택: 프론트엔드에서는 React..." },
-        { "type": "text", "content": "주요 기능: 사용자 관리 - 회원 가입 및 로그인 ..." },
-        { "type": "text", "content": "성과 및 결론: 이 프로젝트를 통해 ..." }
-      ]
-  
-      ### 프로젝트 정보 ###
-      - 프로젝트명: ${projectInfo.title}
-      - 프로젝트 설명: ${projectInfo.description}
-      - 기술 스택:
-        - 프론트엔드: ${projectInfo.feSkill}
-        - 백엔드: ${projectInfo.beSkill}
-        - 인프라: ${projectInfo.infraSkill}
-      - 기능 상세:
-        ${editedFunctions
-          .map(
-            (func, idx) =>
-              `${idx + 1}. ${func.title || 'N/A'} - ${func.description || 'N/A'}`
-          )
-          .join('\n')}
-    `;
-  
-    try {
-      const response = await fetch('/api/generatePortfolio', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ prompt }),
-      });
-  
-      if (!response.ok) {
-        const errorDetails = await response.json();
-        console.error('Error fetching GPT portfolio data:', errorDetails);
-        return [];
-      }
-  
-      const data = await response.json();
-      const blocks = data.choices[0]?.message?.content || '[]'; // 데이터 검증
-      /* eslint-disable @typescript-eslint/no-explicit-any */
-      return JSON.parse(blocks).map((block: any, index: number) => ({
-        id: `block-${Date.now()}-${index}`,
-        type: block.type,
-        content: block.content,
-        scale: block.type === 'image' ? 100 : undefined,
-      }));
-    } catch (error) {
-      console.error('Error fetching GPT portfolio data:', error);
-      return [];
-    }
-    /* eslint-disable @typescript-eslint/no-explicit-any */
-  };
-  
+        try {
+          const response = await fetch('/project/[projectId]/info/generatePortfolio', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ prompt }),
+          });
+      
+          if (!response.ok) {
+            const errorDetails = await response.json();
+            console.error('Error fetching GPT portfolio data:', errorDetails);
+            return [];
+          }
+      
+          const data = await response.json();
+          const rawContent = data.choices[0]?.message?.content || '[]';
+      
+          // JSON 코드 블록 제거 및 파싱
+          const sanitizedContent = rawContent.replace(/```json|```/g, '');
+           /* eslint-disable @typescript-eslint/no-explicit-any */
+          const blocks: PortfolioBlock[] = JSON.parse(sanitizedContent).map((block: any, index: number) => ({
+            id: `block-${Date.now()}-${index}`,
+            type: block.type,
+            content: block.content,
+            scale: block.type === 'image' ? 100 : undefined,
+          }));
+      
+          return blocks;
+        } catch (error) {
+          console.error('Error fetching GPT portfolio data:', error);
+          return [];
+        }
+      };
+  //
   // const fetchGptPortfolioData = async (): Promise<PortfolioBlock[]> => {
   //   if (!projectInfo) return [];
   //   const prompt = `
