@@ -47,6 +47,8 @@ export default function InfoPage({
 
   const [portfolioBlocks, setPortfolioBlocks] = useState<PortfolioBlock[]>([]);
   const [previewPdfUrl, setPreviewPdfUrl] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false); // 로딩 상태 추가
+
 
   // 포트폴리오
   const { getRootProps, getInputProps } = useDropzone({
@@ -169,65 +171,57 @@ export default function InfoPage({
   // GPT API 요청 함수
   const fetchGptPortfolioData = async (): Promise<PortfolioBlock[]> => {
     if (!projectInfo) return [];
+  
     const prompt = `
-          아래 프로젝트 정보를 바탕으로, 포트폴리오 내용을 문장 형식으로 작성하세요. 다음 내용을 포함해야 합니다:
-
-  1. **프로젝트 소개**: 프로젝트명, 설명, 목적, 주요 기능에 대한 요약.
-  2. **기술 스택**: 프로젝트에서 사용된 기술 스택과 해당 기술의 역할.
-  3. **주요 기능**: 각 기능의 목적과 세부 설명.
-  4. **프로젝트 성과 및 결론**: 프로젝트에서 얻은 성과와 느낀 점.
-
-  반환 형식은 다음 JSON 예시와 같아야 합니다:
-  [
-    { "type": "text", "content": "프로젝트 소개: 이 프로젝트는 ..." },
-    { "type": "text", "content": "기술 스택: 프론트엔드에서는 React..." },
-    { "type": "text", "content": "주요 기능: 사용자 관리 - 회원 가입 및 로그인 ..." },
-    { "type": "text", "content": "성과 및 결론: 이 프로젝트를 통해 ..." }
-  ]
-
-  ### 프로젝트 정보 ###
-  - 프로젝트명: ${projectInfo.title}
-  - 프로젝트 설명: ${projectInfo.description}
-  - 기술 스택:
-    - 프론트엔드: ${projectInfo.feSkill}
-    - 백엔드: ${projectInfo.beSkill}
-    - 인프라: ${projectInfo.infraSkill}
-  - 기능 상세:
-    ${editedFunctions
-        .map(
-          (func, idx) =>
-            `${idx + 1}. ${func.title || 'N/A'} - ${func.description || 'N/A'}`
-        )
-        .join('\n')}
-
-  JSON 형식으로 반환하되, 코드 블록(\`\`\`json)은 포함하지 말고 순수 JSON만 반환하세요.
-        `;
-
+      아래 프로젝트 정보를 바탕으로, 포트폴리오 내용을 문장 형식으로 작성하세요. 다음 내용을 포함해야 합니다:
+  
+      1. **프로젝트 소개**: 프로젝트명, 설명, 목적, 주요 기능에 대한 요약.
+      2. **기술 스택**: 프로젝트에서 사용된 기술 스택과 해당 기술의 역할.
+      3. **주요 기능**: 각 기능의 목적과 세부 설명.
+      4. **프로젝트 성과 및 결론**: 프로젝트에서 얻은 성과와 느낀 점.
+  
+      반환 형식은 다음 JSON 예시와 같아야 합니다:
+      [
+        { "type": "text", "content": "프로젝트 소개: 이 프로젝트는 ..." },
+        { "type": "text", "content": "기술 스택: 프론트엔드에서는 React..." },
+        { "type": "text", "content": "주요 기능: 사용자 관리 - 회원 가입 및 로그인 ..." },
+        { "type": "text", "content": "성과 및 결론: 이 프로젝트를 통해 ..." }
+      ]
+  
+      ### 프로젝트 정보 ###
+      - 프로젝트명: ${projectInfo.title}
+      - 프로젝트 설명: ${projectInfo.description}
+      - 기술 스택:
+        - 프론트엔드: ${projectInfo.feSkill}
+        - 백엔드: ${projectInfo.beSkill}
+        - 인프라: ${projectInfo.infraSkill}
+      - 기능 상세:
+        ${editedFunctions
+          .map(
+            (func, idx) =>
+              `${idx + 1}. ${func.title || 'N/A'} - ${func.description || 'N/A'}`
+          )
+          .join('\n')}
+    `;
+  
     try {
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      const response = await fetch('/api/generatePortfolio', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${process.env.NEXT_PUBLIC_OPENAI_API_KEY}`,
         },
-        body: JSON.stringify({
-          model: 'gpt-4o',
-          messages: [{ role: 'user', content: prompt }],
-          max_tokens: 2000,
-        }),
+        body: JSON.stringify({ prompt }),
       });
-
+  
+      if (!response.ok) {
+        const errorDetails = await response.json();
+        console.error('Error fetching GPT portfolio data:', errorDetails);
+        return [];
+      }
+  
       const data = await response.json();
-      const rawContent = data.choices[0].message.content;
-  
-      // JSON 코드 블록 제거 (```json ... ```)
-      const sanitizedContent = rawContent.replace(/```json|```/g, '');
-  
-      // JSON 파싱
-      const blocks = JSON.parse(sanitizedContent);
-
-      /* eslint-disable @typescript-eslint/no-explicit-any */
-      return blocks.map((block: any, index: number) => ({
+      const blocks = data.choices[0]?.message?.content || '[]'; // 데이터 검증
+      return JSON.parse(blocks).map((block: any, index: number) => ({
         id: `block-${Date.now()}-${index}`,
         type: block.type,
         content: block.content,
@@ -238,11 +232,92 @@ export default function InfoPage({
       return [];
     }
   };
+  
+  // const fetchGptPortfolioData = async (): Promise<PortfolioBlock[]> => {
+  //   if (!projectInfo) return [];
+  //   const prompt = `
+  //         아래 프로젝트 정보를 바탕으로, 포트폴리오 내용을 문장 형식으로 작성하세요. 다음 내용을 포함해야 합니다:
+
+  // 1. **프로젝트 소개**: 프로젝트명, 설명, 목적, 주요 기능에 대한 요약.
+  // 2. **기술 스택**: 프로젝트에서 사용된 기술 스택과 해당 기술의 역할.
+  // 3. **주요 기능**: 각 기능의 목적과 세부 설명.
+  // 4. **프로젝트 성과 및 결론**: 프로젝트에서 얻은 성과와 느낀 점.
+
+  // 반환 형식은 다음 JSON 예시와 같아야 합니다:
+  // [
+  //   { "type": "text", "content": "프로젝트 소개: 이 프로젝트는 ..." },
+  //   { "type": "text", "content": "기술 스택: 프론트엔드에서는 React..." },
+  //   { "type": "text", "content": "주요 기능: 사용자 관리 - 회원 가입 및 로그인 ..." },
+  //   { "type": "text", "content": "성과 및 결론: 이 프로젝트를 통해 ..." }
+  // ]
+
+  // ### 프로젝트 정보 ###
+  // - 프로젝트명: ${projectInfo.title}
+  // - 프로젝트 설명: ${projectInfo.description}
+  // - 기술 스택:
+  //   - 프론트엔드: ${projectInfo.feSkill}
+  //   - 백엔드: ${projectInfo.beSkill}
+  //   - 인프라: ${projectInfo.infraSkill}
+  // - 기능 상세:
+  //   ${editedFunctions
+  //       .map(
+  //         (func, idx) =>
+  //           `${idx + 1}. ${func.title || 'N/A'} - ${func.description || 'N/A'}`
+  //       )
+  //       .join('\n')}
+
+  // JSON 형식으로 반환하되, 코드 블록(\`\`\`json)은 포함하지 말고 순수 JSON만 반환하세요.
+  //       `;
+
+  //   try {
+  //     const response = await fetch('https://api.openai.com/v1/chat/completions', {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //         Authorization: `Bearer ${process.env.NEXT_PUBLIC_OPENAI_API_KEY}`,
+  //       },
+  //       body: JSON.stringify({
+  //         model: 'gpt-4o',
+  //         messages: [{ role: 'user', content: prompt }],
+  //         max_tokens: 2000,
+  //       }),
+  //     });
+
+  //     const data = await response.json();
+  //     const rawContent = data.choices[0].message.content;
+  
+  //     // JSON 코드 블록 제거 (```json ... ```)
+  //     const sanitizedContent = rawContent.replace(/```json|```/g, '');
+  
+  //     // JSON 파싱
+  //     const blocks = JSON.parse(sanitizedContent);
+
+  //     /* eslint-disable @typescript-eslint/no-explicit-any */
+  //     return blocks.map((block: any, index: number) => ({
+  //       id: `block-${Date.now()}-${index}`,
+  //       type: block.type,
+  //       content: block.content,
+  //       scale: block.type === 'image' ? 100 : undefined,
+  //     }));
+  //   } catch (error) {
+  //     console.error('Error fetching GPT portfolio data:', error);
+  //     return [];
+  //   }
+  // };
+
+
 
   // AI 포트폴리오 생성
   const generatePortfolio = async () => {
-    const generatedBlocks = await fetchGptPortfolioData();
-    setPortfolioBlocks((prevBlocks) => [...prevBlocks, ...generatedBlocks]);
+    setIsLoading(true); // 로딩 시작
+    try {
+      const generatedBlocks = await fetchGptPortfolioData();
+      setPortfolioBlocks((prevBlocks) => [...prevBlocks, ...generatedBlocks]);
+    } catch (error) {
+      console.error('Error generating portfolio:', error);
+    } finally {
+      setIsLoading(false); // 로딩 종료
+    }
   };
 
 
@@ -587,10 +662,15 @@ export default function InfoPage({
           </h1>
           <button
             onClick={generatePortfolio}
-            className="text-white bg-[#FF6347] px-4 py-2 rounded-lg"
-            style={{ height: '50px' }}
+            className="text-white bg-[#FF6347] px-4 py-2 rounded-lg flex items-center justify-center"
+            style={{ height: '50px', minWidth: '120px' }}
+            disabled={isLoading} // 로딩 중 버튼 비활성화
           >
-            AI로 생성
+            {isLoading ? (
+              <span className="loader">생성 중</span> // 로딩 스피너
+            ) : (
+              'AI로 생성'
+            )}
           </button>
         </div>
         {/* Drag and Drop Context */}
