@@ -15,7 +15,8 @@ interface Task {
 }
 
 interface Story {
-  id: string;
+  id: number;
+  key: string;
   title: string;
   tasks: Task[];
 }
@@ -209,14 +210,14 @@ export default function WeekPage() {
             </h3>
             {stories.map((story) => (
               <div key={story.id} className="mb-4 p-3 bg-white rounded-lg shadow-sm border border-gray-200">
-                <button className="flex justify-between items-center w-full text-left" onClick={() => setSelectedStory(story.id === selectedStory ? null : story.id)}>
+                <button className="flex justify-between items-center w-full text-left" onClick={() => setSelectedStory(story.key === selectedStory ? "" : story.key)}>
                   <div className="flex items-center space-x-2">
                     <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
                     <div><span className="font-semibold text-gray-700">{story.title}</span></div>
                   </div>
-                  <span className="text-gray-500">{story.id === selectedStory ? '▲' : '▼'}</span>
+                  <span className="text-gray-500">{story.key === selectedStory ? '▲' : '▼'}</span>
                 </button>
-                {story.id === selectedStory && (
+                {story.key === selectedStory && (
                   <div className="mt-2 pl-4 space-y-2">
                     {story.tasks.map((task, idx) => (
                       <div key={idx} className="flex justify-between items-center bg-gray-100 p-2 rounded-md">

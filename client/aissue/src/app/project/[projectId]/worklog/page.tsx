@@ -1,17 +1,18 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
-import { usePathname } from 'next/navigation'
+import React, { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import {
   DragDropContext,
   Droppable,
   Draggable,
   DropResult,
-} from '@hello-pangea/dnd'
-import { getWeeklyStories } from '@/api/project'
-import { useQuery } from '@tanstack/react-query'
-import LoadingSpinner from '@/static/svg/blue-spinner.svg'
-import IssueModal from '@/components/(Modal)/IssueModal/IssueModal'
+} from '@hello-pangea/dnd';
+import { getWeeklyStories } from '@/api/project';
+import { useQuery } from '@tanstack/react-query';
+import LoadingSpinner from '@/static/svg/blue-spinner.svg';
+import IssueModal from '@/components/(Modal)/IssueModal/IssueModal';
+import { updateIssueStatus } from '@/api/project';
 
 interface Task {
   title: string;
@@ -20,91 +21,140 @@ interface Task {
 }
 
 interface Story {
-  id: string
-  title: string
-  status: 'To Do' | 'In Progress' | 'Done'
-  parent?: { summary: string };
+  id: number;
+  key:  string;
+  title: string;
+  status: 'To Do' | 'In Progress' | 'Done';
+  parent?: { id: string; summary: string };
   tasks: Task[];
 }
 
 interface Issue {
-  id: string
-  title: string
-  status: 'ToDo' | 'InProgress' | 'Done'
+  id: number;
+  key: string;
+  title: string;
+  status: 'ToDo' | 'InProgress' | 'Done';
 }
 
 const WorkLogPage = () => {
-  const pathname = usePathname()
-  const projectId = pathname.split('/')[2]
-  // const [userName, setUserName] = useState<string | null>(null)
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [selectedIssue, setSelectedIssue] = useState<Story | null>(null)
+  const pathname = usePathname();
+  const projectId = pathname.split('/')[2];
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedIssue, setSelectedIssue] = useState<Story | null>(null);
   const [categorizedIssues, setCategorizedIssues] = useState<{
-    ToDo: Issue[]
-    InProgress: Issue[]
-    Done: Issue[]
+    ToDo: Issue[];
+    InProgress: Issue[];
+    Done: Issue[];
   }>({
     ToDo: [],
     InProgress: [],
     Done: [],
-  })
+  });
 
   const { isLoading, data } = useQuery({
     queryKey: ['weeklyStories', projectId],
     queryFn: () => getWeeklyStories(projectId),
-  })
-
-  // useEffect(() => {
-  //   if (typeof window !== 'undefined') {
-  //     setUserName(sessionStorage.getItem('memberName'))
-  //   }
-  // }, [])
+  });
 
   useEffect(() => {
     if (data) {
-      const stories: Story[] = data
+      const stories: Story[] = data;
+      console.log(stories);
       const issues: Issue[] = stories.map((story) => ({
         id: story.id,
+        key: story.key,
         title: story.title,
         status: mapStatus(story.status),
-      }))
+      }));
 
       const categorized = {
         ToDo: issues.filter((issue) => issue.status === 'ToDo'),
         InProgress: issues.filter((issue) => issue.status === 'InProgress'),
         Done: issues.filter((issue) => issue.status === 'Done'),
-      }
+      };
 
-      setCategorizedIssues(categorized)
+      setCategorizedIssues(categorized);
     }
-  }, [data])
+  }, [data]);
 
   function mapStatus(
-    status: 'To Do' | 'In Progress' | 'Done',
+    status: 'To Do' | 'In Progress' | 'Done'
   ): 'ToDo' | 'InProgress' | 'Done' {
     switch (status) {
       case 'To Do':
-        return 'ToDo'
+        return 'ToDo';
       case 'In Progress':
-        return 'InProgress'
+        return 'InProgress';
       case 'Done':
-        return 'Done'
+        return 'Done';
     }
   }
 
-  const openModal = (issueId: string) => {
+  const openModal = (issueId: number) => {
     if (data) {
-      const story = data.find((story: Story) => story.id === issueId)
+      const story = data.find((story: Story) => story.id === issueId);
       if (story) {
-        setSelectedIssue(story)
-        setIsModalOpen(true)
+        setSelectedIssue(story);
+        setIsModalOpen(true);
       }
     }
-  }
+  };
 
   const closeModal = () => {
-    setSelectedIssue(null)
-    setIsModalOpen(false)
+    setSelectedIssue(null);
+    setIsModalOpen(false);
+  };
+
+  const onDragEnd = async (result: DropResult) => {
+    const { source, destination } = result;
+
+    if (!destination) {
+      return;
+    }
+
+    const sourceDroppableId = source.droppableId as 'ToDo' | 'InProgress' | 'Done';
+    const destinationDroppableId = destination.droppableId as 'ToDo' | 'InProgress' | 'Done';
+
+    const updatedIssues = { ...categorizedIssues };
+    const sourceItems = Array.from(updatedIssues[sourceDroppableId]);
+    const [movedItem] = sourceItems.splice(source.index, 1);
+
+    if (sourceDroppableId === destinationDroppableId) {
+      sourceItems.splice(destination.index, 0, movedItem);
+      updatedIssues[sourceDroppableId] = sourceItems;
+    } else {
+      movedItem.status = destinationDroppableId;
+
+      const destinationItems = Array.from(updatedIssues[destinationDroppableId]);
+      destinationItems.splice(destination.index, 0, movedItem);
+
+      updatedIssues[sourceDroppableId] = sourceItems;
+      updatedIssues[destinationDroppableId] = destinationItems;
+
+      try {
+        const apiStatus = mapStatusToApiFormat(destinationDroppableId);
+        // console.log(movedItem)
+        const responseMessage = await updateIssueStatus(movedItem.key, apiStatus);
+        console.log(responseMessage);
+      } catch (error) {
+        console.error('서버 동기화 실패:', error);
+      }
+    }
+
+    setCategorizedIssues(updatedIssues);
+  };
+
+  function mapStatusToApiFormat(
+    status: 'ToDo' | 'InProgress' | 'Done'
+  ): 'To Do' | 'In Progress' | 'Done' {
+    switch (status) {
+      case 'ToDo':
+        return 'To Do';
+      case 'InProgress':
+        return 'In Progress';
+      case 'Done':
+        return 'Done';
+    }
   }
 
   if (isLoading)
@@ -115,68 +165,31 @@ const WorkLogPage = () => {
           <p className="font-bold">전체 업무 로그를 불러오는 중입니다.</p>
         </div>
       </div>
-    )
-
-  const onDragEnd = (result: DropResult) => {
-    const { source, destination } = result
-
-    if (!destination) {
-      return
-    }
-
-    const sourceDroppableId = source.droppableId as
-      | 'ToDo'
-      | 'InProgress'
-      | 'Done'
-    const destinationDroppableId = destination.droppableId as
-      | 'ToDo'
-      | 'InProgress'
-      | 'Done'
-
-    const updatedIssues = { ...categorizedIssues }
-    const sourceItems = Array.from(updatedIssues[sourceDroppableId])
-    const [movedItem] = sourceItems.splice(source.index, 1)
-
-    if (sourceDroppableId === destinationDroppableId) {
-      sourceItems.splice(destination.index, 0, movedItem)
-      updatedIssues[sourceDroppableId] = sourceItems
-    } else {
-      movedItem.status = destinationDroppableId
-      const destinationItems = Array.from(updatedIssues[destinationDroppableId])
-      destinationItems.splice(destination.index, 0, movedItem)
-
-      updatedIssues[sourceDroppableId] = sourceItems
-      updatedIssues[destinationDroppableId] = destinationItems
-    }
-
-    setCategorizedIssues(updatedIssues)
-  }
+    );
 
   return (
     <div className="flex min-h-screen bg-gray-100 flex-col lg:flex-row">
       <div className="w-full lg:w-4/5 p-4 lg:p-8">
-      <div className="mb-6">
-        <h1 className="text-xl lg:text-2xl font-bold mb-2">
-          {projectId} 프로젝트 스프린트 일정
-        </h1>
-      
-      </div>
-
+        <div className="mb-6">
+          <h1 className="text-xl lg:text-2xl font-bold mb-2">
+            {projectId} 프로젝트 스프린트 일정
+          </h1>
+        </div>
 
         <DragDropContext onDragEnd={onDragEnd}>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {(['ToDo', 'InProgress', 'Done'] as const).map((status) => {
-              let headerStyle = ''
-              let bgStyle = ''
+              let headerStyle = '';
+              let bgStyle = '';
               if (status === 'ToDo') {
-                headerStyle = 'text-[#33675F]'
-                bgStyle = 'bg-[#B2E0D9]'
+                headerStyle = 'text-[#33675F]';
+                bgStyle = 'bg-[#B2E0D9]';
               } else if (status === 'InProgress') {
-                headerStyle = 'text-[#F60000]'
-                bgStyle = 'bg-[#FACACA]'
+                headerStyle = 'text-[#F60000]';
+                bgStyle = 'bg-[#FACACA]';
               } else if (status === 'Done') {
-                headerStyle = 'text-[#000000]'
-                bgStyle = 'bg-[#C0C0C0]'
+                headerStyle = 'text-[#000000]';
+                bgStyle = 'bg-[#C0C0C0]';
               }
 
               return (
@@ -186,9 +199,7 @@ const WorkLogPage = () => {
                       ref={provided.innerRef}
                       {...provided.droppableProps}
                       className={`p-4 rounded-lg shadow-md ${bgStyle} flex flex-col ${
-                        snapshot.isDraggingOver
-                          ? 'border-2 border-blue-400'
-                          : ''
+                        snapshot.isDraggingOver ? 'border-2 border-blue-400' : ''
                       }`}
                       style={{ minHeight: '200px' }}
                     >
@@ -200,8 +211,8 @@ const WorkLogPage = () => {
                       <div className="space-y-4 flex-1 px-2 pb-2">
                         {categorizedIssues[status].map((issue, index) => (
                           <Draggable
-                            key={issue.id}
-                            draggableId={issue.id}
+                            key={issue.key}
+                            draggableId={issue.key}
                             index={index}
                           >
                             {(provided) => (
@@ -220,7 +231,7 @@ const WorkLogPage = () => {
                                     {issue.title}
                                   </h3>
                                   <p className="text-xs lg:text-sm text-gray-500">
-                                    {issue.id}
+                                    {issue.key}
                                   </p>
                                 </div>
                                 <img
@@ -237,23 +248,27 @@ const WorkLogPage = () => {
                     </div>
                   )}
                 </Droppable>
-              )
+              );
             })}
           </div>
         </DragDropContext>
 
         {selectedIssue && (
           <IssueModal
-            isOpen={isModalOpen}
-            onClose={closeModal}
-            title={selectedIssue.title}
-            parentSummary={selectedIssue.parent?.summary || ''}
-            tasks={selectedIssue.tasks}
-          />
+          isOpen={isModalOpen}
+          onClose={closeModal}
+          tasks={selectedIssue?.tasks || []}
+          title={selectedIssue?.title || ''}
+          parentSummary={selectedIssue?.parent?.summary || ''}
+          issueId={selectedIssue?.id || null} // 문자열로 전달
+          issueKey={selectedIssue?.key || null}
+          parentIssueId={selectedIssue?.parent?.id || ''}
+        />
+        
         )}
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default WorkLogPage
+export default WorkLogPage;
