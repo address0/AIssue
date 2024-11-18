@@ -54,7 +54,7 @@ export default function ProjectLayout({
   const toggleProjectChat = () => {
     setIsProjectChatOpen(!isProjectChatOpen)
   }
-  
+
   const [chatBotMessages, setChatBotMessages] = useState<Message[]>([
     {
       text: '안녕하세요. JIRA에 관해 궁금한 게 있으면 뭐든지 물어보세요.',
@@ -151,8 +151,8 @@ export default function ProjectLayout({
                   key={item.path}
                   type="button"
                   onClick={() => {
-                    router.push(`/project/${projectId}/${item.path}`);
-                    setIsSidebarOpen(false); // 메뉴 클릭 시 사이드바 닫기
+                    router.push(`/project/${projectId}/${item.path}`)
+                    setIsSidebarOpen(false) // 메뉴 클릭 시 사이드바 닫기
                   }}
                   className={`p-6 rounded-xl text-left ${
                     currentPath === item.path
@@ -188,40 +188,48 @@ export default function ProjectLayout({
               width={24}
               height={24}
             /> */}
-             <LottieAnimation animationData={animationData} width={24} height={24} />
+            <LottieAnimation
+              animationData={animationData}
+              width={24}
+              height={24}
+            />
           </button>
 
-          {/* Children Content */}
           {children}
         </div>
-        {/* ChatBot Modal Trigger */}
-        <button
-          onClick={toggleChat}
-          className="fixed bottom-16 right-16 lg:bottom-8 lg:right-24 p-4 rounded-full shadow-lg z-50"
-        >
-          <Image
-            src="/img/chatbot.png"
-            alt="ChatBot"
-            width={48}
-            height={48}
-            className="rounded-full"
-          />
-        </button>
 
-        {/* Chat Modal Trigger */}
-        <button
-          onClick={toggleProjectChat}
-          className="fixed bottom-16 right-8 lg:bottom-8 lg:right-8 p-4 rounded-full shadow-lg z-50"
+        <div
+          className={`fixed bottom-8 right-12 flex gap-4 
+              sm:gap-1 md:gap-3 lg:gap-5 z-50`}
         >
-          <Image
-            src="/img/chaticon.png"
-            alt="Chat"
-            width={48}
-            height={48}
-            className="rounded-full"
-          />
-        </button>
+          <button
+            onClick={toggleChat}
+            className="p-1 rounded-full shadow-lg
+              w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 flex items-center justify-center"
+          >
+            <Image
+              src="/img/chatbot.png"
+              alt="ChatBot"
+              width={48}
+              height={48}
+              className="rounded-full w-full h-full"
+            />
+          </button>
 
+          <button
+            onClick={toggleProjectChat}
+            className="p-1 rounded-full shadow-lg
+              w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 flex items-center justify-center"
+          >
+            <Image
+              src="/img/chaticon.png"
+              alt="Chat"
+              width={48}
+              height={48}
+              className="rounded-full w-full h-full"
+            />
+          </button>
+        </div>
 
         {isProjectChatOpen && (
           <ChatModal
