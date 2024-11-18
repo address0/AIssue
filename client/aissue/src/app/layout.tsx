@@ -66,7 +66,7 @@ export default function RootLayout({
         {/* public/img/chatbot.png 파일을 favicon으로 설정 */}
         <link rel="icon" href="/img/chatbot.png" type="image/png" />
       </head>
-      <body>
+      <body className="overflow-hidden">
         <ReactQueryProviders> {children}</ReactQueryProviders>
       </body>
     </html>
