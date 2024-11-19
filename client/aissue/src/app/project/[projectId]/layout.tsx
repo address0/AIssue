@@ -178,7 +178,7 @@ export default function ProjectLayout({
                     router.push(`/project/${projectId}/${item.path}`)
                     setIsSidebarOpen(false) // 메뉴 클릭 시 사이드바 닫기
                   }}
-                  className={`p-6 rounded-xl text-left ${
+                  className={`p-6 rounded-xl text-center ${
                     currentPath === item.path
                       ? 'bg-[#7498e5] text-white'
                       : 'hover:bg-base-50'
