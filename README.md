@@ -222,11 +222,11 @@
 
 ### 2-1 프로젝트 정보
 
-<img src="docs/images/project_info.PNG" alt="project_list" height="400" width="600" />
+<img src="docs/images/project_info.PNG" alt="project_list" height="400" width="700" />
 
 ### 2-2 프로젝트 채팅 회고록
 
-<img src="docs/images/chatting_summary.PNG" alt="chatting_summary" height="400" width="500" />
+<img src="docs/images/chatting_summary.PNG" alt="chatting_summary" height="400" width="600" />
 매일 자정마다 그날의 채팅을 요약및 정리해주는 회고록
 
 ### 2-3 프로젝트 채팅
@@ -238,6 +238,18 @@
 
 <img src="docs/images/chatbot.PNG" alt="chatting" height="300" width="300" />
 jira에 대해 물어볼 수 있는 챗봇
+
+### 2-4 전체 업무 로그
+
+<img src="docs/images/work-log.PNG" alt="chatting" height="300" width="350" />
+본인에게 할당된 이슈들을 편집 및 수정, 드래그 앤드롭 기능
+
+### 2-4 전체 업무 로그 수정
+
+<img src="docs/images/work-log-edit.PNG" alt="chatting" height="300" width="350" />
+이슈 편집 및 수정
+
+###
 
 ## ⚒️ **프로젝트 후기**
 
@@ -255,7 +267,7 @@ JIRA를 활용한 프로젝트 관리를 보다 효과적으로 할 수 있는 �
 
 ### 😎김성현
 
-느낀점
+JIRA API와 통신하며 백엔드와의 상호작용을 깊이 있게 이해할 수 있었습니다. 스프린트 관리와 같은 복잡한 비즈니스 로직을 처리하며 로직 설계와 구현의 중요성을 배웠습니다. 팀원들과의 협업 속에서 원활한 커뮤니케이션과 기획의 중요성을 다시금 느꼈고, 프로젝트 관리의 체계적인 접근이 프로젝트 성공의 열쇠임을 깨달았습니다.
 <br>
 
 ### 🐱‍서승호
@@ -269,10 +281,10 @@ JIRA를 활용한 프로젝트 관리를 보다 효과적으로 할 수 있는 �
 
 ### 🏓주소영
 
-느낀점
+디자인과 AI 기능을 융합하며 사용자 경험을 극대화하는 방법에 대해 배울 수 있었습니다. 특히 TailwindCSS를 활용해 디자인 가이드를 제공하며 효율적인 스타일링 작업이 가능하다는 점을 깨달았습니다. 또한, OpenAI API를 적용하면서 AI가 프로젝트 생산성을 크게 높일 수 있다는 가능성을 체감했고, 이 기술이 프로젝트 관리 툴에 주는 영향력을 실감했습니다.
 <br>
 
 ### 🎯장승연
 
-느낀점
+프론트엔드 작업을 진행하면서 달력 및 스프린트 설정과 같은 세부 기능 구현의 중요성을 깨달았습니다. 사용자 중심의 인터페이스 설계를 목표로 하며 프로젝트의 사용성을 높이는 방법을 고민하게 되었고, 이를 통해 UI/UX에 대한 깊은 통찰을 얻을 수 있었습니다. 팀원들과의 협업이 큰 힘이 되었으며, 한정된 시간 속에서도 완성도 있는 결과물을 만들어낸 점에 보람을 느낍니다.
 <br>
