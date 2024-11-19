@@ -33,8 +33,8 @@ export default function EpicModal({
   const [Loading, setLoading] = useState<boolean>(false)
   const [isError, setIsError] = useState<boolean>(false)
   const [isCreating, setIsCreating] = useState<boolean>(false)
-  // const [editIndex, setEditIndex] = useState<number | null>(null);
-  // const [editItem, setEditItem] = useState<EpicData | null>(null);
+  const [editIndex, setEditIndex] = useState<number | null>(null);
+  const [editItem, setEditItem] = useState<IssueData | null>(null);
   const [parsedData, setParsedData] = useState<IssueData[]>([
     {
         "summary": "[BE] OAuth 기반 회원탈퇴 구현",
@@ -103,12 +103,19 @@ export default function EpicModal({
 ])
   const [projectData, setProjectData] = useState<string>('')
 
+  const priorities:string[] = ['Highest', 'High', 'Medium', 'Low', 'Lowest']
+
   const showSuccessModal = () => {
     Swal.fire({
       title: '에픽 등록 완료',
-      text: 'JIRA에 에픽 생성이 완료되었습니다.<br> JIRA 프로젝트 > 목록에서 에픽을 확인해보세요!',
+      text: `JIRA에 에픽 생성이 완료되었습니다.
+      JIRA 프로젝트 > 목록에서 에픽을 확인해보세요!`,
       icon: 'success',
       confirmButtonText: '확인'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        window.location.reload();
+      }
     });
   };
 
@@ -130,25 +137,24 @@ export default function EpicModal({
     }
   }
 
-  // 수정 함수
-  // const handleEdit = (index: number) => {
-  //   setEditIndex(index);
-  //   setEditItem(parsedData[index]);
-  // };
+  const handleEdit = (index: number) => {
+    setEditIndex(index);
+    setEditItem(parsedData[index]);
+  };
 
-  // // 수정 완료 함수
-  // const handleUpdate = (index: number) => {
-  //   const updatedItems = parsedData.map((item, i) => (i === index ? editItem : item));
-  //   setParsedData(updatedItems);
-  //   setEditIndex(null);
-  //   setEditItem(null);
-  // };
+  const handleUpdate = (index: number) => {
+    if (editItem) { // editItem이 null이 아닐 경우에만 업데이트
+        const updatedItems = parsedData.map((item, i) => (i === index ? editItem : item));
+        setParsedData(updatedItems);
+    }
+    setEditIndex(null);
+    setEditItem(null);
+  };
 
-  // // 삭제 함수
-  // const handleDelete = (index: number) => {
-  //   const updatedItems = parsedData.filter((_, i) => i !== index);
-  //   setParsedData(updatedItems);
-  // };
+  const handleDelete = (index: number) => {
+    const updatedItems = parsedData.filter((_, i) => i !== index);
+    setParsedData(updatedItems);
+  };
 
   const handleCreateIssue = async (projectData:string, type: string) => {
     setLoading(true)
@@ -277,16 +283,68 @@ export default function EpicModal({
               {parsedData?.map((item, index) => (
                 <li key={index}
                 className="w-full h-20 list-none border rounded border-[#54B2A3] my-2 p-2 relative">
-                  <div className="flex items-center my-1">
-                    <img src={`/img/${item?.priority}.png`} alt="priority_img"
-                    className="w-6" />
-                    <p className="text-sm font-bold text-[#54B2A3]">{item?.summary}<span className="text-gray-500 text-xs font-normal ml-4">{item?.start_at} - {item?.end_at}</span></p>
-                  </div>
-                  <p className="text-sm ml-2">{item?.description}</p>
-                  <div className="absolute top-2 right-2 flex space-x-2">
-                    <button className="bg-blue-400 text-xs w-12 h-6 rounded text-white">수정</button>
-                    <button className="bg-red-400 text-xs w-12 h-6 rounded text-white">삭제</button>
-                  </div>
+                  {editIndex === index ? (
+                    <div>
+                       <select
+                        value={editItem?.priority} // priority select
+                        onChange={(e) => setEditItem(prevItem => {
+                          if (!prevItem) return null; // null 체크
+                          return {
+                            ...prevItem,
+                            priority: e.target.value, // 선택된 priority 값 업데이트
+                          } as IssueData; // 타입 단언
+                        })}
+                        className="bg-white hover:bg-gray-200 rounded p-1 w-1/6 text-sm mr-2"
+                      >
+                        {priorities.map((priority) => (
+                          <option key={priority} value={priority}>
+                            {priority}
+                          </option>
+                        ))}
+                      </select>
+                      <input
+                        type="text"
+                        value={editItem?.summary || ''}
+                        onChange={(e) => setEditItem(prevItem => {
+                            if (!prevItem) return null
+                            return {
+                                ...prevItem,
+                                summary: e.target.value,
+                            } as IssueData
+                        })}
+                        className="bg-white hover:bg-gray-200 border rounded p-1 w-1/2 text-sm"
+                      />
+                      <input
+                        type="text"
+                        value={editItem?.description || ''}
+                        onChange={(e) => setEditItem(prevItem => {
+                          if (!prevItem) return null;
+                          return {
+                            ...prevItem,
+                            description: e.target.value,
+                          } as IssueData;
+                        })}
+                        className="bg-white hover:bg-gray-200 border rounded p-1 w-full text-xs"
+                        placeholder="Description"
+                      />
+                      <button onClick={() => handleUpdate(index)} className="absolute top-2 right-2 bg-blue-400 text-xs w-12 h-6 rounded text-white">완료</button>
+                    </div>
+                  ) : (
+                    <div>
+                      <div className="flex items-center my-1">
+                        <img src={`/img/${item?.priority}.png`} alt="priority_img" className="w-6" />
+                        <p className="text-sm font-bold text-[#54B2A3]">
+                          {item?.summary}
+                          <span className="text-gray-500 text-xs font-normal ml-4">{item?.start_at} - {item?.end_at}</span>
+                        </p>
+                      </div>
+                      <p className="text-sm ml-2">{item?.description}</p>
+                      <div className="absolute top-2 right-2 flex space-x-2">
+                        <button onClick={() => handleEdit(index)} className="bg-blue-400 text-xs w-12 h-6 rounded text-white">수정</button>
+                        <button onClick={() => handleDelete(index)} className="bg-red-400 text-xs w-12 h-6 rounded text-white">삭제</button>
+                      </div>
+                    </div>
+            )}
                 </li>
               ))}
               <button className="w-28 h-10 rounded bg-[#54B2A3] text-2xl text-white font-bold" onClick={addItem}>+</button>

@@ -83,10 +83,56 @@ export async function POST(request: Request) {
             "end_at": null
             } ...
         ]
+        }`,
+        `역할: JIRA를 통해 6명의 주니어 개발자들의 개발 업무를 관리하고, 프로젝트 정보와 스토리를 기반으로 서브 태스크를 생성하는 최고의 PM.
+        메인 응답: 현재 진행 중인 프로젝트의 정보, Epic, Story 내용과 상세 구현 정보를 기반으로 담당자의 일정에 맞는 Sub-task 생성.
+        JIRA의 Sub-Task는 프로젝트 관리 및 이슈 추적 시스템에서 사용되는 기능으로, 메인 이슈(예: Story, Bug 등)의 하위 작업을 나타냅니다.
+        특정 Task나 Story의 하위 작업으로, 상위 이슈에 종속되어 있습니다. 즉, Sub-task는 반드시 상위 Task가 있어야 존재할 수 있습니다.
+        각 Sub-Task는 별도의 작업으로 취급되며, 독립적으로 할당되고 진행될 수 있습니다. 따라서 팀원들이 특정 부분에 집중할 수 있게 됩니다.
+        팀이 개발해야 할 특정 작업 또는 기능을 정의하며, 주로 에픽 단위 이슈 바로 하위 컴포넌트로 구성된다.
+        요구사항: [{1: 기존 등록된 Epic 및 Story 일정과 상세 구현 정보를 기준으로 담당자의 상세 Sub-Task 제작}, 
+                {2: 담당자의 역할은 [FE]-frontend, [BE]-backend, [UX/UI], [DB]-database, [INFRA], [EM]-embedded, [MOBILE]로 분류됨. 담당자의 역할에 맞는 업무만 배정하라},
+                {3: 담당자 Story의 Title 컬럼에는 담당자 역할에 맞는 태그가 존재. 해당 태그와 기술 스택에 맞는 Sub-task summary 작성}, 
+                {4: parents 컬럼 - 사용자가 제공하는 Story 정보 기반으로, 생성한 Sub-task리의 부모가 되는 Story 업무의 key로 반드시 제공하라.}, 
+                {5: 각 Story 별 중요도는 Highest/High/Medium/Low/Lowest 중 하나로 설정},
+                {6: 각 업무의 summary에는 [FE], [BE], [Infra], [UX/UI] 와 같은 업무 별 태그를 앞에 명시},
+                {7: start_at / end_at 컬럼은 항상 null값을 가짐},
+                {8: issuetype은 항상 영어로 "Sub-task" 값을 가짐}]
+        응답 형식: json, 기타 세부 설명 필요 없음 - {
+        result: [
+            {"summary": "메인 페이지 CSS 반응형 디자인 구현",
+            "description": "화면 크기에 맞도록 메인 페이지 컴포넌트 CSS 디자인 수정",
+            "issuetype": "Sub-task",
+            "priority": "High",
+            "parent": "S11P31A403-452",
+            "story_points": 0,
+            "start_at": null,
+            "end_at": null
+            },
+            {"summary": "프로젝트 관련 input 컴포넌트 구현",
+            "description": "에픽 생성을 위한 JIRA 프로젝트 정보 입력 컴포넌트 구현",
+            "issuetype": "Sub-task",
+            "priority": "Medium",
+            "parent": "S11P31A403-451",
+            "story_points": 0,
+            "start_at": null,
+            "end_at": null
+            },
+            {"summary": "로그아웃 버튼 - 로그아웃 API 연동",
+            "description": "Axios 통신 기반 백엔드 로그아웃 API 연동",
+            "issuetype": "Sub-task",
+            "priority": "Low",
+            "parent": "S11P31A403-442",
+            "story_points": 0,
+            "start_at": null,
+            "end_at": null
+            } ...
+        ]
         }`
+
     ]
 
-    const selectedPrompt = type === 'epic' ? prompts[0] : prompts[1];
+    const selectedPrompt = type === 'epic' ? prompts[0] : type === 'story' ? prompts[1] : prompts[2];
 
     try {
         const response = await axios.post(

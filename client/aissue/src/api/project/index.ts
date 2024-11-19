@@ -26,8 +26,8 @@ interface Epic {
   summary: string
   description: string
   priority: string
-  startAt: string
-  endAt: string
+  start_at: string | null;
+  end_at: string | null;
 }
 
 // 추가된 인터페이스 정의
@@ -84,38 +84,63 @@ interface ProjectData {
   deleteImage?: boolean
 }
 
+export interface IssueData {
+  summary: string;
+  description: string;
+  issuetype: 'Epic' | 'Story' | 'Sub-task';
+  priority: 'Highest' | 'High' | 'Medium' | 'Low' | 'Lowest';
+  story_points?: number;
+  parent?: string;
+  start_at?: string;
+  end_at?: string;
+}
+
+const createIssue = async (projectKey: string, issueData: IssueData): Promise<void> => {
+  try {
+    const res = await privateAPI.post(`/issues`, {
+      project: projectKey,
+      issues: [issueData],
+    });
+    console.log('이슈 생성 성공:', res.data);
+    return res.data;
+  } catch (error) {
+    console.error('이슈 생성 실패:', error);
+    throw error;
+  }
+};
+
 const getMonthlyEpics = async (projectKey: string): Promise<Epic[]> => {
   const res = await privateAPI.get(`/issues/monthly?project=${projectKey}`)
   const issues = res.data.result
 
-  return issues.map((epic: Epic) => ({
+  const mappedEpics = issues.map((epic: Epic) => ({
     id: epic.id,
     key: epic.key,
     summary: epic.summary,
     description: epic.description,
     priority: epic.priority,
-    startAt: epic.startAt ? new Date(epic.startAt) : null,
-    endAt: epic.endAt ? new Date(epic.endAt) : null,
-  }))
-}
+    start_at: epic.start_at ? new Date(epic.start_at) : null,
+    end_at: epic.end_at ? new Date(epic.end_at) : null,
+  }));
+
+  console.log(mappedEpics);
+
+  return mappedEpics;
+};
 
 const updateIssue = async (
   issue_id: number,
   issue_key: string,
   issuetype: string,
   start_at: string | null,
-  end_at: string | null,
+  end_at: string | null
 ): Promise<void> => {
   const adjustedStartAt = start_at
-    ? new Date(
-        new Date(start_at).setDate(new Date(start_at).getDate() + 1),
-      ).toISOString()
-    : null
+    ? new Date(new Date(start_at).getTime() - new Date().getTimezoneOffset() * 60000).toISOString()
+    : null;
   const adjustedEndAt = end_at
-    ? new Date(
-        new Date(end_at).setDate(new Date(end_at).getDate() + 1),
-      ).toISOString()
-    : null
+    ? new Date(new Date(end_at).getTime() - new Date().getTimezoneOffset() * 60000).toISOString()
+    : null;
 
   const requestData: UpdateIssue = {
     issue_id,
@@ -123,16 +148,19 @@ const updateIssue = async (
     issuetype,
     start_at: adjustedStartAt,
     end_at: adjustedEndAt,
-  }
+  };
+
+  console.log(requestData);
+
   try {
-    const res = await privateAPI.post('/issues/update/schedule', requestData)
-    console.log('수정 요청: ', requestData)
-    return res.data
+    const res = await privateAPI.put('/issues/update/schedule', requestData);
+    console.log('수정 요청: ', requestData);
+    return res.data;
   } catch (error) {
-    console.error('Error updating issue:', error)
-    throw error
+    console.error('Error updating issue:', error);
+    throw error;
   }
-}
+};
 
 const getWeeklyStories = async (projectKey: string): Promise<Story[]> => {
   const res = await privateAPI.get(`/issues/weekly?project=${projectKey}`)
@@ -325,4 +353,5 @@ export {
   getProjectFunctions,
   getMonthlyEpics,
   updateIssue,
+  createIssue,
 }

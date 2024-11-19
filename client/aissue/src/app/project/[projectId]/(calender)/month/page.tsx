@@ -12,7 +12,9 @@ import listPlugin from '@fullcalendar/list';
 import { EventClickArg } from '@fullcalendar/core';
 import { Draggable } from '@fullcalendar/interaction';
 import Modal from 'react-modal';
-import { getMonthlyEpics, updateIssue } from '@/api/project';
+import { getMonthlyEpics, updateIssue, createIssue } from '@/api/project';
+import { useRouter } from "next/navigation";
+import { IssueData } from '@/api/project';
 
 interface CalendarEvent {
   title: string;
@@ -30,38 +32,38 @@ interface CalendarEvent {
 }
 
 const CalendarComponent = () => {
+  const router = useRouter();
   const calendarRef = useRef<FullCalendar | null>(null);
   // 현재 활성화된 뷰 상태 추가
-  const [activeView, setActiveView] = useState('dayGridMonth');
+  // const [activeView, setActiveView] = useState('dayGridMonth');
 
   const [events, setEvents] = useState<CalendarEvent[]>([]);
 
   const [tasks, setTasks] = useState<{ id: number; key: string; title: string; color: string; description: string; }[]>([]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [newEventId, setNewEventId] = useState(0);
-  const [newEventKey, setNewEventKey] = useState('');
+  // const [newEventId, setNewEventId] = useState(0);
+  // const [newEventKey, setNewEventKey] = useState('');
   const [newEventTitle, setNewEventTitle] = useState('');
   const [newEventDescription, setNewEventDescription] = useState('');
-  const [newEventColor, setNewEventColor] = useState('#3788d8');
+  // const [newEventColor, setNewEventColor] = useState('#3788d8');
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [isAllDay, setIsAllDay] = useState(true);
+  // const [isAllDay, setIsAllDay] = useState(true);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
 
   useEffect(() => {
     const fetchEpics = async () => {
       const projectKey = sessionStorage.getItem('projectId');
-  
+
       if (!projectKey) {
         console.warn('project id가 없습니다.');
         return;
       }
-  
+
       try {
         const epics = await getMonthlyEpics(projectKey);
-        console.log(epics);
         const epicTasks = epics
-          .filter((epic) => !epic.startAt)
+          .filter((epic) => !epic.start_at)
           .map((epic) => ({
             id: epic.id,
             key: epic.key,
@@ -69,32 +71,36 @@ const CalendarComponent = () => {
             color: '#87CEFA',
             description: epic.description,
           }));
-  
+
         setTasks(epicTasks);
-  
+
         const eventsWithDates: CalendarEvent[] = epics
-          .filter((epic) => epic.startAt !== null)
-          .map((epic) => ({
-            title: epic.summary,
-            start: epic.startAt ? new Date(epic.startAt) : undefined,
-            end: epic.endAt ? new Date(epic.endAt) : undefined,
-            allDay: true,
-            backgroundColor: '#87CEFA',
-            borderColor: '#87CEFA',
-            extendedProps: {
-              id: epic.id,
-              key: epic.key,
-              description: epic.description,
-            },
-          }));
-  
+          .filter((epic) => epic.start_at !== null)
+          .map((epic) => {
+            const start = epic.start_at ? new Date(new Date(epic.start_at).setHours(0, 0, 0, 0)) : undefined;
+            const end = epic.end_at ? new Date(new Date(epic.end_at).setHours(0, 0, 0, 0)) : undefined;
+            return {
+              title: epic.summary,
+              start,
+              end,
+              allDay: true,
+              backgroundColor: '#87CEFA',
+              borderColor: '#87CEFA',
+              extendedProps: {
+                id: epic.id,
+                key: epic.key,
+                description: epic.description,
+              },
+            };
+          });
+        console.log("생성된 이벤트:", eventsWithDates);
         setEvents(eventsWithDates);
-  
+
       } catch (error) {
         console.error('Error fetching epics:', error);
       }
     };
-  
+
     fetchEpics();
   }, []);
 
@@ -111,8 +117,8 @@ const CalendarComponent = () => {
           const description = eventEl.getAttribute('data-description');
           return {
             title: title || '새 이벤트',
-            backgroundColor: color || '#3788d8',
-            borderColor: color || '#3788d8',
+            backgroundColor: color || '#87CEFA',
+            borderColor: color || '#87CEFA',
             extendedProps: { id, key, description },
           };
         },
@@ -122,56 +128,85 @@ const CalendarComponent = () => {
 
   const handleDateClick = (info: DateClickArg) => {
     setSelectedDate(info.date);
-    setIsAllDay(activeView === 'dayGridMonth'); // Set all-day flag based on view
+    // setIsAllDay(activeView === 'dayGridMonth'); // Set all-day flag based on view
     setSelectedEvent(null);
     setIsModalOpen(true);
   };
 
-  const eventsRef = useRef(events); // 최신 상태 참조
-  eventsRef.current = events; // 항상 최신 상태 유지
+  const eventsRef = useRef(events);
+  eventsRef.current = events;
 
-  const handleAddEvent = () => {
-    if (newEventTitle && selectedDate) {
+  const handleAddEvent = async () => {
+    if (!newEventTitle || !selectedDate) {
+      alert("제목과 날짜를 입력해주세요.");
+      return;
+    }
+
+    const projectKey = sessionStorage.getItem('projectId');
+    if (!projectKey) {
+      console.warn('프로젝트 ID가 없습니다.');
+      return;
+    }
+
+    const startDate = new Date(selectedDate).toISOString();
+    const endDate = new Date(selectedDate);
+    endDate.setDate(endDate.getDate() + 1);
+    const endAt = endDate.toISOString();
+
+    const issueData: IssueData = {
+      summary: newEventTitle,
+      description: newEventDescription || "",
+      issuetype: "Epic",
+      priority: "Medium",
+      story_points: 0,
+      start_at: startDate,
+      end_at: endAt,
+    };
+
+    try {
+      await createIssue(projectKey, issueData);
+      console.log("이슈 생성 성공:", issueData);
+
       const newEvent: CalendarEvent = {
         title: newEventTitle,
-        start: selectedDate,
-        allDay: isAllDay,
-        backgroundColor: newEventColor,
-        borderColor: newEventColor,
+        start: new Date(startDate),
+        end: new Date(endAt),
+        allDay: true,
+        backgroundColor: '#3788d8',
+        borderColor: '#3788d8',
         extendedProps: {
-          id: newEventId,
-          key: newEventKey,
-          description: newEventDescription
+          id: 0,
+          key: '',
+          description: newEventDescription,
         },
       };
 
       setEvents((prevEvents) => [...prevEvents, newEvent]);
       setIsModalOpen(false);
-
-      const updatedEvents = [...eventsRef.current, newEvent];
-      setEvents(updatedEvents);
-      eventsRef.current = updatedEvents; // ref도 최신 상태로 유지
-      syncTasksWithEvents(updatedEvents); // 동기화
-
-      setIsModalOpen(false);
-      setNewEventId(0);
-      setNewEventKey('');
-      setNewEventTitle('');
-      setNewEventColor('#3788d8');
-      setNewEventDescription('');
+      resetNewEventFields();
+    } catch (error) {
+      console.error("이슈 생성 실패:", error);
     }
   };
 
-  const handleEventReceive = (info: any) => {
-    // info.event.setAllDay(true);
-    console.log("Received Event Extended Props:", info.event.extendedProps);
-    const isAllDayEvent = activeView === 'dayGridMonth';
-    console.log(isAllDayEvent)
+  const resetNewEventFields = () => {
+    setNewEventTitle('');
+    setNewEventDescription('');
+  };
+
+  const handleEventReceive = async (info: any) => {
+    // console.log("Received Event Extended Props:", info.event.extendedProps);
+    // const isAllDayEvent = 'dayGridMonth';
+    // console.log(isAllDayEvent)
     const newEvent: CalendarEvent = {
       title: info.event.title,
-      start: info.event.start,
-      // allDay: true,
-      allDay: isAllDayEvent,
+      start: info.event.start
+        ? new Date(new Date(info.event.start).setHours(0, 0, 0, 0))
+        : undefined,
+      end: info.event.end
+        ? new Date(new Date(info.event.end).setHours(0, 0, 0, 0))
+        : undefined,
+      allDay: true,
       backgroundColor: info.event.backgroundColor,
       borderColor: info.event.borderColor,
       extendedProps: {
@@ -179,25 +214,37 @@ const CalendarComponent = () => {
         key: info.event.extendedProps.key,
         description: info.event.extendedProps.description
       }
-
     };
 
-    setEvents((prevEvents) => {
-      const updatedEvents = prevEvents.filter(
-        (event) => !(event.title === newEvent.title && event.start?.getTime() === newEvent.start?.getTime())
-      );
-      syncTasksWithEvents([...updatedEvents, newEvent]);
-      return [...updatedEvents, newEvent];
-    });
+    await updateIssue(
+      newEvent.extendedProps.id,
+      newEvent.extendedProps.key,
+      'Epic',
+      newEvent.start ? newEvent.start.toISOString() : null,
+      newEvent.end ? newEvent.end.toISOString() : null
+    );
 
-    setTasks((prevTasks) => prevTasks.filter((task) => task.title !== newEvent.title));
+    setEvents((prevEvents) =>
+      prevEvents.filter((event) => event.extendedProps.id !== newEvent.extendedProps.id).concat(newEvent)
+    );
+
+    setTasks((prevTasks) => {
+      const updatedTasks = prevTasks.filter(
+        (task) => task.key !== newEvent.extendedProps.key
+      );
+      return updatedTasks;
+    });
   };
 
   const handleEventResize = async (resizeInfo: any) => {
     const updatedEvent: CalendarEvent = {
       title: resizeInfo.event.title,
-      start: resizeInfo.event.start,
-      end: resizeInfo.event.end, // 이벤트 종료일 업데이트
+      start: resizeInfo.event.start
+        ? new Date(new Date(resizeInfo.event.start).setHours(0, 0, 0, 0))
+        : undefined,
+      end: resizeInfo.event.end
+        ? new Date(new Date(resizeInfo.event.end).setHours(0, 0, 0, 0))
+        : undefined,
       allDay: resizeInfo.event.allDay,
       backgroundColor: resizeInfo.event.backgroundColor,
       borderColor: resizeInfo.event.borderColor,
@@ -211,14 +258,14 @@ const CalendarComponent = () => {
     await updateIssue(
       resizeInfo.event.extendedProps.id,
       resizeInfo.event.extendedProps.key,
-      '에픽',
+      'Epic',
       updatedEvent.start ? updatedEvent.start.toISOString() : null,
       updatedEvent.end ? updatedEvent.end.toISOString() : null
     );
 
     setEvents((prevEvents) => {
       const updatedEvents = prevEvents.map((event) =>
-        event.title === updatedEvent.title ? updatedEvent : event
+        event.extendedProps.key === updatedEvent.extendedProps.key ? updatedEvent : event
       );
       return updatedEvents;
     });
@@ -227,8 +274,12 @@ const CalendarComponent = () => {
   const handleEventDrop = async (dropInfo: any) => {
     const updatedEvent: CalendarEvent = {
       title: dropInfo.event.title,
-      start: dropInfo.event.start,
-      end: dropInfo.event.end,
+      start: dropInfo.event.start
+        ? new Date(new Date(dropInfo.event.start).setHours(0, 0, 0, 0))
+        : undefined,
+      end: dropInfo.event.end
+        ? new Date(new Date(dropInfo.event.end).setHours(0, 0, 0, 0))
+        : undefined,
       allDay: dropInfo.event.allDay,
       backgroundColor: dropInfo.event.backgroundColor,
       borderColor: dropInfo.event.borderColor,
@@ -242,24 +293,24 @@ const CalendarComponent = () => {
     await updateIssue(
       dropInfo.event.extendedProps.id,
       dropInfo.event.extendedProps.key,
-      '에픽',
+      'Epic',
       updatedEvent.start ? updatedEvent.start.toISOString() : null,
       updatedEvent.end ? updatedEvent.end.toISOString() : null
     );
 
     setEvents((prevEvents) => {
       const updatedEvents = prevEvents.map((event) =>
-        event.title === updatedEvent.title ? updatedEvent : event
+        event.extendedProps.key === updatedEvent.extendedProps.key ? updatedEvent : event
       );
       return updatedEvents;
     });
   };
 
-  const syncTasksWithEvents = (updatedEvents: CalendarEvent[]) => {
-    setTasks((prevTasks) =>
-      prevTasks.filter((task) => !updatedEvents.some((event) => event.title === task.title))
-    );
-  };
+  // const syncTasksWithEvents = (updatedEvents: CalendarEvent[]) => {
+  //   setTasks((prevTasks) =>
+  //     prevTasks.filter((task) => !updatedEvents.some((event) => event.title === task.title))
+  //   );
+  // };
 
   const handleEventClick = (info: EventClickArg) => {
     console.log(info.event.extendedProps);
@@ -384,19 +435,15 @@ const CalendarComponent = () => {
             customMonth: {
               text: 'Month',
               click: () => {
-                if (calendarRef.current) {
-                  calendarRef.current.getApi().changeView('dayGridMonth');
-                  setActiveView('dayGridMonth');
-                }
+                const currentPath = window.location.pathname.replace(/\/(month|week)$/, "");
+                router.push(`${currentPath}/month`);
               },
             },
             customWeek: {
               text: 'Week',
               click: () => {
-                if (calendarRef.current) {
-                  calendarRef.current.getApi().changeView('timeGridWeek');
-                  setActiveView('timeGridWeek');
-                }
+                const currentPath = window.location.pathname.replace(/\/(month|week)$/, "");
+                router.push(`${currentPath}/week`);
               },
             },
 
@@ -423,7 +470,10 @@ const CalendarComponent = () => {
           eventClick={handleEventClick}
         />
       </div>
-      <div id="external-events" className="w-1/4 bg-white rounded-lg shadow p-4 h-full flex flex-col">
+      <div
+        id="external-events"
+        className="w-1/4 bg-white rounded-lg shadow p-4 h-full flex flex-col hidden md:flex"
+      >
         <h3 className="text-lg font-bold text-blue-600 mb-4 text-center">Epic List</h3>
         {tasks.map((task, index) => (
           <div
@@ -464,35 +514,42 @@ const CalendarComponent = () => {
               </p>
             </div>
           ) : (
-            <>
-              <h2 className="text-xl font-bold mb-4">새 이벤트 추가</h2>
+            <div>
+              <h2 className="text-xl font-bold mb-4">에픽 생성</h2>
               <div className="mb-4">
-                <label className="block mb-1">이벤트 제목:</label>
+                <label className="block mb-1">에픽 제목:</label>
                 <input
                   type="text"
                   value={newEventTitle}
                   onChange={(e) => setNewEventTitle(e.target.value)}
                   className="w-full p-2 border border-gray-300 rounded"
+                  placeholder="에픽 제목을 입력하세요"
                 />
               </div>
               <div className="mb-4">
-                <label className="block mb-1">이벤트 색상:</label>
-                <input
-                  type="color"
-                  value={newEventColor}
-                  onChange={(e) => setNewEventColor(e.target.value)}
-                  className="w-full p-2"
-                />
+                <label className="block mb-1">에픽 설명:</label>
+                <textarea
+                  value={newEventDescription}
+                  onChange={(e) => setNewEventDescription(e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded"
+                  placeholder="에픽 설명을 입력하세요"
+                ></textarea>
               </div>
               <div className="flex justify-end space-x-2">
-                <button onClick={handleAddEvent} className="px-4 py-2 bg-blue-500 text-white rounded">
-                  추가
+                <button
+                  onClick={handleAddEvent}
+                  className="px-4 py-2 bg-blue-500 text-white rounded"
+                >
+                  생성
                 </button>
-                <button onClick={() => setIsModalOpen(false)} className="px-4 py-2 bg-gray-300 rounded">
+                <button
+                  onClick={() => setIsModalOpen(false)}
+                  className="px-4 py-2 bg-gray-300 rounded"
+                >
                   취소
                 </button>
               </div>
-            </>
+            </div>
           )}
         </div>
       </Modal>
