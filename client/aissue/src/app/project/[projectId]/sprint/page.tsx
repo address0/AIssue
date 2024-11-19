@@ -508,7 +508,6 @@ export default function SprintPage({
               {msg.user && (
                 <div className="self-end max-w-sm p-3 bg-blue-300 text-gray-700 rounded-[20px_0px_20px_20px]">
                   {msg?.user}
-                  <button onClick={() => addPrompt(questions[currentQuestionIndex - 1]?.type)}>Next</button>
                 </div>
               )}
               {msg.bot && (
@@ -632,8 +631,12 @@ export default function SprintPage({
           )}
           <div ref={chatEndRef} />
         </div>
-
-
+        {
+          inputList?.length > 0 && (
+            <button onClick={() => addPrompt(questions[currentQuestionIndex - 1]?.type)}
+              className='relative bottom-12 left-4 w-24 h-10 text-lg text-white rounded bg-orange-400 animate-fadeIn'>다음 단계</button>
+          )
+        }
         {/* Input Area Fixed to Bottom */}
         <div className="fixed bottom-5 w-[70%] bg-white p-4 shadow-md flex items-center border-2 border-[#4D86FF] rounded-[10px]">
           <input
