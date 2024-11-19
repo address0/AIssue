@@ -246,7 +246,7 @@ jira에 대해 물어볼 수 있는 챗봇
 
 ### 2-4 전체 업무 로그 수정
 
-<img src="docs/images/work-log-edit.PNG" alt="chatting" height="300" width="350" />
+<img src="docs/images/work-log-edit.PNG" alt="chatting" height="200" width="150" />
 이슈 편집 및 수정
 
 ###
