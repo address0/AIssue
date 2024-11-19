@@ -1,13 +1,16 @@
-// src/app/project/[projectId]/layout.tsx
-
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
-import { getProjectList } from '@/api/project'
-import { useState } from 'react'
+import { getProjectList, getProjectInfo } from '@/api/project'
+import { useState, useEffect } from 'react'
 import ChatBotModal from '@/components/(Modal)/ChatBotModal/page'
+import ChatModal from '@/components/(Modal)/ChatModal/page'
+import { logOut } from '@/api/user'
+import LottieAnimation from '@/components/LottieAnimation/LottieAnimation'
+import animationData from '@public/lottie/Animation - 1731821799004.json'
+import LoadingSpinner from '@/static/svg/blue-spinner.svg'
 
 interface Message {
   text: string
@@ -19,8 +22,11 @@ export default function ProjectLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const memberId =
+    typeof window !== 'undefined' ? sessionStorage.getItem('memberId') : null
+
   const { data, isLoading } = useQuery({
-    queryKey: ['projectList'],
+    queryKey: ['projectList', memberId],
     queryFn: () => getProjectList(),
   })
 
@@ -28,48 +34,114 @@ export default function ProjectLayout({
   const router = useRouter()
   const projectId = pathname.split('/')[2]
   const currentPath = pathname.split('/')[3]
-  const userName = sessionStorage.getItem('memberName')
+  const accessToken =
+    typeof window !== 'undefined' ? sessionStorage.getItem('accessToken') : null
+
+  const userName =
+    typeof window !== 'undefined' ? sessionStorage.getItem('memberName') : null
+
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [isChatOpen, setIsChatOpen] = useState(false)
+  const [isProjectChatOpen, setIsProjectChatOpen] = useState(false)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+
   const toggleDropdown = () => setDropdownOpen(!dropdownOpen)
+  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen)
+
+  useEffect(() => {
+    if (!accessToken || !memberId) {
+      router.push('/login')
+      return
+    }
+
+    if (!isLoading && data) {
+      const isAuthorized = data.includes(projectId)
+
+      if (!isAuthorized) {
+        router.push('/project')
+      }
+    }
+  }, [accessToken, memberId, isLoading, data, projectId, router])
+
+  const toggleChat = () => {
+    setIsChatOpen(!isChatOpen)
+  }
+
+  const toggleProjectChat = () => {
+    setIsProjectChatOpen(!isProjectChatOpen)
+  }
+
   const [chatBotMessages, setChatBotMessages] = useState<Message[]>([
     {
       text: '안녕하세요. JIRA에 관해 궁금한 게 있으면 뭐든지 물어보세요.',
       isUser: false,
     },
   ])
-  const toggleChat = () => {
-    setIsChatOpen(!isChatOpen)
+
+  const handleLogout = async () => {
+    try {
+      await logOut()
+      sessionStorage.clear()
+      router.push('/login')
+    } catch (error) {
+      console.error('로그아웃에 에러가 생겼습니다.', error)
+    }
   }
 
-  const handleProjectSelect = (selectedProjectId: string) => {
+  const handleProjectSelect = async (selectedProjectId: string) => {
     setDropdownOpen(false)
-    router.push(`/project/${selectedProjectId}/sprint`)
+    try {
+      const projectInfo = await getProjectInfo(selectedProjectId)
+      if (projectInfo && projectInfo.isCompleted) {
+        router.push(`/project/${selectedProjectId}/info`)
+      } else {
+        router.push(`/project/${selectedProjectId}`)
+      }
+    } catch (error) {
+      console.error('Failed to fetch project info:', error)
+      router.push(`/project/${selectedProjectId}`)
+    }
   }
 
   if (isLoading) {
-    return <div>프로젝트 목록을 불러오는 중입니다.</div>
+    return (
+      <div className="flex justify-center items-center h-full">
+        <div className="flex flex-col justify-center items-center gap-y-3 font-bold text-lg">
+          <p>프로젝트 목록을 불러오는 중입니다.</p>
+          <p>권한을 확인중입니다.</p>
+          <LoadingSpinner className="animate-spin" />
+        </div>
+      </div>
+    )
   }
+
+  const navigationItems = [
+    { name: 'AI 스프린트 생성', path: 'sprint' },
+    { name: '전체 업무 로그', path: 'worklog' },
+    { name: '프로젝트 일정', path: 'month' },
+    { name: '채팅 회고록', path: 'summary' },
+    { name: '프로젝트 정보', path: 'info' },
+  ]
 
   return (
     <>
-      {/* currentPath가 'info'일 때는 overflow-hidden을 제거 */}
-      <div
-        className={`flex h-screen ${
-          currentPath !== 'info' ? 'overflow-hidden' : ''
-        }`}
-      >
+      <div className="flex h-screen">
         {/* Sidebar */}
-        <div className="flex flex-col p-6 gap-4 text-disabled-dark font-bold w-[20.625rem] bg-white shadow-lg">
-          <div className="flex flex-col py-6 gap-y-2 justify-center items-center">
-            <div className="flex flex-col items-center space-y-4 mb-6">
-              <Image
-                src="/img/chatbot.png"
-                alt="Team Project Icon"
-                width={40}
-                height={40}
-              />
-              <div className="relative flex flex-col justify-center items-center font-normal">
+        <div
+          className={`${
+            isSidebarOpen ? 'w-[20.625rem]' : 'w-0'
+          } transition-all duration-300 fixed top-0 left-0 h-screen bg-white shadow-lg overflow-hidden z-50 lg:w-[20.625rem] lg:static lg:transition-none`}
+        >
+          <div className="flex flex-col p-6 gap-4 text-disabled-dark font-bold">
+            {/* User Info */}
+            <div className="py-6">
+              <div className="flex flex-col items-center mb-6">
+                <Image
+                  src="/img/chatbot.png"
+                  alt="Team Project Icon"
+                  width={40}
+                  height={40}
+                />
                 <p>
                   안녕하세요, <span className="font-bold">{userName}</span>님
                 </p>
@@ -77,11 +149,9 @@ export default function ProjectLayout({
                   onClick={toggleDropdown}
                   className="text-black font-semibold cursor-pointer"
                 >
-                  <span className="font-normal">현재 프로젝트 : </span>
+                  <span className="font-normal">현재 프로젝트: </span>
                   {projectId ? `#${projectId}` : 'Project 선택'}
                 </p>
-
-                {/* Dropdown for Project Selection */}
                 {dropdownOpen && (
                   <div className="absolute z-10 mt-2 w-48 bg-white rounded-md shadow-lg">
                     {data?.map((project: string) => (
@@ -97,93 +167,103 @@ export default function ProjectLayout({
                 )}
               </div>
             </div>
-          </div>
 
-          {/* Navigation Links */}
-          <div className="flex flex-col gap-3 mb-20 text-sm">
+            {/* Navigation Links */}
+            <div className="flex flex-col gap-3 mb-20 text-sm">
+              {navigationItems.map((item) => (
+                <button
+                  key={item.path}
+                  type="button"
+                  onClick={() => {
+                    router.push(`/project/${projectId}/${item.path}`)
+                    setIsSidebarOpen(false) // 메뉴 클릭 시 사이드바 닫기
+                  }}
+                  className={`p-6 rounded-xl text-center ${
+                    currentPath === item.path
+                      ? 'bg-[#7498e5] text-white'
+                      : 'hover:bg-base-50'
+                  }`}
+                >
+                  {item.name}
+                </button>
+              ))}
+            </div>
+
+            {/* Logout Button */}
             <button
-              type="button"
-              onClick={() => router.push(`/project/${projectId}/sprint`)}
-              className={`p-6 rounded-xl text-center ${
-                currentPath === 'sprint'
-                  ? 'bg-[#7498e5] text-white'
-                  : 'hover:bg-base-50'
-              }`}
+              onClick={handleLogout}
+              className="w-full text-center text-black bg-[#EEEEEE] hover:bg-[#9EBDFF66] py-2 rounded-[20px]"
             >
-              AI 스프린트 생성
-            </button>
-            <button
-              type="button"
-              onClick={() => router.push(`/project/${projectId}/worklog`)}
-              className={`p-6 rounded-xl text-center ${
-                currentPath === 'worklog'
-                  ? 'bg-[#7498e5] text-white'
-                  : 'hover:bg-base-50'
-              }`}
-            >
-              전체 업무 로그
-            </button>
-            <button
-              type="button"
-              onClick={() => router.push(`/project/${projectId}/month`)}
-              className={`p-6 rounded-xl text-center ${
-                currentPath === 'month' || currentPath === 'week'
-                  ? 'bg-[#7498e5] text-white'
-                  : 'hover:bg-base-50'
-              }`}
-            >
-              프로젝트 일정
-            </button>
-            <button
-              type="button"
-              onClick={() => router.push(`/project/${projectId}/summary`)}
-              className={`p-6 rounded-xl text-center
-              ${
-                currentPath === 'summary'
-                  ? 'bg-[#7498e5] text-white'
-                  : 'hover:bg-base-50'
-              }`}
-            >
-              채팅 회고록
-            </button>
-            <button
-              type="button"
-              onClick={() => router.push(`/project/${projectId}/info`)}
-              className={`p-6 rounded-xl text-center ${
-                currentPath === 'info'
-                  ? 'bg-[#7498e5] text-white'
-                  : 'hover:bg-base-50'
-              }`}
-            >
-              프로젝트 정보
+              프로젝트 나가기
             </button>
           </div>
-
-          {/* Logout Button */}
-          <button
-            onClick={() => router.push('/login')}
-            className="w-full text-center text-black bg-[#EEEEEE] hover:bg-[#9EBDFF66] py-2 rounded-[20px]"
-            style={{ borderRadius: '10px' }}
-          >
-            프로젝트 나가기
-          </button>
         </div>
 
         {/* Main Content */}
-        <div className="w-full overflow-y-auto">{children}</div>
+        <div className="w-full overflow-y-auto flex flex-col bg-gray-100">
+          {/* Hamburger Menu for Small Screens */}
+          <button
+            onClick={toggleSidebar}
+            className="lg:hidden p-2 bg-gray-200 rounded-md fixed top-4 left-4 z-50"
+          >
+            {/* <Image
+              src="/img/hamburger-menu.png"
+              alt="Menu"
+              width={24}
+              height={24}
+            /> */}
+            <LottieAnimation
+              animationData={animationData}
+              width={24}
+              height={24}
+            />
+          </button>
 
-        {/* ChatBot Modal Trigger */}
-        <button
-          onClick={toggleChat}
-          className="fixed bottom-8 right-24 rounded-full object-fill flex items-center justify-center shadow-lg"
+          {children}
+        </div>
+
+        <div
+          className={`fixed bottom-8 right-12 flex gap-4 
+              sm:gap-1 md:gap-3 lg:gap-5 z-50`}
         >
-          <Image
-            src="/img/chatbot.png"
-            alt="Team Project Icon"
-            width={50}
-            height={50}
+          <button
+            onClick={toggleChat}
+            className="p-1 rounded-full shadow-lg
+              w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 flex items-center justify-center"
+          >
+            <Image
+              src="/img/chatbot.png"
+              alt="ChatBot"
+              width={48}
+              height={48}
+              className="rounded-full w-full h-full"
+            />
+          </button>
+
+          <button
+            onClick={toggleProjectChat}
+            className="p-1 rounded-full shadow-lg
+              w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 flex items-center justify-center"
+          >
+            <Image
+              src="/img/chaticon.png"
+              alt="Chat"
+              width={48}
+              height={48}
+              className="rounded-full w-full h-full"
+            />
+          </button>
+        </div>
+
+        {isProjectChatOpen && (
+          <ChatModal
+            onClose={toggleProjectChat}
+            memberId={memberId}
+            projectId={projectId}
+            accessToken={accessToken}
+            color={'#54B2A3'}
           />
-        </button>
+        )}
 
         {/* ChatBot Modal */}
         {isChatOpen && (

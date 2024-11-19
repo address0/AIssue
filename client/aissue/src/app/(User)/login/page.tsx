@@ -2,24 +2,52 @@
 
 import axios from 'axios'
 import Image from 'next/image'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { login } from '@/api/user/index'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [passswordError, setPasswordError] = useState<string>('')
+  const [passwordError, setPasswordError] = useState<string>('')
+  const [installPrompt, setInstallPrompt] = useState<Event | null>(null)
+  const [isInstallable, setIsInstallable] = useState(false)
   const router = useRouter()
 
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (event: Event) => {
+      event.preventDefault()
+      setInstallPrompt(event)
+      setIsInstallable(true)
+    }
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+
+    return () => {
+      window.removeEventListener(
+        'beforeinstallprompt',
+        handleBeforeInstallPrompt,
+      )
+    }
+  }, [])
+
+  const handleInstallClick = async () => {
+    if (installPrompt) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ;(installPrompt as any).prompt()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const result = await (installPrompt as any).userChoice
+      console.log(`사용자 선택: ${result.outcome}`)
+      setInstallPrompt(null)
+      setIsInstallable(false)
+    }
+  }
+
   const handleSignup = () => {
-    // 회원가입 페이지로 이동
-    console.log('Signup clicked')
-    router.push('/signup') // /signup 페이지로 이동
+    router.push('/signup')
   }
 
   const handleLogin = () => {
-    // 로그인 로직 처리 후 페이지 이동
     loginSubmit()
   }
 
@@ -30,14 +58,16 @@ export default function LoginPage() {
       sessionStorage.setItem('refreshToken', res.refreshToken)
       sessionStorage.setItem('memberId', res.memberId)
       sessionStorage.setItem('memberName', res.memberName)
-      router.push('/project') // /sprint 페이지로 이동
+      router.push('/project')
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        console.log(error.response?.data.message)
         if (error.response?.data.message === '비밀번호가 일치하지 않습니다.') {
           setPasswordError(error.response?.data.message)
+        } else if (
+          error.response?.data.message === '존재하지 않는 이메일입니다.'
+        ) {
+          setPasswordError(error.response?.data.message)
         }
-        console.error('로그인 실패', error)
       }
     }
   }
@@ -73,8 +103,8 @@ export default function LoginPage() {
         <div className="border-b border-gray-300 mb-6 w-full"></div>
 
         <div className="mb-4">
-          {passswordError && (
-            <p className="text-red-500 text-sm mb-2">{passswordError}</p>
+          {passwordError && (
+            <p className="text-red-500 text-sm mb-2">{passwordError}</p>
           )}
           <input
             type="email"
@@ -108,6 +138,15 @@ export default function LoginPage() {
         >
           회원가입
         </button>
+
+        {isInstallable && (
+          <button
+            onClick={handleInstallClick}
+            className="w-full bg-[#099488] text-white py-3 rounded mt-4 hover:bg-[#0DB9AB] transition-colors"
+          >
+            앱 설치
+          </button>
+        )}
       </div>
     </div>
   )
