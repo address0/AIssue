@@ -8,7 +8,7 @@ import NoEpic from '@public/lottie/Animation - 1730424329200.json'
 import LoadingImg from '@public/lottie/Animation - 1731310411267.json'
 import FindEpicImg from '@public/lottie/Animation - 1731658876737.json'
 import EpicModal from '@/components/(Modal)/EpicModal/page'
-import { getEpics, getSprint } from '@/api/issue'
+import { getEpics } from '@/api/issue'
 import { getProjectInfo } from "@/api/project";
 import { postIssues } from "@/api/issue";
 import Swal from 'sweetalert2';
@@ -72,8 +72,8 @@ export default function SprintPage({
   const userName =  typeof window !== 'undefined' ? sessionStorage.getItem('memberName') : null
   const [prompt, setPrompt] = useState<MessageData[]>([])
   const [userRole, setUserRole] = useState<string>('')
-  const [editIndex, setEditIndex] = useState<number | null>(null);
-  const [editItem, setEditItem] = useState<IssueData | null>(null);
+  // const [editIndex, setEditIndex] = useState<number | null>(null);
+  // const [editItem, setEditItem] = useState<IssueData | null>(null);
 
   const questions:SprintData[] = [
     { type: '담당',
@@ -229,28 +229,28 @@ export default function SprintPage({
     nextQuestion()
   }
 
-  const handleEdit = (index: number, type:string) => {
-    setEditIndex(index);
-    if (type === 'story') {
-      setEditItem(parsedStory[index]);
-    } else {
-      setEditItem(parsedSubTask[index]);
-    }
-  };
+  // const handleEdit = (index: number, type:string) => {
+  //   setEditIndex(index);
+  //   if (type === 'story') {
+  //     setEditItem(parsedStory[index]);
+  //   } else {
+  //     setEditItem(parsedSubTask[index]);
+  //   }
+  // };
 
-  const handleUpdate = (index: number, type:string) => {
-    if (editItem) {
-      if (type === 'story') {
-        const updatedItems = parsedStory.map((item, i) => (i === index ? editItem : item));
-        setParsedStory(updatedItems);
-      } else {
-        const updatedItems = parsedSubTask.map((item, i) => (i === index ? editItem : item));
-        setParsedSubTask(updatedItems);
-      }
-    }
-    setEditIndex(null);
-    setEditItem(null);
-  };
+  // const handleUpdate = (index: number, type:string) => {
+  //   if (editItem) {
+  //     if (type === 'story') {
+  //       const updatedItems = parsedStory.map((item, i) => (i === index ? editItem : item));
+  //       setParsedStory(updatedItems);
+  //     } else {
+  //       const updatedItems = parsedSubTask.map((item, i) => (i === index ? editItem : item));
+  //       setParsedSubTask(updatedItems);
+  //     }
+  //   }
+  //   setEditIndex(null);
+  //   setEditItem(null);
+  // };
 
   const handleDelete = (index: number, type:string) => {
     if (type === 'story') {
@@ -568,7 +568,7 @@ export default function SprintPage({
                             <p className="text-sm ml-2">{issue?.description}</p>
                             <p className="text-sm text-gray-500 absolute right-2 top-2">Epic: {issue?.parent}</p>
                             <div className="absolute bottom-2 right-2 flex space-x-2">
-                              <button onClick={() => handleEdit(index, 'story')} className="bg-blue-400 text-xs w-12 h-6 rounded text-white">수정</button>
+                              {/* <button onClick={() => handleEdit(index, 'story')} className="bg-blue-400 text-xs w-12 h-6 rounded text-white">수정</button> */}
                               <button onClick={() => handleDelete(index, 'story')} className="bg-red-400 text-xs w-12 h-6 rounded text-white">삭제</button>
                             </div>
                           </div>
@@ -597,7 +597,7 @@ export default function SprintPage({
                             <p className="text-sm ml-2">{issue?.description}</p>
                             <p className="text-sm text-gray-500 absolute right-2 top-2">Story: {issue?.parent}</p>
                             <div className="absolute bottom-2 right-2 flex space-x-2">
-                              <button onClick={() => handleEdit(index, 'sub-task')} className="bg-blue-400 text-xs w-12 h-6 rounded text-white">수정</button>
+                              {/* <button onClick={() => handleEdit(index, 'sub-task')} className="bg-blue-400 text-xs w-12 h-6 rounded text-white">수정</button> */}
                               <button onClick={() => handleDelete(index, 'sub-task')} className="bg-red-400 text-xs w-12 h-6 rounded text-white">삭제</button>
                             </div>
                           </div>
