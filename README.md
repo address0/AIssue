@@ -1,8 +1,7 @@
-# SSAFY A403 AISSUE
+# AISSUE
 
 <img src="docs/images/logo.png" alt="따다" height="200" width="150" />
 
-- 배포 URL : https://k11a403.p.ssafy.io/
 
 ## 📅 **프로젝트 기간**
 
@@ -12,7 +11,7 @@
 
 <div align="center">
   
-| [최희현](https://github.com/choiheehyun) | [전태호](https://github.com/Taehororo) | [김성현](https://github.com/k-redstone) | [서승호](https://github.com/shocoding) | [주소영](https://github.com/CSchoice) |[장승연](https://github.com/yoonkyungseo) |
+| [최희현](https://github.com/choiheehyun) | [전태호](https://github.com/Taehororo) | [김성현](https://github.com/k-redstone) | [서승호](https://github.com/shocoding) | [주소영](https://github.com/address0) |[장승연](https://github.com/yoonkyungseo) |
 | :----------------------------------: | :-----------------------------------: | :-----------------------------------: | :-----------------------------------: | :-----------------------------------: | :-----------------------------------: | 
 |<img src="https://avatars.githubusercontent.com/u/156387194?v=4" width="100">|<img src="https://avatars.githubusercontent.com/u/145996139?v=4" width="100">|<img src="https://avatars.githubusercontent.com/u/79430840?v=4" width="100">|<img src="https://avatars.githubusercontent.com/u/67960134?v=4" width="100">|<img src="docs/images/profile/choi.png" width="100">|<img src="docs/images/profile/yoon.png" width="100">|
 |          FE, DESIGN          |                  FE, BE                  |              BE            |               INFRA, FE              |              FE, AI,DESIGN           |              FE              |
@@ -52,10 +51,6 @@
 - 브랜치 생성 시, 영문은 모두 **소문자**를 사용한다.
 - git flow 방식을 채용하여 dev branch로 protect한다.
 - 완료 된 작업에 대하여 PR 완료 이후 해당 작업 브랜치는 삭제한다.
-- 생성 예시
-  **분야/타입/#이슈번호\_이슈명**
-  - FE-feat/#S11P31A403-140/text
-  - FE-design/#S11P31A403-140/test
 
 ### commit
 
